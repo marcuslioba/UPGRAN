@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Operação Upgran</title>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>
     * {
       margin: 0;
@@ -178,6 +179,62 @@
     .whatsapp-float:hover {
       background-color: #128C7E;
     }
+
+    .pacote.destaque {
+  border: 2px solid #FBC02D;
+  box-shadow: 0 0 20px rgba(251,192,45,0.3);
+  position: relative;
+  animation: brilho-caixa 3s ease-in-out infinite;
+}
+
+.selo-mais-vendido {
+  position: absolute;
+  top: -12px;
+  right: -12px;
+  background: #FBC02D;
+  color: #000;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-weight: bold;
+  font-size: 0.8rem;
+  animation: pulsar 1.8s infinite;
+}
+
+@keyframes pulsar {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+@keyframes brilho-caixa {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(251,192,45,0.3);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(251,192,45,0.6);
+  }
+}
+
+.botao.destaque-botao:hover {
+  background: linear-gradient(90deg, #fbc02d, #ffd54f, #fbc02d);
+  background-size: 200% auto;
+  animation: brilho-botao 1.5s linear infinite;
+}
+
+@keyframes brilho-botao {
+  0% {
+    background-position: 0% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
   </style>
 </head>
 <body>
@@ -211,27 +268,30 @@
     <h2>Escolha seu Plano de Crescimento</h2>
     <div class="pacotes">
       <div class="pacote">
-        <h3>Essencial</h3>
+        <h3><i class="fas fa-seedling"></i> Essencial</h3>
         <p>Ideal para profissionais que desejam gerar autoridade e serem percebidos como referência local nas redes.</p>
         <div class="preco">R$149,90/mês</div>
-        <p>6 reels impulsionados<br>+1.000 seguidores/mês</p>
+        <p><i class="fas fa-video"></i> 6 reels impulsionados<br><i class="fas fa-user-plus"></i> +1.000 seguidores/mês</p>
         <a href="https://wa.me/558596117925?text=Estou%20pronto%20para%20crescer%20meu%20perfil%20com%20o%20plano%20Essencial" class="botao">Quero Crescer Agora</a>
       </div>
-      <div class="pacote">
-        <h3>Profissional</h3>
+    
+      <div class="pacote destaque">
+        <div class="selo-mais-vendido">🔥 Mais vendido</div>
+        <h3><i class="fas fa-star"></i> Profissional</h3>
         <p>Para quem quer se destacar entre concorrentes e atrair clientes mostrando consistência e relevância.</p>
         <div class="preco">R$199,90/mês</div>
-        <p>9 reels impulsionados<br>+2.000 seguidores/mês</p>
-        <a href="https://wa.me/558596117925?text=Estou%20pronto%20para%20crescer%20meu%20perfil%20com%20o%20plano%20Profissional" class="botao">Quero Crescer Agora</a>
+        <p><i class="fas fa-video"></i> 9 reels impulsionados<br><i class="fas fa-user-plus"></i> +2.000 seguidores/mês</p>
+        <a href="https://wa.me/558596117925?text=Estou%20pronto%20para%20crescer%20meu%20perfil%20com%20o%20plano%20Profissional" class="botao destaque-botao">Quero Crescer Agora</a>
       </div>
+    
       <div class="pacote">
-        <h3>Performance</h3>
+        <h3><i class="fas fa-rocket"></i> Performance</h3>
         <p>Feito para quem entende que presença online impacta diretamente nos resultados do seu negócio.</p>
         <div class="preco">R$249,90/mês</div>
-        <p>12 reels impulsionados<br>+3.000 seguidores/mês</p>
+        <p><i class="fas fa-video"></i> 12 reels impulsionados<br><i class="fas fa-user-plus"></i> +3.000 seguidores/mês</p>
         <a href="https://wa.me/558596117925?text=Estou%20pronto%20para%20crescer%20meu%20perfil%20com%20o%20plano%20Performance" class="botao">Quero Crescer Agora</a>
       </div>
-    </div>
+    </div>    
   </section>
 
   <section id="depoimentos" class="depoimentos">
