@@ -11,7 +11,7 @@
 
 header.scrolled {
   background-color: #FBC02D;
-  color: #000;
+  color: #000000;
   box-shadow: 0 4px 6px rgba(0,0,0,0.2);
 }
 
@@ -50,8 +50,11 @@ header.scrolled nav a:hover {
   position: fixed;
   top: 0;
   width: 100%;
+  text-align: center;
+  padding: 10px 0;
   z-index: 1000;
-  transition: background-color 0.3s, color 0.3s;
+  background-color: transparent;
+  transition: background-color 0.4s ease, padding 0.4s ease;
   
     }
 
@@ -268,25 +271,28 @@ header {
   text-align: center;
   padding: 10px 0;
   z-index: 1000;
-  transition: all 0.3s ease;
   background-color: transparent;
+  transition: background-color 0.5s ease, padding 0.5s ease;
 }
 
-header .promo-bar {
-  background-color: #FBC02D;
-  color: #000;
-  padding: 10px;
-  font-weight: 600;
-  font-size: 0.95rem;
-  transition: opacity 0.3s ease, max-height 0.3s ease;
-}
-
+header .promo-bar,
 header .titulo {
-  font-size: 2.4rem;
-  font-family: 'Montserrat', sans-serif;
-  font-weight: 600;
-  margin: 10px 0;
-  transition: opacity 0.3s ease, max-height 0.3s ease;
+  transition: opacity 0.5s ease, max-height 0.5s ease, padding 0.5s ease, margin 0.5s ease;
+}
+
+/* Para quando a header estiver "scrolled" */
+header.scrolled {
+  background-color: #FBC02D;
+  padding: 5px 0;
+}
+
+header.scrolled .promo-bar,
+header.scrolled .titulo {
+  opacity: 0;
+  max-height: 0;
+  overflow: hidden;
+  padding: 0;
+  margin: 0;
 }
 
 header nav {
@@ -345,8 +351,10 @@ header.scrolled .titulo {
 
 <body>
   <header>
-    <div class="promo-bar">🎯 Assine hoje e ganhe uma análise gratuita do seu Instagram!</div>
-    <h1 class="titulo">Operação Upgran</h1>
+    <div class="promo-bar" style="background:#FBC02D;color:#000;padding:10px 20px;font-weight:600;font-size:0.95rem;">
+      🎯 Assine hoje e ganhe uma análise gratuita do seu Instagram!
+    </div>
+    <h1>Operação Upgran</h1>
     <nav>
       <a href="#sobre">Sobre</a>
       <a href="#pacotes">Planos</a>
@@ -436,5 +444,16 @@ header.scrolled .titulo {
       }
     });
   </script>  
+  <script>
+    window.addEventListener('scroll', function() {
+      const header = document.querySelector('header');
+      if (window.scrollY > 50) {
+        header.classList.add('scrolled');
+      } else {
+        header.classList.remove('scrolled');
+      }
+    });
+  </script>
+  
 </body>
 </html>
