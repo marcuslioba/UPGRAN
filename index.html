@@ -16,34 +16,56 @@
 
   <style>
     :root {
-      --brand-primary: #2563eb; /* Azul padrão */
-      --brand-accent: #16a34a;  /* Verde padrão */
+      --brand-primary: #2563eb;
+      --brand-accent: #16a34a;
+    }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
     .btn {
-      @apply px-4 py-2 rounded-lg font-semibold transition;
+      @apply px-4 py-2 rounded-lg font-semibold transition shadow-sm;
     }
     .btn-primary {
       background: var(--brand-primary);
       color: #fff;
     }
-    .btn-primary:hover { filter: brightness(0.95); }
+    .btn-primary:hover { filter: brightness(1.1); }
     .btn-accent {
       background: var(--brand-accent);
       color: #fff;
     }
-    .btn-accent:hover { filter: brightness(0.95); }
+    .btn-accent:hover { filter: brightness(1.1); }
     .btn-ghost {
-      @apply bg-gray-100 text-gray-700;
+      @apply bg-white border border-gray-300 text-gray-700;
     }
+    .btn-ghost:hover { @apply bg-gray-50; }
     .badge {
       @apply inline-block px-2 py-0.5 rounded-full text-xs font-bold;
     }
     .card {
-      @apply bg-white rounded-lg border border-gray-200;
+      @apply bg-white rounded-xl shadow-sm border border-gray-100;
     }
     .section-title {
-      @apply text-lg font-bold mb-3;
+      @apply text-xl font-bold mb-4;
       color: var(--brand-primary);
+    }
+    .tab-btn {
+      @apply flex flex-col items-center justify-center gap-2 px-6 py-4 rounded-xl transition cursor-pointer;
+      border: 2px solid transparent;
+    }
+    .tab-btn:hover {
+      @apply bg-gray-50;
+    }
+    .tab-btn.active {
+      background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-accent) 100%);
+      color: white;
+      border-color: transparent;
+    }
+    .tab-btn .icon {
+      @apply text-3xl;
+    }
+    .tab-btn .label {
+      @apply text-sm font-semibold;
     }
     @media print {
       .no-print { display: none !important; }
@@ -51,7 +73,7 @@
     }
   </style>
 </head>
-<body class="bg-gray-50 text-gray-900">
+<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
   <div id="root"></div>
 
   <script type="text/babel">
@@ -98,14 +120,17 @@
     const LS_SET_PREFIX = 'checklist_set::';
     const LS_STORE_NAME = 'loja_nome';
     const LS_STORE_ADDR = 'loja_endereco';
-    const LS_BRAND = 'brand_prefs'; // {primary, accent, logoDataUrl}
-    const LS_HISTORY = 'checklist_history'; // array de objetos
+    const LS_BRAND = 'brand_prefs';
+    const LS_HISTORY = 'checklist_history';
 
     function App() {
+      // Aba ativa
+      const [abaAtiva, setAbaAtiva] = useState('inicio'); // inicio, perguntas, loja, personalizacao, historico
+
       // Marca
       const [brandPrimary, setBrandPrimary] = useState('#2563eb');
       const [brandAccent, setBrandAccent] = useState('#16a34a');
-      const [brandLogo, setBrandLogo] = useState(''); // DataURL
+      const [brandLogo, setBrandLogo] = useState('');
 
       // Loja
       const [lojaNome, setLojaNome] = useState('');
@@ -128,7 +153,7 @@
       // CSV
       const [uploadErro, setUploadErro] = useState('');
 
-      // Sets de perguntas (nomeados)
+      // Sets de perguntas
       const [nomeSet, setNomeSet] = useState('');
       const [setsSalvos, setSetsSalvos] = useState([]);
       const [setSelecionado, setSetSelecionado] = useState('');
@@ -155,10 +180,10 @@
       const [fimISO, setFimISO] = useState(null);
 
       // Histórico
-      const [historico, setHistorico] = useState([]); // lista dos checklists anteriores
-      const [whatsNumeroPadrao, setWhatsNumeroPadrao] = useState(''); // opcional: lembrar último número
+      const [historico, setHistorico] = useState([]);
+      const [whatsNumeroPadrao, setWhatsNumeroPadrao] = useState('');
 
-      // Aplicar tema ao CSS root
+      // Aplicar tema
       useEffect(() => {
         document.documentElement.style.setProperty('--brand-primary', brandPrimary || '#2563eb');
         document.documentElement.style.setProperty('--brand-accent', brandAccent || '#16a34a');
@@ -166,14 +191,11 @@
 
       // Carregamento inicial
       useEffect(() => {
-        // Loja
         setLojaNome(localStorage.getItem(LS_STORE_NAME) || '');
         setLojaEndereco(localStorage.getItem(LS_STORE_ADDR) || '');
-        // Sets meta
         try {
           setSetsSalvos(JSON.parse(localStorage.getItem(LS_SETS_META) || '[]'));
         } catch { setSetsSalvos([]); }
-        // Marca
         try {
           const b = JSON.parse(localStorage.getItem(LS_BRAND) || 'null');
           if (b) {
@@ -182,7 +204,6 @@
             if (b.logoDataUrl) setBrandLogo(b.logoDataUrl);
           }
         } catch {}
-        // Histórico
         try {
           setHistorico(JSON.parse(localStorage.getItem(LS_HISTORY) || '[]'));
         } catch { setHistorico([]); }
@@ -306,7 +327,6 @@
         } else {
           for (const l of linhas) out.push({ categoria: 'Geral', texto: l, fotoObrigatoria: false });
         }
-        // uniq
         const seen = new Set(); const uniq = [];
         for (const p of out) {
           const key = normalize((p.categoria||'Geral') + '::' + p.texto);
@@ -430,14 +450,12 @@
         const fim = new Date().toISOString();
         setFimISO(fim);
 
-        // Escolher número WhatsApp
         let numero = prompt('Informe o número (WhatsApp) para enviar o relatório, com DDI. Ex.: 55XXXXXXXXXXX', whatsNumeroPadrao || '');
         if (numero) {
           numero = numero.replace(/\D/g, '');
           setWhatsNumeroPadrao(numero);
         }
 
-        // Preparar payload histórico
         const nota = calcularNota();
         const tipoChecklist = setSelecionado || 'Checklist Atual';
         const historicoItem = {
@@ -450,7 +468,7 @@
           nota,
           perguntas,
           respostas,
-          evidencias, // armazenado inline (dataURL) — pode ficar grande; para produção, use backend/links
+          evidencias,
           coords,
           enderecoGPS,
           distancia,
@@ -458,12 +476,10 @@
           createdAt: new Date().toISOString(),
         };
 
-        // Atualizar histórico (máx. 50)
         const novoHist = [historicoItem, ...historico].slice(0, 50);
         setHistorico(novoHist);
         localStorage.setItem(LS_HISTORY, JSON.stringify(novoHist));
 
-        // Enviar WhatsApp (texto resumido + dados chave)
         if (numero) {
           const resumo = [
             `Checklist: ${tipoChecklist}`,
@@ -494,19 +510,20 @@
         setGpsConfereEndereco(null);
         setInicioISO(null);
         setFimISO(null);
-        // mantém loja e preferências
       };
 
-      // Histórico por loja/tipo para relatório final
+      // Histórico por loja/tipo
       const historicoDaLojaEPorTipo = useMemo(() => {
         if (!lojaNome) return [];
         const tipoAtual = setSelecionado || 'Checklist Atual';
         return historico
           .filter(h => h.lojaNome === lojaNome && h.tipoChecklist === tipoAtual)
-          .slice(0, 5); // últimas 5
+          .slice(0, 5);
       }, [historico, lojaNome, setSelecionado]);
 
-      // UI minimalista
+      // ========== RENDERIZAÇÃO ==========
+
+      // Relatório final
       if (checklistFinalizado) {
         const nota = calcularNota();
         const total = perguntas.length;
@@ -514,16 +531,16 @@
         const dur = inicioISO && fimISO ? humanDuration(new Date(fimISO) - new Date(inicioISO)) : '';
 
         return (
-          <div className="max-w-5xl mx-auto p-4 sm:p-6">
-            <div className="flex items-center gap-3 mb-4">
-              {brandLogo && <img src={brandLogo} alt="logo" className="h-10 w-auto"/>}
-              <h1 className="text-2xl font-bold" style={{color: 'var(--brand-primary)'}}>Relatório do Checklist</h1>
+          <div className="max-w-6xl mx-auto p-6">
+            <div className="flex items-center gap-4 mb-6 no-print">
+              {brandLogo && <img src={brandLogo} alt="logo" className="h-12 w-auto"/>}
+              <h1 className="text-3xl font-bold" style={{color: 'var(--brand-primary)'}}>Relatório do Checklist</h1>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-4">
-              <div className="card p-4 md:col-span-2">
-                <div className="section-title">Dados</div>
-                <div className="grid sm:grid-cols-2 gap-y-2 text-sm">
+            <div className="grid lg:grid-cols-3 gap-6 mb-6">
+              <div className="card p-6 lg:col-span-2">
+                <div className="section-title">Informações</div>
+                <div className="grid sm:grid-cols-2 gap-4 text-sm">
                   <div><span className="font-semibold">Loja:</span> {lojaNome}</div>
                   <div><span className="font-semibold">Tipo:</span> {setSelecionado || 'Checklist Atual'}</div>
                   <div className="sm:col-span-2"><span className="font-semibold">Endereço:</span> {lojaEndereco}</div>
@@ -532,33 +549,34 @@
                   <div><span className="font-semibold">Duração:</span> {dur}</div>
                 </div>
               </div>
-              <div className="card p-4 flex flex-col items-center justify-center">
-                <div className="text-5xl font-bold" style={{color:'var(--brand-accent)'}}>{nota}</div>
-                <div className="text-sm text-gray-600">Nota — {pos} de {total} SIM</div>
+              <div className="card p-6 flex flex-col items-center justify-center bg-gradient-to-br from-green-50 to-green-100">
+                <div className="text-6xl font-bold" style={{color:'var(--brand-accent)'}}>{nota}</div>
+                <div className="text-sm text-gray-700 mt-2">Nota Final</div>
+                <div className="text-xs text-gray-600">{pos} de {total} respostas SIM</div>
               </div>
             </div>
 
-            <div className="card p-4 mt-4">
-              <div className="section-title">Resumo por Categoria</div>
-              <div className="space-y-3">
+            <div className="card p-6 mb-6">
+              <div className="section-title">Respostas por Categoria</div>
+              <div className="space-y-6">
                 {categorias.map(([cat, itens]) => (
                   <div key={cat}>
-                    <div className="font-semibold mb-2">{cat}</div>
-                    <div className="space-y-2">
+                    <div className="font-bold text-lg mb-3" style={{color:'var(--brand-primary)'}}>{cat}</div>
+                    <div className="space-y-4">
                       {itens.map(p => (
-                        <div key={p.id} className="grid md:grid-cols-6 gap-2 items-start">
-                          <div className="md:col-span-4 text-sm">{p.texto}</div>
-                          <div className="md:col-span-1">
-                            <span className={'badge ' + (respostas[p.id] === 'sim' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700')}>
-                              {respostas[p.id] === 'sim' ? 'SIM' : 'NÃO'}
-                            </span>
-                          </div>
-                          <div className="md:col-span-1">
-                            {p.fotoObrigatoria && <span className="badge bg-yellow-100 text-yellow-700"><i className="fa fa-camera mr-1"></i>Foto</span>}
+                        <div key={p.id} className="bg-gray-50 rounded-lg p-4">
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="flex-1 font-medium">{p.texto}</div>
+                            <div className="flex items-center gap-2">
+                              <span className={'badge text-sm ' + (respostas[p.id] === 'sim' ? 'bg-green-500 text-white' : 'bg-red-500 text-white')}>
+                                {respostas[p.id] === 'sim' ? '✓ SIM' : '✗ NÃO'}
+                              </span>
+                              {p.fotoObrigatoria && <span className="badge bg-yellow-400 text-gray-900"><i className="fa fa-camera mr-1"></i>Foto</span>}
+                            </div>
                           </div>
                           {evidencias[p.id] && (
-                            <div className="md:col-span-6">
-                              <img src={evidencias[p.id]} alt={'Evidência '+p.id} className="w-full max-w-sm h-36 object-cover rounded border"/>
+                            <div className="mt-3">
+                              <img src={evidencias[p.id]} alt={'Evidência '+p.id} className="w-full max-w-md h-48 object-cover rounded-lg border-2 border-gray-200"/>
                             </div>
                           )}
                         </div>
@@ -569,18 +587,16 @@
               </div>
             </div>
 
-            <div className="card p-4 mt-4">
-              <div className="section-title">Histórico desta loja — {setSelecionado || 'Checklist Atual'}</div>
-              {historicoDaLojaEPorTipo.length === 0 ? (
-                <div className="text-sm text-gray-500">Sem histórico anterior para esta loja e tipo.</div>
-              ) : (
+            {historicoDaLojaEPorTipo.length > 0 && (
+              <div className="card p-6 mb-6">
+                <div className="section-title">Histórico — {setSelecionado || 'Checklist Atual'}</div>
                 <div className="overflow-x-auto">
                   <table className="min-w-full text-sm">
                     <thead>
-                      <tr className="text-left border-b">
-                        <th className="py-2">Data</th>
-                        <th className="py-2">Nota</th>
-                        <th className="py-2">Duração</th>
+                      <tr className="border-b-2">
+                        <th className="py-3 text-left">Data</th>
+                        <th className="py-3 text-left">Nota</th>
+                        <th className="py-3 text-left">Duração</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -588,19 +604,19 @@
                         const dur = h.inicioISO && h.fimISO ? humanDuration(new Date(h.fimISO) - new Date(h.inicioISO)) : '';
                         return (
                           <tr key={h.id} className="border-b">
-                            <td className="py-2">{fmtDateTime(h.fimISO)}</td>
-                            <td className="py-2">{h.nota}</td>
-                            <td className="py-2">{dur}</td>
+                            <td className="py-3">{fmtDateTime(h.fimISO)}</td>
+                            <td className="py-3 font-semibold">{h.nota}</td>
+                            <td className="py-3">{dur}</td>
                           </tr>
                         );
                       })}
                     </tbody>
                   </table>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
 
-            <div className="flex gap-2 mt-4 no-print">
+            <div className="flex gap-3 no-print">
               <button onClick={() => window.print()} className="btn btn-primary"><i className="fa fa-print mr-2"></i>Imprimir / PDF</button>
               <button onClick={reiniciar} className="btn btn-ghost">Novo Checklist</button>
             </div>
@@ -608,49 +624,50 @@
         );
       }
 
+      // Checklist em andamento
       if (checklistIniciado) {
         return (
-          <div className="max-w-5xl mx-auto p-4 sm:p-6">
-            <div className="flex items-center gap-3 mb-4">
-              {brandLogo && <img src={brandLogo} alt="logo" className="h-8 w-auto"/>}
-              <h1 className="text-xl font-bold" style={{color: 'var(--brand-primary)'}}>Checklist em andamento</h1>
+          <div className="max-w-5xl mx-auto p-6">
+            <div className="flex items-center gap-4 mb-6">
+              {brandLogo && <img src={brandLogo} alt="logo" className="h-10 w-auto"/>}
+              <h1 className="text-2xl font-bold" style={{color: 'var(--brand-primary)'}}>Checklist em Andamento</h1>
             </div>
 
-            <div className="card p-4 mb-4">
-              <div className="grid sm:grid-cols-2 gap-2 text-sm">
+            <div className="card p-6 mb-6 bg-gradient-to-r from-blue-50 to-indigo-50">
+              <div className="grid sm:grid-cols-2 gap-3 text-sm">
                 <div><span className="font-semibold">Loja:</span> {lojaNome}</div>
                 <div><span className="font-semibold">Tipo:</span> {setSelecionado || 'Checklist Atual'}</div>
                 <div className="sm:col-span-2"><span className="font-semibold">Endereço:</span> {lojaEndereco}</div>
               </div>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-6">
               {categorias.map(([cat, itens]) => (
-                <div key={cat} className="card p-4">
-                  <div className="font-semibold mb-2">{cat}</div>
-                  <div className="space-y-3">
+                <div key={cat} className="card p-6">
+                  <div className="font-bold text-xl mb-4" style={{color:'var(--brand-primary)'}}>{cat}</div>
+                  <div className="space-y-4">
                     {itens.map(p => (
-                      <div key={p.id} className="bg-gray-50 rounded p-3">
-                        <div className="text-sm font-medium mb-3">{p.texto}</div>
-                        <div className="flex flex-wrap gap-2 mb-2">
+                      <div key={p.id} className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-4 border-l-4" style={{borderColor: respostas[p.id] ? 'var(--brand-accent)' : '#d1d5db'}}>
+                        <div className="font-medium mb-3">{p.texto}</div>
+                        <div className="flex flex-wrap gap-3 mb-3">
                           <button
                             onClick={() => responder(p.id, 'sim')}
                             className={'btn ' + (respostas[p.id] === 'sim' ? 'btn-accent' : 'btn-ghost')}
                           >
-                            <i className="fa fa-check mr-1"></i>SIM
+                            <i className="fa fa-check mr-2"></i>SIM
                           </button>
                           <button
                             onClick={() => responder(p.id, 'nao')}
                             className={'btn ' + (respostas[p.id] === 'nao' ? 'bg-red-500 text-white' : 'btn-ghost')}
                           >
-                            <i className="fa fa-times mr-1"></i>NÃO
+                            <i className="fa fa-times mr-2"></i>NÃO
                           </button>
-                          {p.fotoObrigatoria && <span className="badge bg-yellow-100 text-yellow-700"><i className="fa fa-camera mr-1"></i>Foto obrigatória</span>}
+                          {p.fotoObrigatoria && <span className="badge bg-yellow-400 text-gray-900 self-center"><i className="fa fa-camera mr-1"></i>Foto obrigatória</span>}
                         </div>
-                        <div className="flex items-center gap-2">
-                          <input type="file" accept="image/*" capture="environment" className="text-xs"
+                        <div className="flex items-center gap-3">
+                          <input type="file" accept="image/*" capture="environment" className="text-sm"
                                  onChange={(e) => handleEvidenciaUpload(p.id, e.target.files[0])}/>
-                          {evidencias[p.id] && <span className="text-xs text-green-700"><i className="fa fa-check mr-1"></i>Foto anexada</span>}
+                          {evidencias[p.id] && <span className="text-sm text-green-700 font-semibold"><i className="fa fa-check-circle mr-1"></i>Foto anexada</span>}
                         </div>
                       </div>
                     ))}
@@ -659,273 +676,369 @@
               ))}
             </div>
 
-            <div className="mt-6">
+            <div className="mt-8">
               <button
                 onClick={finalizarChecklist}
                 disabled={!todasRespondidas || !fotosOk}
-                className={'btn btn-primary w-full ' + ((todasRespondidas && fotosOk) ? '' : 'opacity-60 cursor-not-allowed')}
+                className={'btn btn-primary w-full text-lg py-4 ' + ((todasRespondidas && fotosOk) ? '' : 'opacity-50 cursor-not-allowed')}
               >
-                <i className="fa fa-flag-checkered mr-2"></i>Finalizar e gerar relatório
+                <i className="fa fa-flag-checkered mr-2"></i>Finalizar e Gerar Relatório
               </button>
             </div>
           </div>
         );
       }
 
-      // Primeira página (Dashboard minimal)
+      // Dashboard principal com abas
       return (
-        <div className="max-w-6xl mx-auto p-4 sm:p-6 space-y-6">
+        <div className="min-h-screen pb-12">
           {/* Header */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              {brandLogo && <img src={brandLogo} alt="logo" className="h-10 w-auto"/>}
-              <h1 className="text-2xl sm:text-3xl font-bold" style={{color: 'var(--brand-primary)'}}>Checklist Auditoria</h1>
-            </div>
-          </div>
-
-          {/* Preferências de Marca */}
-          <div className="card p-4">
-            <div className="section-title">Personalização</div>
-            <div className="grid md:grid-cols-3 gap-4 items-center">
-              <div className="space-y-2">
-                <label className="text-sm font-semibold">Cor Primária</label>
-                <input type="color" value={brandPrimary} onChange={(e)=>{ setBrandPrimary(e.target.value); salvarMarca({primary: e.target.value}); }}
-                       className="w-16 h-10 border rounded"/>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-semibold">Cor de Destaque</label>
-                <input type="color" value={brandAccent} onChange={(e)=>{ setBrandAccent(e.target.value); salvarMarca({accent: e.target.value}); }}
-                       className="w-16 h-10 border rounded"/>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-semibold">Logo (PNG/JPG)</label>
-                <input type="file" accept="image/*" onChange={(e)=> {
-                  const f = e.target.files?.[0]; if (!f) return;
-                  const r = new FileReader();
-                  r.onload = ev => { setBrandLogo(ev.target.result); salvarMarca({logoDataUrl: ev.target.result}); };
-                  r.readAsDataURL(f);
-                }} className="text-sm"/>
-                {brandLogo && <div className="text-xs text-gray-500">Logo carregado.</div>}
+          <div className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+            <div className="max-w-7xl mx-auto px-6 py-4">
+              <div className="flex items-center gap-4">
+                {brandLogo && <img src={brandLogo} alt="logo" className="h-12 w-auto"/>}
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
+                  Checklist Auditoria
+                </h1>
               </div>
             </div>
           </div>
 
-          {/* Dados da loja + Localização */}
-          <div className="grid lg:grid-cols-2 gap-6">
-            <div className="card p-4">
-              <div className="section-title">Dados da Loja</div>
-              <div className="space-y-3">
-                <div>
-                  <label className="text-sm font-semibold">Nome</label>
-                  <input type="text" className="w-full border rounded px-3 py-2"
-                         value={lojaNome} onChange={(e)=> setLojaNome(e.target.value)} onBlur={(e)=> localStorage.setItem(LS_STORE_NAME, e.target.value)}
-                         placeholder="Ex.: Loja Centro - Matriz"/>
-                </div>
-                <div>
-                  <label className="text-sm font-semibold">Endereço</label>
-                  <input type="text" className="w-full border rounded px-3 py-2"
-                         value={lojaEndereco} onChange={(e)=> setLojaEndereco(e.target.value)} onBlur={(e)=> localStorage.setItem(LS_STORE_ADDR, e.target.value)}
-                         placeholder="Rua, número - Bairro, Cidade/UF"/>
-                </div>
-                <div className="text-xs text-gray-500">Salvamos automaticamente no seu navegador.</div>
+          {/* Navegação por abas */}
+          <div className="max-w-7xl mx-auto px-6 py-6">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+              <div className={'tab-btn ' + (abaAtiva === 'inicio' ? 'active' : 'bg-white')} onClick={() => setAbaAtiva('inicio')}>
+                <div className="icon"><i className="fas fa-home"></i></div>
+                <div className="label">Início</div>
+              </div>
+              <div className={'tab-btn ' + (abaAtiva === 'loja' ? 'active' : 'bg-white')} onClick={() => setAbaAtiva('loja')}>
+                <div className="icon"><i className="fas fa-store"></i></div>
+                <div className="label">Loja</div>
+              </div>
+              <div className={'tab-btn ' + (abaAtiva === 'perguntas' ? 'active' : 'bg-white')} onClick={() => setAbaAtiva('perguntas')}>
+                <div className="icon"><i className="fas fa-clipboard-list"></i></div>
+                <div className="label">Perguntas</div>
+              </div>
+              <div className={'tab-btn ' + (abaAtiva === 'historico' ? 'active' : 'bg-white')} onClick={() => setAbaAtiva('historico')}>
+                <div className="icon"><i className="fas fa-history"></i></div>
+                <div className="label">Histórico</div>
+              </div>
+              <div className={'tab-btn ' + (abaAtiva === 'personalizacao' ? 'active' : 'bg-white')} onClick={() => setAbaAtiva('personalizacao')}>
+                <div className="icon"><i className="fas fa-palette"></i></div>
+                <div className="label">Personalização</div>
               </div>
             </div>
 
-            <div className="card p-4">
-              <div className="section-title">Localização</div>
-              <div className="flex gap-2">
-                <button className="btn btn-primary" onClick={capturarLocalizacao}><i className="fa fa-location-arrow mr-2"></i>Capturar GPS</button>
-                {geoStatus === 'buscando' && <span className="text-sm text-gray-600">Buscando...</span>}
-                {geoStatus === 'ok' && <span className="text-sm text-green-700"><i className="fa fa-check mr-1"></i>Capturada</span>}
-              </div>
-              {geoErro && <div className="text-sm text-red-600 mt-2">{geoErro}</div>}
-              {coords && (
-                <div className="mt-3 text-sm space-y-1">
-                  <div><span className="font-semibold">Lat/Lon:</span> {coords.latitude.toFixed(6)}, {coords.longitude.toFixed(6)}</div>
-                  {coords.accuracy && <div><span className="font-semibold">Precisão:</span> ±{Math.round(coords.accuracy)} m</div>}
-                  {enderecoGPS && <div><span className="font-semibold">Endereço GPS:</span> {enderecoGPS}</div>}
-                  <div className={(gpsConfereEndereco === true ? 'text-green-700' : gpsConfereEndereco === false ? 'text-red-700' : 'text-gray-600') + ' font-semibold'}>
-                    {gpsValidando ? 'Validando...' :
-                      gpsConfereEndereco === true ? 'Endereço GPS confere.' :
-                      gpsConfereEndereco === false ? 'Endereço GPS NÃO confere.' :
-                      'Capture o GPS para validar.'
-                    }
+            {/* Conteúdo das abas */}
+            {abaAtiva === 'inicio' && (
+              <div className="space-y-6">
+                <div className="card p-8 text-center bg-gradient-to-br from-blue-50 to-indigo-50">
+                  <i className="fas fa-clipboard-check text-6xl mb-4" style={{color:'var(--brand-primary)'}}></i>
+                  <h2 className="text-2xl font-bold mb-4" style={{color:'var(--brand-primary)'}}>Bem-vindo ao Sistema de Checklist</h2>
+                  <p className="text-gray-700 mb-6">Configure sua loja, perguntas e personalize a marca antes de iniciar.</p>
+                  
+                  <div className="grid md:grid-cols-3 gap-4 text-left max-w-3xl mx-auto mb-6">
+                    <div className="bg-white rounded-lg p-4 shadow-sm">
+                      <div className="flex items-center gap-3 mb-2">
+                        <i className="fas fa-store text-2xl" style={{color:'var(--brand-primary)'}}></i>
+                        <div className="font-semibold">Loja</div>
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        {lojaNome ? <span className="text-green-600"><i className="fa fa-check mr-1"></i>Configurada</span> : <span className="text-red-600"><i className="fa fa-times mr-1"></i>Pendente</span>}
+                      </div>
+                    </div>
+                    <div className="bg-white rounded-lg p-4 shadow-sm">
+                      <div className="flex items-center gap-3 mb-2">
+                        <i className="fas fa-map-marker-alt text-2xl" style={{color:'var(--brand-primary)'}}></i>
+                        <div className="font-semibold">GPS</div>
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        {coords && gpsConfereEndereco ? <span className="text-green-600"><i className="fa fa-check mr-1"></i>Validado</span> : <span className="text-red-600"><i className="fa fa-times mr-1"></i>Pendente</span>}
+                      </div>
+                    </div>
+                    <div className="bg-white rounded-lg p-4 shadow-sm">
+                      <div className="flex items-center gap-3 mb-2">
+                        <i className="fas fa-clipboard-list text-2xl" style={{color:'var(--brand-primary)'}}></i>
+                        <div className="font-semibold">Perguntas</div>
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        {perguntas.length > 0 ? <span className="text-green-600"><i className="fa fa-check mr-1"></i>{perguntas.length} itens</span> : <span className="text-red-600"><i className="fa fa-times mr-1"></i>Nenhuma</span>}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
-          </div>
 
-          {/* Gerenciar perguntas */}
-          <div className="card p-4">
-            <div className="section-title">Perguntas (por categoria + foto obrigatória)</div>
-            <div className="grid md:grid-cols-12 gap-2">
-              <input className="md:col-span-3 border rounded px-3 py-2" placeholder="Categoria" value={novaCategoria} onChange={(e)=> setNovaCategoria(e.target.value)}/>
-              <input className="md:col-span-7 border rounded px-3 py-2" placeholder="Nova pergunta..." value={novaPergunta}
-                     onChange={(e)=> setNovaPergunta(e.target.value)} onKeyPress={(e)=> { if (e.key==='Enter') adicionarPergunta(); }}/>
-              <label className="md:col-span-2 flex items-center gap-2">
-                <input type="checkbox" checked={novaFotoObrigatoria} onChange={(e)=> setNovaFotoObrigatoria(e.target.checked)}/>
-                <span className="text-sm">Foto obrigatória</span>
-              </label>
-            </div>
-            <div className="flex items-center gap-2 mt-2">
-              <button className="btn btn-accent" onClick={adicionarPergunta}><i className="fa fa-plus mr-1"></i>Adicionar</button>
-              <input type="file" accept=".csv" className="text-sm" onChange={(e)=> handleArquivoCSV(e.target.files?.[0])}/>
-              <button className="text-sm underline" onClick={baixarModeloCSV}>Baixar modelo CSV</button>
-            </div>
-            {uploadErro && <div className="text-sm text-red-600 mt-2">{uploadErro}</div>}
+                  <button
+                    onClick={iniciarChecklist}
+                    disabled={!requisitosParaIniciar()}
+                    className={'btn btn-accent text-xl py-4 px-8 ' + (requisitosParaIniciar() ? '' : 'opacity-50 cursor-not-allowed')}
+                  >
+                    <i className="fa fa-play mr-2"></i>Iniciar Checklist
+                  </button>
 
-            {/* Sets */}
-            <div className="grid lg:grid-cols-2 gap-3 mt-4">
-              <div className="card p-3">
-                <div className="text-sm font-semibold mb-2">Salvar conjunto</div>
-                <div className="flex gap-2">
-                  <input className="flex-1 border rounded px-3 py-2 text-sm" placeholder="Nome do conjunto" value={nomeSet} onChange={(e)=> setNomeSet(e.target.value)}/>
-                  <button className="btn btn-primary"
-                    onClick={()=> {
-                      const nome = (nomeSet || '').trim();
-                      if (!nome) { alert('Informe um nome.'); return; }
-                      if (perguntas.length === 0) { alert('Sem perguntas para salvar.'); return; }
-                      salvarSetLocal(nome, perguntas); setNomeSet('');
-                      alert('Conjunto salvo.');
-                    }}>Salvar</button>
-                </div>
-              </div>
-              <div className="card p-3">
-                <div className="text-sm font-semibold mb-2">Carregar conjunto</div>
-                <div className="flex gap-2">
-                  <select className="flex-1 border rounded px-3 py-2 text-sm" value={setSelecionado} onChange={(e)=> setSetSelecionado(e.target.value)}>
-                    <option value="">Selecione</option>
-                    {setsSalvos.sort((a,b)=> a.name.localeCompare(b.name)).map(s => (
-                      <option key={s.name} value={s.name}>{s.name} ({s.count})</option>
-                    ))}
-                  </select>
-                  <button className="btn btn-ghost" onClick={()=>{
-                    if (!setSelecionado) { alert('Selecione um conjunto.'); return; }
-                    const lista = carregarSetLocal(setSelecionado);
-                    if (!lista?.length) { alert('Conjunto vazio ou inválido.'); return; }
-                    const mapped = lista.map((p,i)=> ({...p, id: i+1, categoria: p.categoria||'Geral', fotoObrigatoria: !!p.fotoObrigatoria}));
-                    setPerguntas(mapped); setRespostas({}); setEvidencias({});
-                  }}>Carregar</button>
-                  <button className="btn btn-ghost" onClick={()=>{
-                    if (!setSelecionado) { alert('Selecione um conjunto.'); return; }
-                    if (confirm(`Excluir conjunto "${setSelecionado}"?`)) {
-                      excluirSetLocal(setSelecionado); setSetSelecionado('');
-                    }
-                  }}>Excluir</button>
-                </div>
-              </div>
-            </div>
-
-            {/* Lista */}
-            <div className="mt-4 space-y-2">
-              {perguntas.map(p => (
-                <div key={p.id} className="flex items-center gap-2 bg-white border rounded p-2">
-                  {editandoId === p.id ? (
-                    <>
-                      <input className="w-40 border rounded px-2 py-1" value={categoriaEdicao} onChange={(e)=> setCategoriaEdicao(e.target.value)} placeholder="Categoria"/>
-                      <input className="flex-1 border rounded px-2 py-1" value={textoEdicao} onChange={(e)=> setTextoEdicao(e.target.value)} />
-                      <label className="flex items-center gap-1 text-sm">
-                        <input type="checkbox" checked={fotoObrigatoriaEdicao} onChange={(e)=> setFotoObrigatoriaEdicao(e.target.checked)}/>
-                        Foto
-                      </label>
-                      <button className="text-green-600" onClick={salvarEdicao}><i className="fa fa-check"></i></button>
-                      <button className="text-gray-600" onClick={()=> setEditandoId(null)}><i className="fa fa-times"></i></button>
-                    </>
-                  ) : (
-                    <>
-                      <span className="badge bg-gray-100 text-gray-700">{p.categoria || 'Geral'}</span>
-                      <span className="flex-1 text-sm">{p.texto}</span>
-                      {p.fotoObrigatoria && <span className="badge bg-yellow-100 text-yellow-700"><i className="fa fa-camera mr-1"></i>Foto</span>}
-                      <button className="text-blue-600" onClick={()=> iniciarEdicao(p.id)}><i className="fa fa-edit"></i></button>
-                      <button className="text-red-600" onClick={()=> removerPergunta(p.id)}><i className="fa fa-trash"></i></button>
-                    </>
+                  {!requisitosParaIniciar() && (
+                    <div className="mt-4 text-sm text-red-600">
+                      <div className="font-semibold mb-2">Requisitos pendentes:</div>
+                      <ul className="list-disc list-inside text-left max-w-md mx-auto">
+                        {!lojaNome.trim() && <li>Configure o nome da loja</li>}
+                        {!lojaEndereco.trim() && <li>Configure o endereço da loja</li>}
+                        {!coords && <li>Capture a localização GPS</li>}
+                        {coords && gpsConfereEndereco !== true && <li>Valide o endereço GPS</li>}
+                        {perguntas.length === 0 && <li>Adicione perguntas ao checklist</li>}
+                      </ul>
+                    </div>
                   )}
                 </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Histórico de checklists */}
-          <div className="card p-4">
-            <div className="section-title">Histórico de Checklists</div>
-            {historico.length === 0 ? (
-              <div className="text-sm text-gray-500">Sem checklists salvos ainda.</div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-sm">
-                  <thead>
-                    <tr className="text-left border-b">
-                      <th className="py-2">Data</th>
-                      <th className="py-2">Loja</th>
-                      <th className="py-2">Tipo</th>
-                      <th className="py-2">Nota</th>
-                      <th className="py-2">Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {historico.map(h => (
-                      <tr key={h.id} className="border-b">
-                        <td className="py-2">{fmtDateTime(h.fimISO || h.createdAt)}</td>
-                        <td className="py-2">{h.lojaNome}</td>
-                        <td className="py-2">{h.tipoChecklist}</td>
-                        <td className="py-2">{h.nota}</td>
-                        <td className="py-2">
-                          <button className="text-blue-600 underline" onClick={()=>{
-                            // Visualizar: carrega os dados desse histórico e abre relatório
-                            setLojaNome(h.lojaNome);
-                            setLojaEndereco(h.lojaEndereco);
-                            setRespostas(h.respostas || {});
-                            setEvidencias(h.evidencias || {});
-                            setCoords(h.coords || null);
-                            setEnderecoGPS(h.enderecoGPS || '');
-                            setDistancia(h.distancia ?? null);
-                            setDentroDaArea(!!h.dentroDaArea);
-                            setInicioISO(h.inicioISO || h.createdAt);
-                            setFimISO(h.fimISO || h.createdAt);
-                            setChecklistIniciado(true);
-                            setChecklistFinalizado(true);
-                            // carrega perguntas do item (mantém categorias/foto flags)
-                            if (h.perguntas?.length) {
-                              const mapped = h.perguntas.map((p,i)=> ({...p, id: i+1, categoria: p.categoria || 'Geral', fotoObrigatoria: !!p.fotoObrigatoria}));
-                              setPerguntas(mapped);
-                            }
-                          }}>Ver</button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
               </div>
             )}
-          </div>
 
-          {/* Botão iniciar */}
-          <div className="card p-4">
-            <div className="section-title">Iniciar</div>
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="text-sm">
-                Status: {requisitosParaIniciar() ? <span className="text-green-700 font-semibold">Pronto</span> : <span className="text-gray-600">Pendente</span>}
+            {abaAtiva === 'loja' && (
+              <div className="space-y-6">
+                <div className="card p-6">
+                  <div className="section-title"><i className="fas fa-store mr-2"></i>Dados da Loja</div>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-semibold mb-2">Nome da Loja</label>
+                      <input
+                        type="text"
+                        className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:border-blue-500 focus:outline-none"
+                        value={lojaNome}
+                        onChange={(e) => salvarLojaNome(e.target.value)}
+                        placeholder="Ex.: Loja Centro - Matriz"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold mb-2">Endereço Completo</label>
+                      <input
+                        type="text"
+                        className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:border-blue-500 focus:outline-none"
+                        value={lojaEndereco}
+                        onChange={(e) => salvarLojaEndereco(e.target.value)}
+                        placeholder="Rua, número - Bairro, Cidade/UF"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="card p-6">
+                  <div className="section-title"><i className="fas fa-map-marker-alt mr-2"></i>Localização GPS</div>
+                  <button className="btn btn-primary mb-4" onClick={capturarLocalizacao}>
+                    <i className="fa fa-location-arrow mr-2"></i>Capturar Localização
+                  </button>
+                  {geoStatus === 'buscando' && <div className="text-sm text-gray-600 mb-2"><i className="fa fa-spinner fa-spin mr-2"></i>Buscando localização...</div>}
+                  {geoErro && <div className="text-sm text-red-600 mb-2"><i className="fa fa-exclamation-circle mr-2"></i>{geoErro}</div>}
+                  
+                  {coords && (
+                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-4 space-y-2 text-sm">
+                      <div className="flex items-center gap-2">
+                        <i className="fa fa-check-circle text-green-600"></i>
+                        <span className="font-semibold">GPS Capturado</span>
+                      </div>
+                      <div><span className="font-semibold">Coordenadas:</span> {coords.latitude.toFixed(6)}, {coords.longitude.toFixed(6)}</div>
+                      {coords.accuracy && <div><span className="font-semibold">Precisão:</span> ±{Math.round(coords.accuracy)} metros</div>}
+                      {enderecoGPS && (
+                        <div className="pt-2 border-t border-green-200">
+                          <div className="font-semibold mb-1">Endereço GPS:</div>
+                          <div className="text-gray-700">{enderecoGPS}</div>
+                        </div>
+                      )}
+                      <div className={'font-bold pt-2 ' + (gpsConfereEndereco === true ? 'text-green-700' : gpsConfereEndereco === false ? 'text-red-700' : 'text-gray-600')}>
+                        {gpsValidando ? 'Validando endereço...' :
+                          gpsConfereEndereco === true ? '✓ Endereço GPS confere com a loja' :
+                          gpsConfereEndereco === false ? '✗ Endereço GPS NÃO confere' :
+                          'Aguardando validação'
+                        }
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
-              <button className="btn btn-accent" disabled={!requisitosParaIniciar() || gpsValidando}
-                      onClick={iniciarChecklist}>
-                <i className="fa fa-play mr-2"></i>Iniciar Checklist
-              </button>
-            </div>
-            {!requisitosParaIniciar() && (
-              <ul className="list-disc ml-5 mt-2 text-xs text-gray-600">
-                {!lojaNome.trim() && <li>Informe o nome da loja.</li>}
-                {!lojaEndereco.trim() && <li>Informe o endereço da loja.</li>}
-                {!coords && <li>Capture o GPS.</li>}
-                {coords && gpsConfereEndereco !== true && <li>Endereço GPS deve coincidir com o da loja.</li>}
-              </ul>
             )}
-          </div>
-        </div>
-      );
-    }
 
-    ReactDOM.render(<App />, document.getElementById('root'));
-  </script>
-</body>
-</html>
+            {abaAtiva === 'perguntas' && (
+              <div className="space-y-6">
+                <div className="card p-6">
+                  <div className="section-title"><i className="fas fa-plus-circle mr-2"></i>Adicionar Pergunta</div>
+                  <div className="grid md:grid-cols-12 gap-3 mb-4">
+                    <input
+                      className="md:col-span-3 border-2 border-gray-200 rounded-lg px-4 py-3 focus:border-blue-500 focus:outline-none"
+                      placeholder="Categoria"
+                      value={novaCategoria}
+                      onChange={(e) => setNovaCategoria(e.target.value)}
+                    />
+                    <input
+                      className="md:col-span-7 border-2 border-gray-200 rounded-lg px-4 py-3 focus:border-blue-500 focus:outline-none"
+                      placeholder="Digite a pergunta..."
+                      value={novaPergunta}
+                      onChange={(e) => setNovaPergunta(e.target.value)}
+                      onKeyPress={(e) => { if (e.key === 'Enter') adicionarPergunta(); }}
+                    />
+                    <label className="md:col-span-2 flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" checked={novaFotoObrigatoria} onChange={(e) => setNovaFotoObrigatoria(e.target.checked)} className="w-5 h-5"/>
+                      <span className="text-sm font-semibold">Foto obrigatória</span>
+                    </label>
+                  </div>
+                  <button className="btn btn-accent" onClick={adicionarPergunta}>
+                    <i className="fa fa-plus mr-2"></i>Adicionar Pergunta
+                  </button>
+                </div>
+
+                <div className="card p-6">
+                  <div className="section-title"><i className="fas fa-file-csv mr-2"></i>Importar CSV</div>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <input type="file" accept=".csv" className="text-sm" onChange={(e) => handleArquivoCSV(e.target.files?.[0])}/>
+                    <button className="btn btn-ghost" onClick={baixarModeloCSV}>
+                      <i className="fa fa-download mr-2"></i>Baixar Modelo
+                    </button>
+                  </div>
+                  {uploadErro && <div className="text-sm text-red-600 mt-2"><i className="fa fa-exclamation-circle mr-2"></i>{uploadErro}</div>}
+                </div>
+
+                <div className="grid lg:grid-cols-2 gap-6">
+                  <div className="card p-6">
+                    <div className="section-title"><i className="fas fa-save mr-2"></i>Salvar Conjunto</div>
+                    <div className="flex gap-3">
+                      <input
+                        className="flex-1 border-2 border-gray-200 rounded-lg px-4 py-3 focus:border-blue-500 focus:outline-none"
+                        placeholder="Nome do conjunto"
+                        value={nomeSet}
+                        onChange={(e) => setNomeSet(e.target.value)}
+                      />
+                      <button
+                        className="btn btn-primary"
+                        onClick={() => {
+                          const nome = (nomeSet || '').trim();
+                          if (!nome) { alert('Informe um nome.'); return; }
+                          if (perguntas.length === 0) { alert('Sem perguntas para salvar.'); return; }
+                          salvarSetLocal(nome, perguntas);
+                          setNomeSet('');
+                          alert('Conjunto salvo com sucesso!');
+                        }}
+                      >
+                        <i className="fa fa-save mr-2"></i>Salvar
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="card p-6">
+                    <div className="section-title"><i className="fas fa-folder-open mr-2"></i>Carregar Conjunto</div>
+                    <div className="flex gap-3">
+                      <select
+                        className="flex-1 border-2 border-gray-200 rounded-lg px-4 py-3 focus:border-blue-500 focus:outline-none"
+                        value={setSelecionado}
+                        onChange={(e) => setSetSelecionado(e.target.value)}
+                      >
+                        <option value="">Selecione um conjunto</option>
+                        {setsSalvos.sort((a, b) => a.name.localeCompare(b.name)).map(s => (
+                          <option key={s.name} value={s.name}>{s.name} ({s.count})</option>
+                        ))}
+                      </select>
+                      <button
+                        className="btn btn-ghost"
+                        onClick={() => {
+                          if (!setSelecionado) { alert('Selecione um conjunto.'); return; }
+                          const lista = carregarSetLocal(setSelecionado);
+                          if (!lista?.length) { alert('Conjunto vazio ou inválido.'); return; }
+                          const mapped = lista.map((p, i) => ({ ...p, id: i + 1, categoria: p.categoria || 'Geral', fotoObrigatoria: !!p.fotoObrigatoria }));
+                          setPerguntas(mapped);
+                          setRespostas({});
+                          setEvidencias({});
+                          alert('Conjunto carregado!');
+                        }}
+                      >
+                        <i className="fa fa-upload mr-2"></i>Carregar
+                      </button>
+                      <button
+                        className="btn btn-ghost"
+                        onClick={() => {
+                          if (!setSelecionado) { alert('Selecione um conjunto.'); return; }
+                          if (confirm(`Excluir conjunto "${setSelecionado}"?`)) {
+                            excluirSetLocal(setSelecionado);
+                            setSetSelecionado('');
+                          }
+                        }}
+                      >
+                        <i className="fa fa-trash"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="card p-6">
+                  <div className="section-title"><i className="fas fa-list mr-2"></i>Lista de Perguntas ({perguntas.length})</div>
+                  {perguntas.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      <i className="fas fa-inbox text-4xl mb-3"></i>
+                      <div>Nenhuma pergunta cadastrada ainda.</div>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {perguntas.map(p => (
+                        <div key={p.id} className="flex items-center gap-3 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-4 border-l-4" style={{borderColor:'var(--brand-primary)'}}>
+                          {editandoId === p.id ? (
+                            <>
+                              <input
+                                className="w-40 border-2 border-gray-300 rounded px-3 py-2"
+                                value={categoriaEdicao}
+                                onChange={(e) => setCategoriaEdicao(e.target.value)}
+                                placeholder="Categoria"
+                              />
+                              <input
+                                className="flex-1 border-2 border-gray-300 rounded px-3 py-2"
+                                value={textoEdicao}
+                                onChange={(e) => setTextoEdicao(e.target.value)}
+                              />
+                              <label className="flex items-center gap-2 text-sm">
+                                <input type="checkbox" checked={fotoObrigatoriaEdicao} onChange={(e) => setFotoObrigatoriaEdicao(e.target.checked)} className="w-4 h-4"/>
+                                Foto
+                              </label>
+                              <button className="text-green-600 text-xl" onClick={salvarEdicao}><i className="fa fa-check"></i></button>
+                              <button className="text-gray-600 text-xl" onClick={() => setEditandoId(null)}><i className="fa fa-times"></i></button>
+                            </>
+                          ) : (
+                            <>
+                              <span className="badge bg-blue-100 text-blue-700 font-semibold">{p.categoria || 'Geral'}</span>
+                              <span className="flex-1 font-medium">{p.texto}</span>
+                              {p.fotoObrigatoria && <span className="badge bg-yellow-400 text-gray-900"><i className="fa fa-camera mr-1"></i>Foto</span>}
+                              <button className="text-blue-600 text-lg" onClick={() => iniciarEdicao(p.id)}><i className="fa fa-edit"></i></button>
+                              <button className="text-red-600 text-lg" onClick={() => removerPergunta(p.id)}><i className="fa fa-trash"></i></button>
+                            </>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {abaAtiva === 'historico' && (
+              <div className="space-y-6">
+                <div className="card p-6">
+                  <div className="section-title"><i className="fas fa-history mr-2"></i>Histórico de Checklists</div>
+                  {historico.length === 0 ? (
+                    <div className="text-center py-12 text-gray-500">
+                      <i className="fas fa-clipboard text-5xl mb-4"></i>
+                      <div className="text-lg">Nenhum checklist realizado ainda.</div>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full">
+                        <thead>
+                          <tr className="border-b-2 border-gray-300">
+                            <th className="py-3 px-4 text-left font-bold">Data</th>
+                            <th className="py-3 px-4 text-left font-bold">Loja</th>
+                            <th className="py-3 px-4 text-left font-bold">Tipo</th>
+                            <th className="py-3 px-4 text-left font-bold">Nota</th>
+                            <th className="py-3 px-4 text-left font-bold">Ações</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {historico.map(h => (
+                            <tr key={h.id} className="border-b hover:bg-gray-50">
+                              <td className="py-3 px-4">{fmtDateTime(h.fimISO || h.createdAt)}</td>
+                              <td className="py-3 px-4 font-medium">{h.lojaNome}</td>
+                              <td className="py-3 px-4">{h.tipoChecklist}</td>
+                              <td className="py-3 px-4">
+                                <span className="badge bg-green-500 text-white text-sm font-bold">{h.nota}</span>
+                              </td>
+                              <td className="py-3
