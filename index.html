@@ -4,99 +4,43 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Checklist Auditoria</title>
-
-  <!-- Tailwind + FontAwesome -->
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-
-  <!-- React -->
-  <script src="https://unpkg.com/react@17/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react@17/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
   <style>
     :root {
       --brand-primary: #2563eb;
       --brand-accent: #16a34a;
     }
-    body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    }
-    .btn {
-      @apply px-4 py-2 rounded-lg font-semibold transition shadow-sm;
-    }
-    .btn-primary {
-      background: var(--brand-primary);
-      color: #fff;
-    }
+    body { font-family: 'Inter', -apple-system, sans-serif; }
+    .btn { @apply px-4 py-2 rounded-lg font-semibold transition shadow-sm; }
+    .btn-primary { background: var(--brand-primary); color: #fff; }
     .btn-primary:hover { filter: brightness(1.1); }
-    .btn-accent {
-      background: var(--brand-accent);
-      color: #fff;
-    }
+    .btn-accent { background: var(--brand-accent); color: #fff; }
     .btn-accent:hover { filter: brightness(1.1); }
-    .btn-ghost {
-      @apply bg-white border border-gray-300 text-gray-700;
-    }
+    .btn-ghost { @apply bg-white border border-gray-300 text-gray-700; }
     .btn-ghost:hover { @apply bg-gray-50; }
-    .badge {
-      @apply inline-block px-2 py-0.5 rounded-full text-xs font-bold;
-    }
-    .card {
-      @apply bg-white rounded-xl shadow-sm border border-gray-100;
-    }
-    .section-title {
-      @apply text-xl font-bold mb-4;
-      color: var(--brand-primary);
-    }
-    .tab-btn {
-      @apply flex flex-col items-center justify-center gap-2 px-6 py-4 rounded-xl transition cursor-pointer;
-      border: 2px solid transparent;
-    }
-    .tab-btn:hover {
-      @apply bg-gray-50;
-    }
-    .tab-btn.active {
-      background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-accent) 100%);
-      color: white;
-      border-color: transparent;
-    }
-    .tab-btn .icon {
-      @apply text-3xl;
-    }
-    .tab-btn .label {
-      @apply text-sm font-semibold;
-    }
-    @media print {
-      .no-print { display: none !important; }
-      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    }
+    .badge { @apply inline-block px-2 py-0.5 rounded-full text-xs font-bold; }
+    .card { @apply bg-white rounded-xl shadow-sm border border-gray-100; }
+    .section-title { @apply text-xl font-bold mb-4; color: var(--brand-primary); }
+    .tab-btn { @apply flex flex-col items-center justify-center gap-2 px-4 py-3 rounded-xl transition cursor-pointer border-2 border-transparent; }
+    .tab-btn:hover { @apply bg-gray-50; }
+    .tab-btn.active { background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-accent) 100%); color: white; }
+    .tab-btn .icon { @apply text-2xl; }
+    .tab-btn .label { @apply text-xs font-semibold; }
+    @media print { .no-print { display: none !important; } body { -webkit-print-color-adjust: exact; } }
   </style>
 </head>
 <body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
   <div id="root"></div>
-
   <script type="text/babel">
     const { useState, useEffect, useMemo } = React;
 
     // Utils
     const uid = () => Math.random().toString(36).slice(2, 10);
-    const normalize = (s) => (s || '')
-      .toString().toLowerCase()
-      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-      .replace(/[.,;:]/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
-    const fmtDateTime = (iso) => {
-      if (!iso) return '';
-      const d = new Date(iso);
-      return d.toLocaleString('pt-BR');
-    };
-    const fmtDate = (iso) => {
-      if (!iso) return '';
-      const d = new Date(iso);
-      return d.toLocaleDateString('pt-BR');
-    };
+    const fmtDateTime = (iso) => iso ? new Date(iso).toLocaleString('pt-BR') : '';
     const humanDuration = (ms) => {
       if (!ms || ms < 0) return '';
       const s = Math.floor(ms / 1000);
@@ -105,300 +49,212 @@
       const seg = s % 60;
       return [h ? h + 'h' : null, (m || h) ? m + 'm' : null, seg + 's'].filter(Boolean).join(' ');
     };
-    const toRad = (deg) => (deg * Math.PI) / 180;
+    const normalize = (s) => (s || '').toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[.,;:]/g, ' ').replace(/\s+/g, ' ').trim();
     const haversineMeters = (lat1, lon1, lat2, lon2) => {
       const R = 6371000;
+      const toRad = (deg) => (deg * Math.PI) / 180;
       const dLat = toRad(lat2 - lat1);
       const dLon = toRad(lon2 - lon1);
       const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-      return R * c;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     };
 
-    // Storage keys
-    const LS_SETS_META = 'checklist_sets_meta';
-    const LS_SET_PREFIX = 'checklist_set::';
-    const LS_STORE_NAME = 'loja_nome';
-    const LS_STORE_ADDR = 'loja_endereco';
-    const LS_BRAND = 'brand_prefs';
-    const LS_HISTORY = 'checklist_history';
+    // Storage
+    const storage = {
+      get: (key, def = null) => { try { return JSON.parse(localStorage.getItem(key)) || def; } catch { return def; } },
+      set: (key, val) => localStorage.setItem(key, JSON.stringify(val)),
+      getString: (key, def = '') => localStorage.getItem(key) || def,
+      setString: (key, val) => localStorage.setItem(key, val)
+    };
 
     function App() {
-      // Aba ativa
-      const [abaAtiva, setAbaAtiva] = useState('inicio'); // inicio, perguntas, loja, personalizacao, historico
-
-      // Marca
+      const [aba, setAba] = useState('inicio');
       const [brandPrimary, setBrandPrimary] = useState('#2563eb');
       const [brandAccent, setBrandAccent] = useState('#16a34a');
       const [brandLogo, setBrandLogo] = useState('');
-
-      // Loja
       const [lojaNome, setLojaNome] = useState('');
       const [lojaEndereco, setLojaEndereco] = useState('');
-
-      // Perguntas
       const [perguntas, setPerguntas] = useState([
         { id: 1, categoria: 'Segurança', texto: 'EPIs conferidos?', fotoObrigatoria: true },
-        { id: 2, categoria: 'Operação', texto: 'Equipamentos verificados?', fotoObrigatoria: false },
-        { id: 3, categoria: 'Documentação', texto: 'Documentos atualizados?', fotoObrigatoria: false },
+        { id: 2, categoria: 'Operação', texto: 'Equipamentos verificados?', fotoObrigatoria: false }
       ]);
       const [novaPergunta, setNovaPergunta] = useState('');
       const [novaCategoria, setNovaCategoria] = useState('');
-      const [novaFotoObrigatoria, setNovaFotoObrigatoria] = useState(false);
-      const [editandoId, setEditandoId] = useState(null);
-      const [textoEdicao, setTextoEdicao] = useState('');
-      const [categoriaEdicao, setCategoriaEdicao] = useState('');
-      const [fotoObrigatoriaEdicao, setFotoObrigatoriaEdicao] = useState(false);
-
-      // CSV
-      const [uploadErro, setUploadErro] = useState('');
-
-      // Sets de perguntas
-      const [nomeSet, setNomeSet] = useState('');
+      const [novaFotoObrig, setNovaFotoObrig] = useState(false);
+      const [editId, setEditId] = useState(null);
+      const [editTexto, setEditTexto] = useState('');
+      const [editCat, setEditCat] = useState('');
+      const [editFoto, setEditFoto] = useState(false);
       const [setsSalvos, setSetsSalvos] = useState([]);
       const [setSelecionado, setSetSelecionado] = useState('');
-
-      // Geo
-      const [geoStatus, setGeoStatus] = useState('idle');
+      const [nomeSet, setNomeSet] = useState('');
       const [coords, setCoords] = useState(null);
       const [enderecoGPS, setEnderecoGPS] = useState('');
+      const [geoStatus, setGeoStatus] = useState('idle');
       const [geoErro, setGeoErro] = useState('');
-      const [alvoLat, setAlvoLat] = useState('');
-      const [alvoLon, setAlvoLon] = useState('');
-      const [alvoRaio, setAlvoRaio] = useState(100);
-      const [distancia, setDistancia] = useState(null);
-      const [dentroDaArea, setDentroDaArea] = useState(false);
-      const [gpsConfereEndereco, setGpsConfereEndereco] = useState(null);
-      const [gpsValidando, setGpsValidando] = useState(false);
-
-      // Fluxo checklist
+      const [gpsConfere, setGpsConfere] = useState(null);
       const [checklistIniciado, setChecklistIniciado] = useState(false);
       const [checklistFinalizado, setChecklistFinalizado] = useState(false);
       const [respostas, setRespostas] = useState({});
       const [evidencias, setEvidencias] = useState({});
       const [inicioISO, setInicioISO] = useState(null);
       const [fimISO, setFimISO] = useState(null);
-
-      // Histórico
       const [historico, setHistorico] = useState([]);
-      const [whatsNumeroPadrao, setWhatsNumeroPadrao] = useState('');
+      const [contatos, setContatos] = useState([]);
+      const [novoContatoNome, setNovoContatoNome] = useState('');
+      const [novoContatoTel, setNovoContatoTel] = useState('');
+
+      // Carregar dados
+      useEffect(() => {
+        const b = storage.get('brand');
+        if (b) {
+          if (b.primary) setBrandPrimary(b.primary);
+          if (b.accent) setBrandAccent(b.accent);
+          if (b.logo) setBrandLogo(b.logo);
+        }
+        setLojaNome(storage.getString('loja_nome'));
+        setLojaEndereco(storage.getString('loja_endereco'));
+        setSetsSalvos(storage.get('sets_meta', []));
+        setHistorico(storage.get('historico', []));
+        setContatos(storage.get('contatos', []));
+      }, []);
 
       // Aplicar tema
       useEffect(() => {
-        document.documentElement.style.setProperty('--brand-primary', brandPrimary || '#2563eb');
-        document.documentElement.style.setProperty('--brand-accent', brandAccent || '#16a34a');
+        document.documentElement.style.setProperty('--brand-primary', brandPrimary);
+        document.documentElement.style.setProperty('--brand-accent', brandAccent);
       }, [brandPrimary, brandAccent]);
 
-      // Carregamento inicial
-      useEffect(() => {
-        setLojaNome(localStorage.getItem(LS_STORE_NAME) || '');
-        setLojaEndereco(localStorage.getItem(LS_STORE_ADDR) || '');
-        try {
-          setSetsSalvos(JSON.parse(localStorage.getItem(LS_SETS_META) || '[]'));
-        } catch { setSetsSalvos([]); }
-        try {
-          const b = JSON.parse(localStorage.getItem(LS_BRAND) || 'null');
-          if (b) {
-            if (b.primary) setBrandPrimary(b.primary);
-            if (b.accent) setBrandAccent(b.accent);
-            if (b.logoDataUrl) setBrandLogo(b.logoDataUrl);
-          }
-        } catch {}
-        try {
-          setHistorico(JSON.parse(localStorage.getItem(LS_HISTORY) || '[]'));
-        } catch { setHistorico([]); }
-      }, []);
+      // Salvar marca
+      const salvarMarca = () => storage.set('brand', { primary: brandPrimary, accent: brandAccent, logo: brandLogo });
 
-      // Persistir marca
-      const salvarMarca = (obj) => {
-        const novo = { primary: brandPrimary, accent: brandAccent, logoDataUrl: brandLogo, ...obj };
-        localStorage.setItem(LS_BRAND, JSON.stringify(novo));
-      };
-
-      // Persistir loja
-      const salvarLojaNome = (v) => {
-        setLojaNome(v);
-        localStorage.setItem(LS_STORE_NAME, v);
-      };
-      const salvarLojaEndereco = (v) => {
-        setLojaEndereco(v);
-        localStorage.setItem(LS_STORE_ADDR, v);
-      };
-
-      // Sets perguntas
-      const carregarMeta = () => {
-        try { return JSON.parse(localStorage.getItem(LS_SETS_META) || '[]'); } catch { return []; }
-      };
-      const salvarMeta = (meta) => {
-        localStorage.setItem(LS_SETS_META, JSON.stringify(meta));
-      };
-      const salvarSetLocal = (nome, listaPerguntas) => {
-        if (!nome || !listaPerguntas?.length) return;
-        localStorage.setItem(LS_SET_PREFIX + nome, JSON.stringify(listaPerguntas));
-        const meta = carregarMeta();
-        const idx = meta.findIndex(m => m.name === nome);
-        const item = { name: nome, count: listaPerguntas.length, updatedAt: new Date().toISOString() };
-        if (idx >= 0) meta[idx] = item; else meta.push(item);
-        salvarMeta(meta);
-        setSetsSalvos(meta);
-      };
-      const carregarSetLocal = (nome) => {
-        try { return JSON.parse(localStorage.getItem(LS_SET_PREFIX + nome) || 'null'); } catch { return null; }
-      };
-      const excluirSetLocal = (nome) => {
-        localStorage.removeItem(LS_SET_PREFIX + nome);
-        const meta = carregarMeta().filter(m => m.name !== nome);
-        salvarMeta(meta);
-        setSetsSalvos(meta);
-      };
-
-      // Agrupar categorias
+      // Perguntas
+      const proxId = useMemo(() => perguntas.length ? Math.max(...perguntas.map(p => p.id)) + 1 : 1, [perguntas]);
       const categorias = useMemo(() => {
         const map = new Map();
-        for (const p of perguntas) {
+        perguntas.forEach(p => {
           const c = p.categoria || 'Geral';
           if (!map.has(c)) map.set(c, []);
           map.get(c).push(p);
-        }
+        });
         return Array.from(map.entries()).sort((a,b) => a[0].localeCompare(b[0]));
       }, [perguntas]);
 
-      // Edição/adicionar perguntas
-      const proxId = useMemo(() => (perguntas.length ? Math.max(...perguntas.map(p => p.id)) + 1 : 1), [perguntas]);
       const adicionarPergunta = () => {
         if (!novaPergunta.trim()) return;
-        const cat = (novaCategoria || 'Geral').trim();
-        setPerguntas(prev => [...prev, { id: proxId, categoria: cat, texto: novaPergunta.trim(), fotoObrigatoria: !!novaFotoObrigatoria }]);
-        setNovaCategoria(''); setNovaPergunta(''); setNovaFotoObrigatoria(false);
+        setPerguntas([...perguntas, { id: proxId, categoria: (novaCategoria || 'Geral').trim(), texto: novaPergunta.trim(), fotoObrigatoria: novaFotoObrig }]);
+        setNovaCategoria(''); setNovaPergunta(''); setNovaFotoObrig(false);
       };
+
       const iniciarEdicao = (id) => {
         const p = perguntas.find(x => x.id === id);
         if (!p) return;
-        setEditandoId(id);
-        setCategoriaEdicao(p.categoria);
-        setTextoEdicao(p.texto);
-        setFotoObrigatoriaEdicao(!!p.fotoObrigatoria);
+        setEditId(id); setEditCat(p.categoria); setEditTexto(p.texto); setEditFoto(!!p.fotoObrigatoria);
       };
+
       const salvarEdicao = () => {
-        if (editandoId == null) return;
-        setPerguntas(prev => prev.map(p => p.id === editandoId ? ({
-          ...p,
-          categoria: (categoriaEdicao || 'Geral').trim(),
-          texto: (textoEdicao || p.texto).trim(),
-          fotoObrigatoria: !!fotoObrigatoriaEdicao
-        }) : p));
-        setEditandoId(null);
-        setCategoriaEdicao('');
-        setTextoEdicao('');
-        setFotoObrigatoriaEdicao(false);
+        if (!editId) return;
+        setPerguntas(perguntas.map(p => p.id === editId ? { ...p, categoria: (editCat || 'Geral').trim(), texto: editTexto.trim(), fotoObrigatoria: editFoto } : p));
+        setEditId(null); setEditCat(''); setEditTexto(''); setEditFoto(false);
       };
+
       const removerPergunta = (id) => setPerguntas(perguntas.filter(p => p.id !== id));
 
+      // Sets
+      const salvarSet = () => {
+        const nome = nomeSet.trim();
+        if (!nome || !perguntas.length) { alert('Informe um nome e adicione perguntas.'); return; }
+        storage.set('set::' + nome, perguntas);
+        const meta = storage.get('sets_meta', []);
+        const idx = meta.findIndex(m => m.name === nome);
+        const item = { name: nome, count: perguntas.length, updatedAt: new Date().toISOString() };
+        if (idx >= 0) meta[idx] = item; else meta.push(item);
+        storage.set('sets_meta', meta);
+        setSetsSalvos(meta);
+        setNomeSet('');
+        alert('Conjunto salvo!');
+      };
+
+      const carregarSet = () => {
+        if (!setSelecionado) { alert('Selecione um conjunto.'); return; }
+        const lista = storage.get('set::' + setSelecionado);
+        if (!lista?.length) { alert('Conjunto vazio.'); return; }
+        setPerguntas(lista.map((p, i) => ({ ...p, id: i + 1 })));
+        setRespostas({}); setEvidencias({});
+        alert('Conjunto carregado!');
+      };
+
+      const excluirSet = () => {
+        if (!setSelecionado) { alert('Selecione um conjunto.'); return; }
+        if (!confirm(`Excluir "${setSelecionado}"?`)) return;
+        localStorage.removeItem('set::' + setSelecionado);
+        const meta = storage.get('sets_meta', []).filter(m => m.name !== setSelecionado);
+        storage.set('sets_meta', meta);
+        setSetsSalvos(meta);
+        setSetSelecionado('');
+      };
+
       // CSV
-      const detectarDelim = (text) => {
-        const head = text.split(/\r?\n/).slice(0, 5).join('\n');
-        const c1 = (head.match(/;/g) || []).length;
-        const c2 = (head.match(/,/g) || []).length;
-        const c3 = (head.match(/\t/g) || []).length;
-        if (c1 >= c2 && c1 >= c3) return ';';
-        if (c2 >= c1 && c2 >= c3) return ',';
-        return '\t';
-      };
-      const parseBoolLoose = (v) => ['sim','yes','true','1'].includes(normalize(v));
-      const parseCSVToPerguntas = (text) => {
-        const linhas = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-        if (!linhas.length) return [];
-        const delim = detectarDelim(text);
-        const header = linhas[0].split(delim).map(c => normalize(c));
-        const hasHeader = ['categoria','pergunta','perguntas','foto_obrigatoria','foto obrigatoria','foto-obrigatoria','foto obrigatoria?'].some(h => header.includes(h));
-        const out = [];
-        if (hasHeader) {
-          const idxCategoria = header.findIndex(h => h === 'categoria');
-          const idxPergunta = header.findIndex(h => ['pergunta','perguntas'].includes(h));
-          const idxFoto = header.findIndex(h => ['foto_obrigatoria','foto obrigatoria','foto-obrigatoria','foto obrigatoria?'].includes(h));
-          for (let i = 1; i < linhas.length; i++) {
-            const cols = linhas[i].split(delim).map(c => c.trim());
-            const texto = idxPergunta >= 0 ? (cols[idxPergunta] || '') : '';
-            if (!texto) continue;
-            const categoria = idxCategoria >= 0 ? (cols[idxCategoria] || 'Geral') : 'Geral';
-            const fotoObrigatoria = idxFoto >= 0 ? parseBoolLoose(cols[idxFoto] || 'não') : false;
-            out.push({ categoria, texto, fotoObrigatoria });
-          }
-        } else {
-          for (const l of linhas) out.push({ categoria: 'Geral', texto: l, fotoObrigatoria: false });
-        }
-        const seen = new Set(); const uniq = [];
-        for (const p of out) {
-          const key = normalize((p.categoria||'Geral') + '::' + p.texto);
-          if (!seen.has(key)) { seen.add(key); uniq.push(p); }
-        }
-        return uniq;
-      };
-      const handleArquivoCSV = (file) => {
-        setUploadErro('');
-        if (!file) return;
-        if (!file.name.toLowerCase().endsWith('.csv')) {
-          setUploadErro('Formato não suportado. Use CSV (.csv).');
-          return;
-        }
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          try {
-            const dados = parseCSVToPerguntas(e.target.result);
-            if (!dados.length) { setUploadErro('Nenhuma pergunta válida encontrada.'); return; }
-            const novos = dados.map((d, i) => ({ id: i+1, categoria: d.categoria || 'Geral', texto: d.texto, fotoObrigatoria: !!d.fotoObrigatoria }));
-            setPerguntas(novos);
-            setRespostas({});
-            setEvidencias({});
-          } catch (err) {
-            setUploadErro('Erro processando CSV: ' + err.message);
-          }
-        };
-        reader.readAsText(file, 'utf-8');
-      };
       const baixarModeloCSV = () => {
-        const linhas = [
-          'categoria;pergunta;foto_obrigatoria',
-          'Segurança;EPIs conferidos?;sim',
-          'Operação;Equipamentos verificados?;nao',
-          'Documentação;Documentos atualizados?;nao'
-        ];
-        const blob = new Blob([linhas.join('\n')], { type: 'text/csv;charset=utf-8;' });
+        const csv = 'categoria;pergunta;foto_obrigatoria\nSegurança;EPIs conferidos?;sim\nOperação;Equipamentos verificados?;nao';
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = url; a.download = 'modelo_perguntas_checklist.csv';
+        a.href = url; a.download = 'modelo_checklist.csv';
         document.body.appendChild(a); a.click(); document.body.removeChild(a);
         URL.revokeObjectURL(url);
       };
 
-      // Geo + validação endereço
-      const tokensEndereco = (s) => normalize(s).split(' ').filter(w => w && !/^\d{1,2}$/.test(w));
-      const enderecoCoincide = (loja, gps) => {
-        const a = new Set(tokensEndereco(loja));
-        const b = new Set(tokensEndereco(gps));
-        let inter = 0; for (const t of a) if (b.has(t)) inter++;
-        return inter >= 3;
+      const handleCSV = (file) => {
+        if (!file || !file.name.endsWith('.csv')) { alert('Use arquivo CSV.'); return; }
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const text = e.target.result;
+            const linhas = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+            if (!linhas.length) { alert('CSV vazio.'); return; }
+            const delim = text.includes(';') ? ';' : ',';
+            const header = linhas[0].split(delim).map(c => normalize(c));
+            const hasHeader = header.some(h => ['categoria','pergunta','foto'].includes(h));
+            const dados = [];
+            const start = hasHeader ? 1 : 0;
+            for (let i = start; i < linhas.length; i++) {
+              const cols = linhas[i].split(delim).map(c => c.trim());
+              if (hasHeader) {
+                const idxCat = header.findIndex(h => h === 'categoria');
+                const idxPerg = header.findIndex(h => ['pergunta','perguntas'].includes(h));
+                const idxFoto = header.findIndex(h => h.includes('foto'));
+                const texto = idxPerg >= 0 ? cols[idxPerg] : cols[0];
+                if (!texto) continue;
+                dados.push({
+                  categoria: idxCat >= 0 ? (cols[idxCat] || 'Geral') : 'Geral',
+                  texto,
+                  fotoObrigatoria: idxFoto >= 0 ? ['sim','yes','true','1'].includes(normalize(cols[idxFoto])) : false
+                });
+              } else {
+                if (cols[0]) dados.push({ categoria: 'Geral', texto: cols[0], fotoObrigatoria: false });
+              }
+            }
+            if (!dados.length) { alert('Nenhuma pergunta válida.'); return; }
+            setPerguntas(dados.map((d, i) => ({ id: i + 1, ...d })));
+            setRespostas({}); setEvidencias({});
+            alert('CSV importado!');
+          } catch (err) {
+            alert('Erro ao processar CSV: ' + err.message);
+          }
+        };
+        reader.readAsText(file, 'utf-8');
       };
-      const validarEnderecoGPS = (endGPS, endLoja) => {
-        setGpsValidando(true);
-        try { setGpsConfereEndereco(enderecoCoincide(endLoja, endGPS)); }
-        finally { setGpsValidando(false); }
-      };
-      const capturarLocalizacao = () => {
+
+      // GPS
+      const capturarGPS = () => {
         setGeoErro('');
-        if (!('geolocation' in navigator)) { setGeoStatus('erro'); setGeoErro('Geolocalização não suportada.'); return; }
+        if (!navigator.geolocation) { setGeoStatus('erro'); setGeoErro('GPS não suportado.'); return; }
         setGeoStatus('buscando');
         navigator.geolocation.getCurrentPosition(async (pos) => {
           const { latitude, longitude, accuracy } = pos.coords;
-          const c = { latitude, longitude, accuracy };
-          setCoords(c);
+          setCoords({ latitude, longitude, accuracy });
           setGeoStatus('ok');
-          if (!alvoLat || !alvoLon) {
-            setAlvoLat(String(latitude)); setAlvoLon(String(longitude)); setDistancia(0); setDentroDaArea(true);
-          } else {
-            const d = haversineMeters(latitude, longitude, parseFloat(alvoLat), parseFloat(alvoLon));
-            setDistancia(d); setDentroDaArea(d <= (parseFloat(alvoRaio) || 0));
-          }
           try {
             const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`;
             const resp = await fetch(url, { headers: { 'Accept-Language': 'pt-BR' } });
@@ -406,63 +262,81 @@
               const data = await resp.json();
               const end = data.display_name || '';
               setEnderecoGPS(end);
-              if (lojaEndereco.trim()) validarEnderecoGPS(end, lojaEndereco);
+              if (lojaEndereco.trim()) {
+                const tokensLoja = normalize(lojaEndereco).split(' ').filter(w => w && !/^\d{1,2}$/.test(w));
+                const tokensGPS = normalize(end).split(' ').filter(w => w && !/^\d{1,2}$/.test(w));
+                const inter = tokensLoja.filter(t => tokensGPS.includes(t)).length;
+                setGpsConfere(inter >= 3);
+              }
             }
-          } catch (e) {}
+          } catch {}
         }, (err) => {
-          setGeoStatus('erro'); setGeoErro(err.message || 'Falha ao obter localização.');
+          setGeoStatus('erro'); setGeoErro(err.message || 'Falha ao obter GPS.');
         }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
       };
 
-      // Evidências
-      const handleEvidenciaUpload = (id, file) => {
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (e) => setEvidencias(prev => ({ ...prev, [id]: e.target.result }));
-        reader.readAsDataURL(file);
-      };
+      // Checklist
+      const requisitosOk = () => lojaNome.trim() && lojaEndereco.trim() && coords && gpsConfere === true && perguntas.length > 0;
 
-      // Fluxo checklist
-      const responder = (id, v) => setRespostas(prev => ({ ...prev, [id]: v }));
-      const requisitosParaIniciar = () =>
-        lojaNome.trim() && lojaEndereco.trim() && coords && dentroDaArea && gpsConfereEndereco === true && perguntas.length > 0;
       const iniciarChecklist = () => {
-        if (!requisitosParaIniciar()) {
-          alert('Para iniciar: loja preenchida, GPS ok, dentro da área e endereço GPS deve coincidir.');
+        if (!requisitosOk()) {
+          alert('Complete: nome da loja, endereço, GPS validado e perguntas.');
           return;
         }
         setChecklistIniciado(true);
         setInicioISO(new Date().toISOString());
         setFimISO(null);
       };
+
+      const responder = (id, v) => setRespostas({ ...respostas, [id]: v });
+
+      const handleEvidencia = (id, file) => {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => setEvidencias({ ...evidencias, [id]: e.target.result });
+        reader.readAsDataURL(file);
+      };
+
       const todasRespondidas = perguntas.every(p => respostas[p.id]);
       const fotosOk = perguntas.every(p => p.fotoObrigatoria ? !!evidencias[p.id] : true);
+
       const calcularNota = () => {
         const total = perguntas.length;
         const pos = perguntas.filter(p => respostas[p.id] === 'sim').length;
         return total ? ((pos / total) * 10).toFixed(1) : '0.0';
       };
 
-      // Histórico: salvar no fim, com WhatsApp
-      const finalizarChecklist = async () => {
+      const finalizarChecklist = () => {
         if (!todasRespondidas) { alert('Responda todas as perguntas.'); return; }
-        if (!fotosOk) { alert('Há itens com foto obrigatória sem evidência.'); return; }
+        if (!fotosOk) { alert('Há fotos obrigatórias pendentes.'); return; }
+        
         const fim = new Date().toISOString();
         setFimISO(fim);
+        const nota = calcularNota();
+        const tipo = setSelecionado || 'Checklist Atual';
 
-        let numero = prompt('Informe o número (WhatsApp) para enviar o relatório, com DDI. Ex.: 55XXXXXXXXXXX', whatsNumeroPadrao || '');
-        if (numero) {
-          numero = numero.replace(/\D/g, '');
-          setWhatsNumeroPadrao(numero);
+        // Escolher contato
+        let numero = '';
+        if (contatos.length > 0) {
+          const opcoes = contatos.map((c, i) => `${i + 1}. ${c.nome} - ${c.telefone}`).join('\n');
+          const escolha = prompt(`Escolha o contato para enviar:\n${opcoes}\n\nOu digite 0 para informar outro número:`);
+          if (escolha && escolha !== '0') {
+            const idx = parseInt(escolha) - 1;
+            if (idx >= 0 && idx < contatos.length) numero = contatos[idx].telefone.replace(/\D/g, '');
+          } else if (escolha === '0') {
+            numero = prompt('Informe o número com DDI (ex: 5511999999999):');
+            if (numero) numero = numero.replace(/\D/g, '');
+          }
+        } else {
+          numero = prompt('Informe o número WhatsApp com DDI (ex: 5511999999999):');
+          if (numero) numero = numero.replace(/\D/g, '');
         }
 
-        const nota = calcularNota();
-        const tipoChecklist = setSelecionado || 'Checklist Atual';
-        const historicoItem = {
+        const item = {
           id: uid(),
           lojaNome,
           lojaEndereco,
-          tipoChecklist,
+          tipo,
           inicioISO,
           fimISO: fim,
           nota,
@@ -471,26 +345,16 @@
           evidencias,
           coords,
           enderecoGPS,
-          distancia,
-          dentroDaArea,
-          createdAt: new Date().toISOString(),
+          createdAt: fim
         };
 
-        const novoHist = [historicoItem, ...historico].slice(0, 50);
+        const novoHist = [item, ...historico].slice(0, 50);
         setHistorico(novoHist);
-        localStorage.setItem(LS_HISTORY, JSON.stringify(novoHist));
+        storage.set('historico', novoHist);
 
         if (numero) {
-          const resumo = [
-            `Checklist: ${tipoChecklist}`,
-            `Loja: ${lojaNome}`,
-            `Endereço: ${lojaEndereco}`,
-            `Início: ${fmtDateTime(inicioISO)}`,
-            `Término: ${fmtDateTime(fim)}`,
-            `Nota: ${nota}`,
-          ].join('\n');
-          const url = `https://wa.me/${numero}?text=${encodeURIComponent(resumo)}`;
-          window.open(url, '_blank');
+          const resumo = `Checklist: ${tipo}\nLoja: ${lojaNome}\nEndereço: ${lojaEndereco}\nInício: ${fmtDateTime(inicioISO)}\nTérmino: ${fmtDateTime(fim)}\nNota: ${nota}`;
+          window.open(`https://wa.me/${numero}?text=${encodeURIComponent(resumo)}`, '_blank');
         }
 
         setChecklistFinalizado(true);
@@ -505,25 +369,39 @@
         setEnderecoGPS('');
         setGeoStatus('idle');
         setGeoErro('');
-        setDistancia(null);
-        setDentroDaArea(false);
-        setGpsConfereEndereco(null);
+        setGpsConfere(null);
         setInicioISO(null);
         setFimISO(null);
       };
 
+      // Contatos
+      const adicionarContato = () => {
+        const nome = novoContatoNome.trim();
+        const tel = novoContatoTel.trim();
+        if (!nome || !tel) { alert('Preencha nome e telefone.'); return; }
+        const novos = [...contatos, { id: uid(), nome, telefone: tel }];
+        setContatos(novos);
+        storage.set('contatos', novos);
+        setNovoContatoNome('');
+        setNovoContatoTel('');
+      };
+
+      const removerContato = (id) => {
+        const novos = contatos.filter(c => c.id !== id);
+        setContatos(novos);
+        storage.set('contatos', novos);
+      };
+
       // Histórico por loja/tipo
-      const historicoDaLojaEPorTipo = useMemo(() => {
+      const historicoFiltrado = useMemo(() => {
         if (!lojaNome) return [];
-        const tipoAtual = setSelecionado || 'Checklist Atual';
-        return historico
-          .filter(h => h.lojaNome === lojaNome && h.tipoChecklist === tipoAtual)
-          .slice(0, 5);
+        const tipo = setSelecionado || 'Checklist Atual';
+        return historico.filter(h => h.lojaNome === lojaNome && h.tipo === tipo).slice(0, 5);
       }, [historico, lojaNome, setSelecionado]);
 
       // ========== RENDERIZAÇÃO ==========
 
-      // Relatório final
+      // Relatório
       if (checklistFinalizado) {
         const nota = calcularNota();
         const total = perguntas.length;
@@ -533,52 +411,45 @@
         return (
           <div className="max-w-6xl mx-auto p-6">
             <div className="flex items-center gap-4 mb-6 no-print">
-              {brandLogo && <img src={brandLogo} alt="logo" className="h-12 w-auto"/>}
+              {brandLogo && <img src={brandLogo} alt="logo" className="h-12"/>}
               <h1 className="text-3xl font-bold" style={{color: 'var(--brand-primary)'}}>Relatório do Checklist</h1>
             </div>
 
             <div className="grid lg:grid-cols-3 gap-6 mb-6">
               <div className="card p-6 lg:col-span-2">
                 <div className="section-title">Informações</div>
-                <div className="grid sm:grid-cols-2 gap-4 text-sm">
-                  <div><span className="font-semibold">Loja:</span> {lojaNome}</div>
-                  <div><span className="font-semibold">Tipo:</span> {setSelecionado || 'Checklist Atual'}</div>
-                  <div className="sm:col-span-2"><span className="font-semibold">Endereço:</span> {lojaEndereco}</div>
-                  <div><span className="font-semibold">Início:</span> {fmtDateTime(inicioISO)}</div>
-                  <div><span className="font-semibold">Término:</span> {fmtDateTime(fimISO)}</div>
-                  <div><span className="font-semibold">Duração:</span> {dur}</div>
+                <div className="grid sm:grid-cols-2 gap-3 text-sm">
+                  <div><b>Loja:</b> {lojaNome}</div>
+                  <div><b>Tipo:</b> {setSelecionado || 'Checklist Atual'}</div>
+                  <div className="sm:col-span-2"><b>Endereço:</b> {lojaEndereco}</div>
+                  <div><b>Início:</b> {fmtDateTime(inicioISO)}</div>
+                  <div><b>Término:</b> {fmtDateTime(fimISO)}</div>
+                  <div><b>Duração:</b> {dur}</div>
                 </div>
               </div>
               <div className="card p-6 flex flex-col items-center justify-center bg-gradient-to-br from-green-50 to-green-100">
                 <div className="text-6xl font-bold" style={{color:'var(--brand-accent)'}}>{nota}</div>
                 <div className="text-sm text-gray-700 mt-2">Nota Final</div>
-                <div className="text-xs text-gray-600">{pos} de {total} respostas SIM</div>
+                <div className="text-xs text-gray-600">{pos}/{total} SIM</div>
               </div>
             </div>
 
             <div className="card p-6 mb-6">
-              <div className="section-title">Respostas por Categoria</div>
+              <div className="section-title">Respostas</div>
               <div className="space-y-6">
                 {categorias.map(([cat, itens]) => (
                   <div key={cat}>
                     <div className="font-bold text-lg mb-3" style={{color:'var(--brand-primary)'}}>{cat}</div>
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                       {itens.map(p => (
                         <div key={p.id} className="bg-gray-50 rounded-lg p-4">
-                          <div className="flex items-start justify-between mb-2">
+                          <div className="flex justify-between mb-2">
                             <div className="flex-1 font-medium">{p.texto}</div>
-                            <div className="flex items-center gap-2">
-                              <span className={'badge text-sm ' + (respostas[p.id] === 'sim' ? 'bg-green-500 text-white' : 'bg-red-500 text-white')}>
-                                {respostas[p.id] === 'sim' ? '✓ SIM' : '✗ NÃO'}
-                              </span>
-                              {p.fotoObrigatoria && <span className="badge bg-yellow-400 text-gray-900"><i className="fa fa-camera mr-1"></i>Foto</span>}
-                            </div>
+                            <span className={'badge text-sm ' + (respostas[p.id] === 'sim' ? 'bg-green-500 text-white' : 'bg-red-500 text-white')}>
+                              {respostas[p.id] === 'sim' ? '✓ SIM' : '✗ NÃO'}
+                            </span>
                           </div>
-                          {evidencias[p.id] && (
-                            <div className="mt-3">
-                              <img src={evidencias[p.id]} alt={'Evidência '+p.id} className="w-full max-w-md h-48 object-cover rounded-lg border-2 border-gray-200"/>
-                            </div>
-                          )}
+                          {evidencias[p.id] && <img src={evidencias[p.id]} alt="Evidência" className="w-full max-w-md h-48 object-cover rounded-lg mt-2"/>}
                         </div>
                       ))}
                     </div>
@@ -587,37 +458,32 @@
               </div>
             </div>
 
-            {historicoDaLojaEPorTipo.length > 0 && (
+            {historicoFiltrado.length > 0 && (
               <div className="card p-6 mb-6">
-                <div className="section-title">Histórico — {setSelecionado || 'Checklist Atual'}</div>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full text-sm">
-                    <thead>
-                      <tr className="border-b-2">
-                        <th className="py-3 text-left">Data</th>
-                        <th className="py-3 text-left">Nota</th>
-                        <th className="py-3 text-left">Duração</th>
+                <div className="section-title">Histórico desta Loja</div>
+                <table className="min-w-full text-sm">
+                  <thead>
+                    <tr className="border-b-2">
+                      <th className="py-2 text-left">Data</th>
+                      <th className="py-2 text-left">Nota</th>
+                      <th className="py-2 text-left">Duração</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {historicoFiltrado.map(h => (
+                      <tr key={h.id} className="border-b">
+                        <td className="py-2">{fmtDateTime(h.fimISO)}</td>
+                        <td className="py-2 font-bold">{h.nota}</td>
+                        <td className="py-2">{h.inicioISO && h.fimISO ? humanDuration(new Date(h.fimISO) - new Date(h.inicioISO)) : ''}</td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {historicoDaLojaEPorTipo.map(h => {
-                        const dur = h.inicioISO && h.fimISO ? humanDuration(new Date(h.fimISO) - new Date(h.inicioISO)) : '';
-                        return (
-                          <tr key={h.id} className="border-b">
-                            <td className="py-3">{fmtDateTime(h.fimISO)}</td>
-                            <td className="py-3 font-semibold">{h.nota}</td>
-                            <td className="py-3">{dur}</td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
 
             <div className="flex gap-3 no-print">
-              <button onClick={() => window.print()} className="btn btn-primary"><i className="fa fa-print mr-2"></i>Imprimir / PDF</button>
+              <button onClick={() => window.print()} className="btn btn-primary"><i className="fa fa-print mr-2"></i>Imprimir</button>
               <button onClick={reiniciar} className="btn btn-ghost">Novo Checklist</button>
             </div>
           </div>
@@ -629,15 +495,15 @@
         return (
           <div className="max-w-5xl mx-auto p-6">
             <div className="flex items-center gap-4 mb-6">
-              {brandLogo && <img src={brandLogo} alt="logo" className="h-10 w-auto"/>}
+              {brandLogo && <img src={brandLogo} alt="logo" className="h-10"/>}
               <h1 className="text-2xl font-bold" style={{color: 'var(--brand-primary)'}}>Checklist em Andamento</h1>
             </div>
 
             <div className="card p-6 mb-6 bg-gradient-to-r from-blue-50 to-indigo-50">
-              <div className="grid sm:grid-cols-2 gap-3 text-sm">
-                <div><span className="font-semibold">Loja:</span> {lojaNome}</div>
-                <div><span className="font-semibold">Tipo:</span> {setSelecionado || 'Checklist Atual'}</div>
-                <div className="sm:col-span-2"><span className="font-semibold">Endereço:</span> {lojaEndereco}</div>
+              <div className="grid sm:grid-cols-2 gap-2 text-sm">
+                <div><b>Loja:</b> {lojaNome}</div>
+                <div><b>Tipo:</b> {setSelecionado || 'Checklist Atual'}</div>
+                <div className="sm:col-span-2"><b>Endereço:</b> {lojaEndereco}</div>
               </div>
             </div>
 
@@ -647,27 +513,20 @@
                   <div className="font-bold text-xl mb-4" style={{color:'var(--brand-primary)'}}>{cat}</div>
                   <div className="space-y-4">
                     {itens.map(p => (
-                      <div key={p.id} className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-4 border-l-4" style={{borderColor: respostas[p.id] ? 'var(--brand-accent)' : '#d1d5db'}}>
+                      <div key={p.id} className="bg-gray-50 rounded-lg p-4">
                         <div className="font-medium mb-3">{p.texto}</div>
                         <div className="flex flex-wrap gap-3 mb-3">
-                          <button
-                            onClick={() => responder(p.id, 'sim')}
-                            className={'btn ' + (respostas[p.id] === 'sim' ? 'btn-accent' : 'btn-ghost')}
-                          >
+                          <button onClick={() => responder(p.id, 'sim')} className={'btn ' + (respostas[p.id] === 'sim' ? 'btn-accent' : 'btn-ghost')}>
                             <i className="fa fa-check mr-2"></i>SIM
                           </button>
-                          <button
-                            onClick={() => responder(p.id, 'nao')}
-                            className={'btn ' + (respostas[p.id] === 'nao' ? 'bg-red-500 text-white' : 'btn-ghost')}
-                          >
+                          <button onClick={() => responder(p.id, 'nao')} className={'btn ' + (respostas[p.id] === 'nao' ? 'bg-red-500 text-white' : 'btn-ghost')}>
                             <i className="fa fa-times mr-2"></i>NÃO
                           </button>
                           {p.fotoObrigatoria && <span className="badge bg-yellow-400 text-gray-900 self-center"><i className="fa fa-camera mr-1"></i>Foto obrigatória</span>}
                         </div>
                         <div className="flex items-center gap-3">
-                          <input type="file" accept="image/*" capture="environment" className="text-sm"
-                                 onChange={(e) => handleEvidenciaUpload(p.id, e.target.files[0])}/>
-                          {evidencias[p.id] && <span className="text-sm text-green-700 font-semibold"><i className="fa fa-check-circle mr-1"></i>Foto anexada</span>}
+                          <input type="file" accept="image/*" capture="environment" className="text-sm" onChange={(e) => handleEvidencia(p.id, e.target.files[0])}/>
+                          {evidencias[p.id] && <span className="text-sm text-green-700 font-bold"><i className="fa fa-check-circle mr-1"></i>Anexada</span>}
                         </div>
                       </div>
                     ))}
@@ -676,75 +535,56 @@
               ))}
             </div>
 
-            <div className="mt-8">
-              <button
-                onClick={finalizarChecklist}
-                disabled={!todasRespondidas || !fotosOk}
-                className={'btn btn-primary w-full text-lg py-4 ' + ((todasRespondidas && fotosOk) ? '' : 'opacity-50 cursor-not-allowed')}
-              >
-                <i className="fa fa-flag-checkered mr-2"></i>Finalizar e Gerar Relatório
-              </button>
-            </div>
+            <button onClick={finalizarChecklist} disabled={!todasRespondidas || !fotosOk}
+              className={'btn btn-primary w-full text-lg py-4 mt-8 ' + ((todasRespondidas && fotosOk) ? '' : 'opacity-50 cursor-not-allowed')}>
+              <i className="fa fa-flag-checkered mr-2"></i>Finalizar
+            </button>
           </div>
         );
       }
 
-      // Dashboard principal com abas
+      // Dashboard
       return (
         <div className="min-h-screen pb-12">
-          {/* Header */}
-          <div className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
-            <div className="max-w-7xl mx-auto px-6 py-4">
-              <div className="flex items-center gap-4">
-                {brandLogo && <img src={brandLogo} alt="logo" className="h-12 w-auto"/>}
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
-                  Checklist Auditoria
-                </h1>
-              </div>
+          <div className="bg-white shadow-sm border-b sticky top-0 z-50">
+            <div className="max-w-7xl mx-auto px-6 py-4 flex items-center gap-4">
+              {brandLogo && <img src={brandLogo} alt="logo" className="h-12"/>}
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">Checklist Auditoria</h1>
             </div>
           </div>
 
-          {/* Navegação por abas */}
           <div className="max-w-7xl mx-auto px-6 py-6">
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-              <div className={'tab-btn ' + (abaAtiva === 'inicio' ? 'active' : 'bg-white')} onClick={() => setAbaAtiva('inicio')}>
-                <div className="icon"><i className="fas fa-home"></i></div>
-                <div className="label">Início</div>
-              </div>
-              <div className={'tab-btn ' + (abaAtiva === 'loja' ? 'active' : 'bg-white')} onClick={() => setAbaAtiva('loja')}>
-                <div className="icon"><i className="fas fa-store"></i></div>
-                <div className="label">Loja</div>
-              </div>
-              <div className={'tab-btn ' + (abaAtiva === 'perguntas' ? 'active' : 'bg-white')} onClick={() => setAbaAtiva('perguntas')}>
-                <div className="icon"><i className="fas fa-clipboard-list"></i></div>
-                <div className="label">Perguntas</div>
-              </div>
-              <div className={'tab-btn ' + (abaAtiva === 'historico' ? 'active' : 'bg-white')} onClick={() => setAbaAtiva('historico')}>
-                <div className="icon"><i className="fas fa-history"></i></div>
-                <div className="label">Histórico</div>
-              </div>
-              <div className={'tab-btn ' + (abaAtiva === 'personalizacao' ? 'active' : 'bg-white')} onClick={() => setAbaAtiva('personalizacao')}>
-                <div className="icon"><i className="fas fa-palette"></i></div>
-                <div className="label">Personalização</div>
-              </div>
+            <div className="grid grid-cols-3 md:grid-cols-6 gap-3 mb-8">
+              {[
+                { id: 'inicio', icon: 'home', label: 'Início' },
+                { id: 'loja', icon: 'store', label: 'Loja' },
+                { id: 'perguntas', icon: 'clipboard-list', label: 'Perguntas' },
+                { id: 'contatos', icon: 'address-book', label: 'Contatos' },
+                { id: 'historico', icon: 'history', label: 'Histórico' },
+                { id: 'personalizacao', icon: 'palette', label: 'Marca' }
+              ].map(t => (
+                <div key={t.id} className={'tab-btn ' + (aba === t.id ? 'active' : 'bg-white')} onClick={() => setAba(t.id)}>
+                  <div className="icon"><i className={'fas fa-' + t.icon}></i></div>
+                  <div className="label">{t.label}</div>
+                </div>
+              ))}
             </div>
 
-            {/* Conteúdo das abas */}
-            {abaAtiva === 'inicio' && (
+            {aba === 'inicio' && (
               <div className="space-y-6">
                 <div className="card p-8 text-center bg-gradient-to-br from-blue-50 to-indigo-50">
                   <i className="fas fa-clipboard-check text-6xl mb-4" style={{color:'var(--brand-primary)'}}></i>
-                  <h2 className="text-2xl font-bold mb-4" style={{color:'var(--brand-primary)'}}>Bem-vindo ao Sistema de Checklist</h2>
-                  <p className="text-gray-700 mb-6">Configure sua loja, perguntas e personalize a marca antes de iniciar.</p>
+                  <h2 className="text-2xl font-bold mb-4" style={{color:'var(--brand-primary)'}}>Sistema de Checklist</h2>
+                  <p className="text-gray-700 mb-6">Configure loja, GPS e perguntas antes de iniciar.</p>
                   
-                  <div className="grid md:grid-cols-3 gap-4 text-left max-w-3xl mx-auto mb-6">
+                  <div className="grid md:grid-cols-3 gap-4 max-w-3xl mx-auto mb-6">
                     <div className="bg-white rounded-lg p-4 shadow-sm">
                       <div className="flex items-center gap-3 mb-2">
                         <i className="fas fa-store text-2xl" style={{color:'var(--brand-primary)'}}></i>
                         <div className="font-semibold">Loja</div>
                       </div>
-                      <div className="text-sm text-gray-600">
-                        {lojaNome ? <span className="text-green-600"><i className="fa fa-check mr-1"></i>Configurada</span> : <span className="text-red-600"><i className="fa fa-times mr-1"></i>Pendente</span>}
+                      <div className="text-sm">
+                        {lojaNome ? <span className="text-green-600"><i className="fa fa-check mr-1"></i>OK</span> : <span className="text-red-600"><i className="fa fa-times mr-1"></i>Pendente</span>}
                       </div>
                     </div>
                     <div className="bg-white rounded-lg p-4 shadow-sm">
@@ -752,8 +592,8 @@
                         <i className="fas fa-map-marker-alt text-2xl" style={{color:'var(--brand-primary)'}}></i>
                         <div className="font-semibold">GPS</div>
                       </div>
-                      <div className="text-sm text-gray-600">
-                        {coords && gpsConfereEndereco ? <span className="text-green-600"><i className="fa fa-check mr-1"></i>Validado</span> : <span className="text-red-600"><i className="fa fa-times mr-1"></i>Pendente</span>}
+                      <div className="text-sm">
+                        {coords && gpsConfere ? <span className="text-green-600"><i className="fa fa-check mr-1"></i>OK</span> : <span className="text-red-600"><i className="fa fa-times mr-1"></i>Pendente</span>}
                       </div>
                     </div>
                     <div className="bg-white rounded-lg p-4 shadow-sm">
@@ -761,29 +601,26 @@
                         <i className="fas fa-clipboard-list text-2xl" style={{color:'var(--brand-primary)'}}></i>
                         <div className="font-semibold">Perguntas</div>
                       </div>
-                      <div className="text-sm text-gray-600">
-                        {perguntas.length > 0 ? <span className="text-green-600"><i className="fa fa-check mr-1"></i>{perguntas.length} itens</span> : <span className="text-red-600"><i className="fa fa-times mr-1"></i>Nenhuma</span>}
+                      <div className="text-sm">
+                        {perguntas.length > 0 ? <span className="text-green-600"><i className="fa fa-check mr-1"></i>{perguntas.length}</span> : <span className="text-red-600"><i className="fa fa-times mr-1"></i>0</span>}
                       </div>
                     </div>
                   </div>
 
-                  <button
-                    onClick={iniciarChecklist}
-                    disabled={!requisitosParaIniciar()}
-                    className={'btn btn-accent text-xl py-4 px-8 ' + (requisitosParaIniciar() ? '' : 'opacity-50 cursor-not-allowed')}
-                  >
+                  <button onClick={iniciarChecklist} disabled={!requisitosOk()}
+                    className={'btn btn-accent text-xl py-4 px-8 ' + (requisitosOk() ? '' : 'opacity-50 cursor-not-allowed')}>
                     <i className="fa fa-play mr-2"></i>Iniciar Checklist
                   </button>
 
-                  {!requisitosParaIniciar() && (
+                  {!requisitosOk() && (
                     <div className="mt-4 text-sm text-red-600">
-                      <div className="font-semibold mb-2">Requisitos pendentes:</div>
-                      <ul className="list-disc list-inside text-left max-w-md mx-auto">
-                        {!lojaNome.trim() && <li>Configure o nome da loja</li>}
-                        {!lojaEndereco.trim() && <li>Configure o endereço da loja</li>}
-                        {!coords && <li>Capture a localização GPS</li>}
-                        {coords && gpsConfereEndereco !== true && <li>Valide o endereço GPS</li>}
-                        {perguntas.length === 0 && <li>Adicione perguntas ao checklist</li>}
+                      <div className="font-semibold mb-2">Pendências:</div>
+                      <ul className="list-disc list-inside">
+                        {!lojaNome.trim() && <li>Nome da loja</li>}
+                        {!lojaEndereco.trim() && <li>Endereço da loja</li>}
+                        {!coords && <li>Capturar GPS</li>}
+                        {coords && gpsConfere !== true && <li>Validar GPS</li>}
+                        {perguntas.length === 0 && <li>Adicionar perguntas</li>}
                       </ul>
                     </div>
                   )}
@@ -791,62 +628,44 @@
               </div>
             )}
 
-            {abaAtiva === 'loja' && (
+            {aba === 'loja' && (
               <div className="space-y-6">
                 <div className="card p-6">
                   <div className="section-title"><i className="fas fa-store mr-2"></i>Dados da Loja</div>
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-semibold mb-2">Nome da Loja</label>
-                      <input
-                        type="text"
-                        className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:border-blue-500 focus:outline-none"
-                        value={lojaNome}
-                        onChange={(e) => salvarLojaNome(e.target.value)}
-                        placeholder="Ex.: Loja Centro - Matriz"
-                      />
+                      <label className="block text-sm font-semibold mb-2">Nome</label>
+                      <input type="text" className="w-full border-2 rounded-lg px-4 py-3" value={lojaNome}
+                        onChange={(e) => { setLojaNome(e.target.value); storage.setString('loja_nome', e.target.value); }}
+                        placeholder="Ex: Loja Centro"/>
                     </div>
                     <div>
-                      <label className="block text-sm font-semibold mb-2">Endereço Completo</label>
-                      <input
-                        type="text"
-                        className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:border-blue-500 focus:outline-none"
-                        value={lojaEndereco}
-                        onChange={(e) => salvarLojaEndereco(e.target.value)}
-                        placeholder="Rua, número - Bairro, Cidade/UF"
-                      />
+                      <label className="block text-sm font-semibold mb-2">Endereço</label>
+                      <input type="text" className="w-full border-2 rounded-lg px-4 py-3" value={lojaEndereco}
+                        onChange={(e) => { setLojaEndereco(e.target.value); storage.setString('loja_endereco', e.target.value); }}
+                        placeholder="Rua, número - Cidade/UF"/>
                     </div>
                   </div>
                 </div>
 
                 <div className="card p-6">
-                  <div className="section-title"><i className="fas fa-map-marker-alt mr-2"></i>Localização GPS</div>
-                  <button className="btn btn-primary mb-4" onClick={capturarLocalizacao}>
-                    <i className="fa fa-location-arrow mr-2"></i>Capturar Localização
+                  <div className="section-title"><i className="fas fa-map-marker-alt mr-2"></i>GPS</div>
+                  <button className="btn btn-primary mb-4" onClick={capturarGPS}>
+                    <i className="fa fa-location-arrow mr-2"></i>Capturar
                   </button>
-                  {geoStatus === 'buscando' && <div className="text-sm text-gray-600 mb-2"><i className="fa fa-spinner fa-spin mr-2"></i>Buscando localização...</div>}
-                  {geoErro && <div className="text-sm text-red-600 mb-2"><i className="fa fa-exclamation-circle mr-2"></i>{geoErro}</div>}
+                  {geoStatus === 'buscando' && <div className="text-sm text-gray-600"><i className="fa fa-spinner fa-spin mr-2"></i>Buscando...</div>}
+                  {geoErro && <div className="text-sm text-red-600"><i className="fa fa-exclamation-circle mr-2"></i>{geoErro}</div>}
                   
                   {coords && (
-                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-4 space-y-2 text-sm">
+                    <div className="bg-green-50 rounded-lg p-4 space-y-2 text-sm">
                       <div className="flex items-center gap-2">
                         <i className="fa fa-check-circle text-green-600"></i>
                         <span className="font-semibold">GPS Capturado</span>
                       </div>
-                      <div><span className="font-semibold">Coordenadas:</span> {coords.latitude.toFixed(6)}, {coords.longitude.toFixed(6)}</div>
-                      {coords.accuracy && <div><span className="font-semibold">Precisão:</span> ±{Math.round(coords.accuracy)} metros</div>}
-                      {enderecoGPS && (
-                        <div className="pt-2 border-t border-green-200">
-                          <div className="font-semibold mb-1">Endereço GPS:</div>
-                          <div className="text-gray-700">{enderecoGPS}</div>
-                        </div>
-                      )}
-                      <div className={'font-bold pt-2 ' + (gpsConfereEndereco === true ? 'text-green-700' : gpsConfereEndereco === false ? 'text-red-700' : 'text-gray-600')}>
-                        {gpsValidando ? 'Validando endereço...' :
-                          gpsConfereEndereco === true ? '✓ Endereço GPS confere com a loja' :
-                          gpsConfereEndereco === false ? '✗ Endereço GPS NÃO confere' :
-                          'Aguardando validação'
-                        }
+                      <div><b>Coordenadas:</b> {coords.latitude.toFixed(6)}, {coords.longitude.toFixed(6)}</div>
+                      {enderecoGPS && <div><b>Endereço GPS:</b> {enderecoGPS}</div>}
+                      <div className={'font-bold ' + (gpsConfere === true ? 'text-green-700' : gpsConfere === false ? 'text-red-700' : 'text-gray-600')}>
+                        {gpsConfere === true ? '✓ Endereço confere' : gpsConfere === false ? '✗ Endereço NÃO confere' : 'Aguardando validação'}
                       </div>
                     </div>
                   )}
@@ -854,145 +673,73 @@
               </div>
             )}
 
-            {abaAtiva === 'perguntas' && (
+            {aba === 'perguntas' && (
               <div className="space-y-6">
                 <div className="card p-6">
-                  <div className="section-title"><i className="fas fa-plus-circle mr-2"></i>Adicionar Pergunta</div>
+                  <div className="section-title"><i className="fas fa-plus-circle mr-2"></i>Adicionar</div>
                   <div className="grid md:grid-cols-12 gap-3 mb-4">
-                    <input
-                      className="md:col-span-3 border-2 border-gray-200 rounded-lg px-4 py-3 focus:border-blue-500 focus:outline-none"
-                      placeholder="Categoria"
-                      value={novaCategoria}
-                      onChange={(e) => setNovaCategoria(e.target.value)}
-                    />
-                    <input
-                      className="md:col-span-7 border-2 border-gray-200 rounded-lg px-4 py-3 focus:border-blue-500 focus:outline-none"
-                      placeholder="Digite a pergunta..."
-                      value={novaPergunta}
-                      onChange={(e) => setNovaPergunta(e.target.value)}
-                      onKeyPress={(e) => { if (e.key === 'Enter') adicionarPergunta(); }}
-                    />
-                    <label className="md:col-span-2 flex items-center gap-2 cursor-pointer">
-                      <input type="checkbox" checked={novaFotoObrigatoria} onChange={(e) => setNovaFotoObrigatoria(e.target.checked)} className="w-5 h-5"/>
-                      <span className="text-sm font-semibold">Foto obrigatória</span>
+                    <input className="md:col-span-3 border-2 rounded-lg px-4 py-3" placeholder="Categoria" value={novaCategoria} onChange={(e) => setNovaCategoria(e.target.value)}/>
+                    <input className="md:col-span-7 border-2 rounded-lg px-4 py-3" placeholder="Pergunta..." value={novaPergunta}
+                      onChange={(e) => setNovaPergunta(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && adicionarPergunta()}/>
+                    <label className="md:col-span-2 flex items-center gap-2">
+                      <input type="checkbox" checked={novaFotoObrig} onChange={(e) => setNovaFotoObrig(e.target.checked)} className="w-5 h-5"/>
+                      <span className="text-sm font-semibold">Foto</span>
                     </label>
                   </div>
-                  <button className="btn btn-accent" onClick={adicionarPergunta}>
-                    <i className="fa fa-plus mr-2"></i>Adicionar Pergunta
-                  </button>
+                  <button className="btn btn-accent" onClick={adicionarPergunta}><i className="fa fa-plus mr-2"></i>Adicionar</button>
                 </div>
 
                 <div className="card p-6">
-                  <div className="section-title"><i className="fas fa-file-csv mr-2"></i>Importar CSV</div>
-                  <div className="flex flex-wrap items-center gap-3">
-                    <input type="file" accept=".csv" className="text-sm" onChange={(e) => handleArquivoCSV(e.target.files?.[0])}/>
-                    <button className="btn btn-ghost" onClick={baixarModeloCSV}>
-                      <i className="fa fa-download mr-2"></i>Baixar Modelo
-                    </button>
+                  <div className="section-title"><i className="fas fa-file-csv mr-2"></i>CSV</div>
+                  <div className="flex gap-3">
+                    <input type="file" accept=".csv" className="text-sm" onChange={(e) => handleCSV(e.target.files[0])}/>
+                    <button className="btn btn-ghost" onClick={baixarModeloCSV}><i className="fa fa-download mr-2"></i>Modelo</button>
                   </div>
-                  {uploadErro && <div className="text-sm text-red-600 mt-2"><i className="fa fa-exclamation-circle mr-2"></i>{uploadErro}</div>}
                 </div>
 
                 <div className="grid lg:grid-cols-2 gap-6">
                   <div className="card p-6">
                     <div className="section-title"><i className="fas fa-save mr-2"></i>Salvar Conjunto</div>
                     <div className="flex gap-3">
-                      <input
-                        className="flex-1 border-2 border-gray-200 rounded-lg px-4 py-3 focus:border-blue-500 focus:outline-none"
-                        placeholder="Nome do conjunto"
-                        value={nomeSet}
-                        onChange={(e) => setNomeSet(e.target.value)}
-                      />
-                      <button
-                        className="btn btn-primary"
-                        onClick={() => {
-                          const nome = (nomeSet || '').trim();
-                          if (!nome) { alert('Informe um nome.'); return; }
-                          if (perguntas.length === 0) { alert('Sem perguntas para salvar.'); return; }
-                          salvarSetLocal(nome, perguntas);
-                          setNomeSet('');
-                          alert('Conjunto salvo com sucesso!');
-                        }}
-                      >
-                        <i className="fa fa-save mr-2"></i>Salvar
-                      </button>
+                      <input className="flex-1 border-2 rounded-lg px-4 py-3" placeholder="Nome" value={nomeSet} onChange={(e) => setNomeSet(e.target.value)}/>
+                      <button className="btn btn-primary" onClick={salvarSet}><i className="fa fa-save"></i></button>
                     </div>
                   </div>
 
                   <div className="card p-6">
-                    <div className="section-title"><i className="fas fa-folder-open mr-2"></i>Carregar Conjunto</div>
+                    <div className="section-title"><i className="fas fa-folder-open mr-2"></i>Carregar</div>
                     <div className="flex gap-3">
-                      <select
-                        className="flex-1 border-2 border-gray-200 rounded-lg px-4 py-3 focus:border-blue-500 focus:outline-none"
-                        value={setSelecionado}
-                        onChange={(e) => setSetSelecionado(e.target.value)}
-                      >
-                        <option value="">Selecione um conjunto</option>
-                        {setsSalvos.sort((a, b) => a.name.localeCompare(b.name)).map(s => (
-                          <option key={s.name} value={s.name}>{s.name} ({s.count})</option>
-                        ))}
+                      <select className="flex-1 border-2 rounded-lg px-4 py-3" value={setSelecionado} onChange={(e) => setSetSelecionado(e.target.value)}>
+                        <option value="">Selecione</option>
+                        {setsSalvos.map(s => <option key={s.name} value={s.name}>{s.name} ({s.count})</option>)}
                       </select>
-                      <button
-                        className="btn btn-ghost"
-                        onClick={() => {
-                          if (!setSelecionado) { alert('Selecione um conjunto.'); return; }
-                          const lista = carregarSetLocal(setSelecionado);
-                          if (!lista?.length) { alert('Conjunto vazio ou inválido.'); return; }
-                          const mapped = lista.map((p, i) => ({ ...p, id: i + 1, categoria: p.categoria || 'Geral', fotoObrigatoria: !!p.fotoObrigatoria }));
-                          setPerguntas(mapped);
-                          setRespostas({});
-                          setEvidencias({});
-                          alert('Conjunto carregado!');
-                        }}
-                      >
-                        <i className="fa fa-upload mr-2"></i>Carregar
-                      </button>
-                      <button
-                        className="btn btn-ghost"
-                        onClick={() => {
-                          if (!setSelecionado) { alert('Selecione um conjunto.'); return; }
-                          if (confirm(`Excluir conjunto "${setSelecionado}"?`)) {
-                            excluirSetLocal(setSelecionado);
-                            setSetSelecionado('');
-                          }
-                        }}
-                      >
-                        <i className="fa fa-trash"></i>
-                      </button>
+                      <button className="btn btn-ghost" onClick={carregarSet}><i className="fa fa-upload"></i></button>
+                      <button className="btn btn-ghost" onClick={excluirSet}><i className="fa fa-trash"></i></button>
                     </div>
                   </div>
                 </div>
 
                 <div className="card p-6">
-                  <div className="section-title"><i className="fas fa-list mr-2"></i>Lista de Perguntas ({perguntas.length})</div>
+                  <div className="section-title"><i className="fas fa-list mr-2"></i>Lista ({perguntas.length})</div>
                   {perguntas.length === 0 ? (
                     <div className="text-center py-8 text-gray-500">
                       <i className="fas fa-inbox text-4xl mb-3"></i>
-                      <div>Nenhuma pergunta cadastrada ainda.</div>
+                      <div>Nenhuma pergunta</div>
                     </div>
                   ) : (
                     <div className="space-y-3">
                       {perguntas.map(p => (
-                        <div key={p.id} className="flex items-center gap-3 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-4 border-l-4" style={{borderColor:'var(--brand-primary)'}}>
-                          {editandoId === p.id ? (
+                        <div key={p.id} className="flex items-center gap-3 bg-gray-50 rounded-lg p-4 border-l-4" style={{borderColor:'var(--brand-primary)'}}>
+                          {editId === p.id ? (
                             <>
-                              <input
-                                className="w-40 border-2 border-gray-300 rounded px-3 py-2"
-                                value={categoriaEdicao}
-                                onChange={(e) => setCategoriaEdicao(e.target.value)}
-                                placeholder="Categoria"
-                              />
-                              <input
-                                className="flex-1 border-2 border-gray-300 rounded px-3 py-2"
-                                value={textoEdicao}
-                                onChange={(e) => setTextoEdicao(e.target.value)}
-                              />
+                              <input className="w-32 border-2 rounded px-3 py-2" value={editCat} onChange={(e) => setEditCat(e.target.value)} placeholder="Categoria"/>
+                              <input className="flex-1 border-2 rounded px-3 py-2" value={editTexto} onChange={(e) => setEditTexto(e.target.value)}/>
                               <label className="flex items-center gap-2 text-sm">
-                                <input type="checkbox" checked={fotoObrigatoriaEdicao} onChange={(e) => setFotoObrigatoriaEdicao(e.target.checked)} className="w-4 h-4"/>
+                                <input type="checkbox" checked={editFoto} onChange={(e) => setEditFoto(e.target.checked)} className="w-4 h-4"/>
                                 Foto
                               </label>
                               <button className="text-green-600 text-xl" onClick={salvarEdicao}><i className="fa fa-check"></i></button>
-                              <button className="text-gray-600 text-xl" onClick={() => setEditandoId(null)}><i className="fa fa-times"></i></button>
+                              <button className="text-gray-600 text-xl" onClick={() => setEditId(null)}><i className="fa fa-times"></i></button>
                             </>
                           ) : (
                             <>
@@ -1011,34 +758,124 @@
               </div>
             )}
 
-            {abaAtiva === 'historico' && (
+            {aba === 'contatos' && (
               <div className="space-y-6">
                 <div className="card p-6">
-                  <div className="section-title"><i className="fas fa-history mr-2"></i>Histórico de Checklists</div>
-                  {historico.length === 0 ? (
-                    <div className="text-center py-12 text-gray-500">
-                      <i className="fas fa-clipboard text-5xl mb-4"></i>
-                      <div className="text-lg">Nenhum checklist realizado ainda.</div>
+                  <div className="section-title"><i className="fas fa-user-plus mr-2"></i>Adicionar Contato</div>
+                  <div className="grid md:grid-cols-12 gap-3 mb-4">
+                    <input className="md:col-span-5 border-2 rounded-lg px-4 py-3" placeholder="Nome" value={novoContatoNome} onChange={(e) => setNovoContatoNome(e.target.value)}/>
+                    <input className="md:col-span-5 border-2 rounded-lg px-4 py-3" placeholder="Telefone (com DDI)" value={novoContatoTel} onChange={(e) => setNovoContatoTel(e.target.value)}/>
+                    <button className="md:col-span-2 btn btn-accent" onClick={adicionarContato}><i className="fa fa-plus mr-2"></i>Adicionar</button>
+                  </div>
+                </div>
+
+                <div className="card p-6">
+                  <div className="section-title"><i className="fas fa-address-book mr-2"></i>Lista de Contatos ({contatos.length})</div>
+                  {contatos.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      <i className="fas fa-address-book text-4xl mb-3"></i>
+                      <div>Nenhum contato cadastrado</div>
                     </div>
                   ) : (
-                    <div className="overflow-x-auto">
-                      <table className="min-w-full">
-                        <thead>
-                          <tr className="border-b-2 border-gray-300">
-                            <th className="py-3 px-4 text-left font-bold">Data</th>
-                            <th className="py-3 px-4 text-left font-bold">Loja</th>
-                            <th className="py-3 px-4 text-left font-bold">Tipo</th>
-                            <th className="py-3 px-4 text-left font-bold">Nota</th>
-                            <th className="py-3 px-4 text-left font-bold">Ações</th>
+                    <div className="space-y-3">
+                      {contatos.map(c => (
+                        <div key={c.id} className="flex items-center justify-between bg-gray-50 rounded-lg p-4">
+                          <div>
+                            <div className="font-semibold">{c.nome}</div>
+                            <div className="text-sm text-gray-600">{c.telefone}</div>
+                          </div>
+                          <button className="text-red-600 text-lg" onClick={() => removerContato(c.id)}><i className="fa fa-trash"></i></button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {aba === 'historico' && (
+              <div className="card p-6">
+                <div className="section-title"><i className="fas fa-history mr-2"></i>Histórico</div>
+                {historico.length === 0 ? (
+                  <div className="text-center py-12 text-gray-500">
+                    <i className="fas fa-clipboard text-5xl mb-4"></i>
+                    <div className="text-lg">Nenhum checklist realizado</div>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full">
+                      <thead>
+                        <tr className="border-b-2">
+                          <th className="py-3 px-4 text-left font-bold">Data</th>
+                          <th className="py-3 px-4 text-left font-bold">Loja</th>
+                          <th className="py-3 px-4 text-left font-bold">Tipo</th>
+                          <th className="py-3 px-4 text-left font-bold">Nota</th>
+                          <th className="py-3 px-4 text-left font-bold">Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {historico.map(h => (
+                          <tr key={h.id} className="border-b hover:bg-gray-50">
+                            <td className="py-3 px-4">{fmtDateTime(h.fimISO || h.createdAt)}</td>
+                            <td className="py-3 px-4 font-medium">{h.lojaNome}</td>
+                            <td className="py-3 px-4">{h.tipo}</td>
+                            <td className="py-3 px-4"><span className="badge bg-green-500 text-white font-bold">{h.nota}</span></td>
+                            <td className="py-3 px-4">
+                              <button className="text-blue-600 underline" onClick={() => {
+                                setLojaNome(h.lojaNome);
+                                setLojaEndereco(h.lojaEndereco);
+                                setRespostas(h.respostas || {});
+                                setEvidencias(h.evidencias || {});
+                                setCoords(h.coords || null);
+                                setEnderecoGPS(h.enderecoGPS || '');
+                                setInicioISO(h.inicioISO || h.createdAt);
+                                setFimISO(h.fimISO || h.createdAt);
+                                setChecklistIniciado(true);
+                                setChecklistFinalizado(true);
+                                if (h.perguntas?.length) setPerguntas(h.perguntas.map((p, i) => ({ ...p, id: i + 1 })));
+                              }}>Ver</button>
+                            </td>
                           </tr>
-                        </thead>
-                        <tbody>
-                          {historico.map(h => (
-                            <tr key={h.id} className="border-b hover:bg-gray-50">
-                              <td className="py-3 px-4">{fmtDateTime(h.fimISO || h.createdAt)}</td>
-                              <td className="py-3 px-4 font-medium">{h.lojaNome}</td>
-                              <td className="py-3 px-4">{h.tipoChecklist}</td>
-                              <td className="py-3 px-4">
-                                <span className="badge bg-green-500 text-white text-sm font-bold">{h.nota}</span>
-                              </td>
-                              <td className="py-3
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {aba === 'personalizacao' && (
+              <div className="card p-6">
+                <div className="section-title"><i className="fas fa-palette mr-2"></i>Personalização</div>
+                <div className="grid md:grid-cols-3 gap-6">
+                  <div>
+                    <label className="block text-sm font-semibold mb-2">Cor Primária</label>
+                    <input type="color" value={brandPrimary} onChange={(e) => { setBrandPrimary(e.target.value); salvarMarca(); }} className="w-20 h-12 border rounded"/>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold mb-2">Cor de Destaque</label>
+                    <input type="color" value={brandAccent} onChange={(e) => { setBrandAccent(e.target.value); salvarMarca(); }} className="w-20 h-12 border rounded"/>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold mb-2">Logo</label>
+                    <input type="file" accept="image/*" onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (!f) return;
+                      const r = new FileReader();
+                      r.onload = ev => { setBrandLogo(ev.target.result); salvarMarca(); };
+                      r.readAsDataURL(f);
+                    }} className="text-sm"/>
+                    {brandLogo && <div className="text-xs text-green-600 mt-1"><i className="fa fa-check mr-1"></i>Logo carregado</div>}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.render(<App />, document.getElementById('root'));
+  </script>
+</body>
+</html>
