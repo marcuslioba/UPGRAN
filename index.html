@@ -195,23 +195,22 @@ const exportarPDF = async () => {
     return;
   }
 
-  // Aguarda um pequeno tempo para garantir que o layout foi renderizado
-  await new Promise(resolve => setTimeout(resolve, 300));
+  // Garante que as imagens estejam renderizadas
+  await new Promise(resolve => setTimeout(resolve, 800));
 
   const opt = {
-    margin: [0.4, 0.3, 0.4, 0.3],
-    filename: (loja.nome || 'relatorio') + '.pdf',
+    margin: [0.3, 0.2, 0.3, 0.2],
+    filename: `${loja.nome || "relatorio"}_${new Date().toISOString().split("T")[0]}.pdf`,
     image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true },
+    html2canvas: { scale: 2, useCORS: true, scrollY: 0, logging: false },
     jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
   };
 
   try {
-    const worker = html2pdf().set(opt).from(element);
-    await worker.save();
+    await html2pdf().set(opt).from(element).save();
   } catch (err) {
-    console.error('Erro ao gerar PDF:', err);
-    alert('Erro ao gerar o PDF. Tente novamente.');
+    console.error("Erro ao gerar PDF:", err);
+    alert("Erro ao gerar PDF. Tente novamente.");
   }
 };
 
@@ -703,4 +702,5 @@ const exportarPDF = async () => {
   </script>
 </body>
 </html>
+
 
