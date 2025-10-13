@@ -62,6 +62,8 @@
         { id:3, categoria:'Documentação', texto:'Documentos atualizados?', fotoObrigatoria:false },
       ]));
       const [loja, setLoja] = useState(LS.get(LS_KEYS.LOJA, { nome:'', endereco:'' }));
+      const [avaliador, setAvaliador] = useState(LS.get("checklist:avaliador", ""));
+useEffect(() => { LS.set("checklist:avaliador", avaliador); }, [avaliador]);
       const [setsMeta, setSetsMeta] = useState(LS.get(LS_KEYS.SETS_META, []));
       const [coords, setCoords] = useState(null);
       const [enderecoGPS, setEnderecoGPS] = useState('');
@@ -260,13 +262,14 @@ const exportarPDF = async () => {
             )}
 
             {fase === 'relatorio' && (
-              <RelatorioFinal
-                perguntas={perguntas} respostas={respostas} evidencias={evidencias}
-                loja={loja} coords={coords} enderecoGPS={enderecoGPS}
-                inicioISO={inicioISO} fimISO={fimISO}
-                distancia={distancia} dentroArea={dentroArea}
-                exportarPDF={exportarPDF} reiniciar={reiniciar}
-              />
+<RelatorioFinal
+  perguntas={perguntas} respostas={respostas} evidencias={evidencias}
+  loja={loja} coords={coords} enderecoGPS={enderecoGPS}
+  inicioISO={inicioISO} fimISO={fimISO}
+  distancia={distancia} dentroArea={dentroArea}
+  avaliador={avaliador}
+  exportarPDF={exportarPDF} reiniciar={reiniciar}
+/>
             )}
 
             {/* modal de imagem */}
@@ -424,6 +427,15 @@ const exportarPDF = async () => {
             {/* Dados da loja */}
             <div>
               <h2 className="font-bold text-lg text-blue-700 mb-3">1. Dados da Loja</h2>
+              <label className="text-sm">Nome do Avaliador</label>
+<input
+  type="text"
+  value={avaliador}
+  onChange={(e) => setAvaliador(e.target.value)}
+  className="w-full border rounded px-3 py-2 mb-2"
+  placeholder="Ex.: João Silva"
+/>
+
               <label className="text-sm">Nome</label>
               <input type="text" value={loja.nome} onChange={(e)=>setLoja({...loja, nome:e.target.value})}
                 className="w-full border rounded px-3 py-2 mb-2" placeholder="Ex.: Loja Centro - Matriz"/>
@@ -619,6 +631,8 @@ const exportarPDF = async () => {
               <div className="text-right text-sm text-gray-600">
                 <div><strong>{loja.nome}</strong></div>
                 <div>{loja.endereco}</div>
+                {avaliador && <div><strong>Avaliador:</strong> {avaliador}</div>}
+
               </div>
             </div>
 
@@ -702,5 +716,6 @@ const exportarPDF = async () => {
   </script>
 </body>
 </html>
+
 
 
