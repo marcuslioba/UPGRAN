@@ -1,47 +1,65 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
   <title>Checklist Auditoria</title>
+  <meta name="description" content="Checklist simples com dados da loja, perguntas por categorias, geolocalização, assinatura do auditor e relatório final.">
+
+  <!-- Tailwind v2 (já ok para CDNs simples) -->
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-  <script crossorigin src="https://unpkg.com/react@17/umd/react.production.min.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js"></script>
+
+  <!-- React 17 UMD + Babel -->
+  <script src="https://unpkg.com/react@17/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
   <style>
-    :root {
-      --brand-primary: #2563eb;
-      --brand-accent: #16a34a;
+    @media print {
+      .print\:hidden { display: none !important; }
+      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     }
-    body { font-family: 'Inter', -apple-system, sans-serif; }
-    .btn { @apply px-4 py-2 rounded-lg font-semibold transition shadow-sm; }
-    .btn-primary { background: var(--brand-primary); color: #fff; }
-    .btn-primary:hover { filter: brightness(1.1); }
-    .btn-accent { background: var(--brand-accent); color: #fff; }
-    .btn-accent:hover { filter: brightness(1.1); }
-    .btn-ghost { @apply bg-white border border-gray-300 text-gray-700; }
-    .btn-ghost:hover { @apply bg-gray-50; }
-    .badge { @apply inline-block px-2 py-0.5 rounded-full text-xs font-bold; }
-    .card { @apply bg-white rounded-xl shadow-sm border border-gray-100; }
-    .section-title { @apply text-xl font-bold mb-4; color: var(--brand-primary); }
-    .tab-btn { @apply flex flex-col items-center justify-center gap-2 px-4 py-3 rounded-xl transition cursor-pointer border-2 border-transparent; }
-    .tab-btn:hover { @apply bg-gray-50; }
-    .tab-btn.active { background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-accent) 100%); color: white; }
-    .tab-btn .icon { @apply text-2xl; }
-    .tab-btn .label { @apply text-xs font-semibold; }
-    @media print { .no-print { display: none !important; } body { -webkit-print-color-adjust: exact; } }
+    body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 9999px; font-size: 12px; font-weight: 700; }
+    .btn { @apply px-4 py-2 rounded-lg font-bold transition; }
+    .btn-primary { @apply bg-green-600 text-white; }
+    .btn-primary:hover { @apply bg-green-700; }
+    .btn-secondary { @apply bg-gray-200 text-gray-800; }
+    .btn-secondary:hover { @apply bg-gray-300; }
+    .btn-danger { @apply bg-red-600 text-white; }
+    .btn-danger:hover { @apply bg-red-700; }
+    .hint { @apply text-xs text-gray-600; }
+    .progress-wrapper { height: 10px; }
+    .progress-bar { height: 10px; transition: width .3s ease; }
   </style>
 </head>
-<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+<body class="bg-gray-50">
   <div id="root"></div>
-  <script type="text/babel">
-    const { useState, useEffect, useMemo } = React;
 
-    // Utils
-    const uid = () => Math.random().toString(36).slice(2, 10);
-    const fmtDateTime = (iso) => iso ? new Date(iso).toLocaleString('pt-BR') : '';
-    const humanDuration = (ms) => {
+  <script type="text/babel">
+    const { useState, useEffect, useMemo, useRef } = React;
+
+    // Helpers
+    const normalizarTexto = (s) => (s || '').toString().toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[.,;:]/g, ' ').replace(/\s+/g, ' ').trim();
+
+    const toRad = (deg) => (deg * Math.PI) / 180;
+    const haversineMeters = (lat1, lon1, lat2, lon2) => {
+      const R = 6371000;
+      const dLat = toRad(lat2 - lat1);
+      const dLon = toRad(lon2 - lon1);
+      const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      return R * c;
+    };
+    const formatarDataHora = (iso) => {
+      if (!iso) return '';
+      const d = new Date(iso);
+      return d.toLocaleString('pt-BR');
+    };
+    const duracaoHumana = (ms) => {
       if (!ms || ms < 0) return '';
       const s = Math.floor(ms / 1000);
       const h = Math.floor(s / 3600);
@@ -49,315 +67,397 @@
       const seg = s % 60;
       return [h ? h + 'h' : null, (m || h) ? m + 'm' : null, seg + 's'].filter(Boolean).join(' ');
     };
-    const normalize = (s) => (s || '').toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[.,;:]/g, ' ').replace(/\s+/g, ' ').trim();
-    const haversineMeters = (lat1, lon1, lat2, lon2) => {
-      const R = 6371000;
-      const toRad = (deg) => (deg * Math.PI) / 180;
-      const dLat = toRad(lat2 - lat1);
-      const dLon = toRad(lon2 - lon1);
-      const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
-      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    };
 
-    // Storage
-    const storage = {
-      get: (key, def = null) => { try { return JSON.parse(localStorage.getItem(key)) || def; } catch { return def; } },
-      set: (key, val) => localStorage.setItem(key, JSON.stringify(val)),
-      getString: (key, def = '') => localStorage.getItem(key) || def,
-      setString: (key, val) => localStorage.setItem(key, val)
-    };
+    // localStorage Keys
+    const LS_META_KEY = 'checklist_sets_meta';
+    const LS_STORE_NAME = 'loja_nome';
+    const LS_STORE_ADDR = 'loja_endereco';
+    const LS_AUDITOR_NAME = 'auditor_nome';
+    const LS_IN_PROGRESS = 'checklist_progress_v2'; // salva progresso (perguntas, respostas, evidencias)
+    const LS_SIGNATURE = 'auditor_signature_dataurl'; // base64 da assinatura
 
     function App() {
-      const [aba, setAba] = useState('inicio');
-      const [brandPrimary, setBrandPrimary] = useState('#2563eb');
-      const [brandAccent, setBrandAccent] = useState('#16a34a');
-      const [brandLogo, setBrandLogo] = useState('');
+      // Passo atual (wizard): 1=Loja, 2=GPS, 3=Perguntas, 4=Checklist
+      const [passo, setPasso] = useState(1);
+
+      // Loja
       const [lojaNome, setLojaNome] = useState('');
       const [lojaEndereco, setLojaEndereco] = useState('');
+      // Auditor
+      const [auditorNome, setAuditorNome] = useState('');
+
+      // Geo
+      const [geoStatus, setGeoStatus] = useState('idle');
+      const [coords, setCoords] = useState(null);
+      const [enderecoGPS, setEnderecoGPS] = useState('');
+      const [geoErro, setGeoErro] = useState('');
+      const [gpsConfereEndereco, setGpsConfereEndereco] = useState(null);
+      const [gpsValidando, setGpsValidando] = useState(false);
+      const [alvoLat, setAlvoLat] = useState('');
+      const [alvoLon, setAlvoLon] = useState('');
+      const [alvoRaio, setAlvoRaio] = useState(150); // raio padrão um pouco maior
+      const [distancia, setDistancia] = useState(null);
+      const [dentroDaArea, setDentroDaArea] = useState(false);
+      const [permitirProsseguirSemGPS, setPermitirProsseguirSemGPS] = useState(false);
+      const [justificativaGPS, setJustificativaGPS] = useState('');
+
+      // Perguntas
       const [perguntas, setPerguntas] = useState([
         { id: 1, categoria: 'Segurança', texto: 'EPIs conferidos?', fotoObrigatoria: true },
-        { id: 2, categoria: 'Operação', texto: 'Equipamentos verificados?', fotoObrigatoria: false }
+        { id: 2, categoria: 'Operação', texto: 'Equipamentos verificados?', fotoObrigatoria: false },
+        { id: 3, categoria: 'Documentação', texto: 'Documentos atualizados?', fotoObrigatoria: false },
       ]);
       const [novaPergunta, setNovaPergunta] = useState('');
       const [novaCategoria, setNovaCategoria] = useState('');
-      const [novaFotoObrig, setNovaFotoObrig] = useState(false);
-      const [editId, setEditId] = useState(null);
-      const [editTexto, setEditTexto] = useState('');
-      const [editCat, setEditCat] = useState('');
-      const [editFoto, setEditFoto] = useState(false);
-      const [setsSalvos, setSetsSalvos] = useState([]);
-      const [setSelecionado, setSetSelecionado] = useState('');
-      const [nomeSet, setNomeSet] = useState('');
-      const [coords, setCoords] = useState(null);
-      const [enderecoGPS, setEnderecoGPS] = useState('');
-      const [geoStatus, setGeoStatus] = useState('idle');
-      const [geoErro, setGeoErro] = useState('');
-      const [gpsConfere, setGpsConfere] = useState(null);
+      const [novaFotoObrigatoria, setNovaFotoObrigatoria] = useState(false);
+      const [editandoId, setEditandoId] = useState(null);
+      const [textoEdicao, setTextoEdicao] = useState('');
+      const [categoriaEdicao, setCategoriaEdicao] = useState('');
+      const [fotoObrigatoriaEdicao, setFotoObrigatoriaEdicao] = useState(false);
+
+      // Respostas e evidências
+      const [respostas, setRespostas] = useState({});
+      const [evidencias, setEvidencias] = useState({}); // map id -> dataURL
+      const [erroImagem, setErroImagem] = useState('');
+
+      // Fluxo
       const [checklistIniciado, setChecklistIniciado] = useState(false);
       const [checklistFinalizado, setChecklistFinalizado] = useState(false);
-      const [respostas, setRespostas] = useState({});
-      const [evidencias, setEvidencias] = useState({});
       const [inicioISO, setInicioISO] = useState(null);
       const [fimISO, setFimISO] = useState(null);
-      const [historico, setHistorico] = useState([]);
-      const [contatos, setContatos] = useState([]);
-      const [novoContatoNome, setNovoContatoNome] = useState('');
-      const [novoContatoTel, setNovoContatoTel] = useState('');
 
-      // Carregar dados
+      // CSV
+      const [uploadErro, setUploadErro] = useState('');
+
+      // Conjuntos salvos (presets)
+      const [nomeSet, setNomeSet] = useState('');
+      const [setsSalvos, setSetsSalvos] = useState([]);
+      const [setSelecionado, setSetSelecionado] = useState('');
+
+      // Ajuda
+      const [mostrarAjuda, setMostrarAjuda] = useState(true);
+
+      // Assinatura
+      const canvasRef = useRef(null);
+      const [assinando, setAssinando] = useState(false);
+      const [assinaturaDataURL, setAssinaturaDataURL] = useState('');
+
+      // Carga inicial
       useEffect(() => {
-        const b = storage.get('brand');
-        if (b) {
-          if (b.primary) setBrandPrimary(b.primary);
-          if (b.accent) setBrandAccent(b.accent);
-          if (b.logo) setBrandLogo(b.logo);
-        }
-        setLojaNome(storage.getString('loja_nome'));
-        setLojaEndereco(storage.getString('loja_endereco'));
-        setSetsSalvos(storage.get('sets_meta', []));
-        setHistorico(storage.get('historico', []));
-        setContatos(storage.get('contatos', []));
+        // loja e auditor
+        setLojaNome(localStorage.getItem(LS_STORE_NAME) || '');
+        setLojaEndereco(localStorage.getItem(LS_STORE_ADDR) || '');
+        setAuditorNome(localStorage.getItem(LS_AUDITOR_NAME) || '');
+        // conjuntos
+        try { setSetsSalvos(JSON.parse(localStorage.getItem(LS_META_KEY) || '[]')); } catch { setSetsSalvos([]); }
+        // progresso
+        try {
+          const prog = JSON.parse(localStorage.getItem(LS_IN_PROGRESS) || 'null');
+          if (prog) {
+            if (prog.perguntas && Array.isArray(prog.perguntas) && prog.perguntas.length) setPerguntas(prog.perguntas);
+            if (prog.respostas) setRespostas(prog.respostas);
+            if (prog.evidencias) setEvidencias(prog.evidencias);
+            if (prog.checklistIniciado) setChecklistIniciado(true);
+            if (prog.inicioISO) setInicioISO(prog.inicioISO);
+          }
+        } catch {}
+        // assinatura
+        const sig = localStorage.getItem(LS_SIGNATURE) || '';
+        if (sig) setAssinaturaDataURL(sig);
       }, []);
 
-      // Aplicar tema
+      // Auto-save progresso simples
       useEffect(() => {
-        document.documentElement.style.setProperty('--brand-primary', brandPrimary);
-        document.documentElement.style.setProperty('--brand-accent', brandAccent);
-      }, [brandPrimary, brandAccent]);
+        const payload = {
+          perguntas, respostas, evidencias,
+          checklistIniciado, inicioISO
+        };
+        localStorage.setItem(LS_IN_PROGRESS, JSON.stringify(payload));
+      }, [perguntas, respostas, evidencias, checklistIniciado, inicioISO]);
 
-      // Salvar marca
-      const salvarMarca = () => storage.set('brand', { primary: brandPrimary, accent: brandAccent, logo: brandLogo });
-
-      // Perguntas
-      const proxId = useMemo(() => perguntas.length ? Math.max(...perguntas.map(p => p.id)) + 1 : 1, [perguntas]);
+      // Categorização
       const categorias = useMemo(() => {
         const map = new Map();
-        perguntas.forEach(p => {
-          const c = p.categoria || 'Geral';
-          if (!map.has(c)) map.set(c, []);
-          map.get(c).push(p);
-        });
+        for (const p of perguntas) {
+          const cat = p.categoria || 'Geral';
+          if (!map.has(cat)) map.set(cat, []);
+          map.get(cat).push(p);
+        }
         return Array.from(map.entries()).sort((a,b) => a[0].localeCompare(b[0]));
       }, [perguntas]);
 
-      const adicionarPergunta = () => {
-        if (!novaPergunta.trim()) return;
-        setPerguntas([...perguntas, { id: proxId, categoria: (novaCategoria || 'Geral').trim(), texto: novaPergunta.trim(), fotoObrigatoria: novaFotoObrig }]);
-        setNovaCategoria(''); setNovaPergunta(''); setNovaFotoObrig(false);
+      // Progresso
+      const totalPerguntas = perguntas.length;
+      const respondidas = perguntas.filter(p => respostas[p.id]).length;
+      const pct = totalPerguntas ? Math.round((respondidas / totalPerguntas) * 100) : 0;
+
+      // Loja
+      const salvarLojaNome = (v) => { localStorage.setItem(LS_STORE_NAME, v); setLojaNome(v); };
+      const salvarLojaEndereco = (v) => { localStorage.setItem(LS_STORE_ADDR, v); setLojaEndereco(v); };
+      const salvarAuditorNome = (v) => { localStorage.setItem(LS_AUDITOR_NAME, v); setAuditorNome(v); };
+
+      // CSV helpers
+      const detectarDelimitador = (text) => {
+        const primeiroBloco = text.split(/\r?\n/).slice(0, 5).join('\n');
+        const c1 = (primeiroBloco.match(/;/g) || []).length;
+        const c2 = (primeiroBloco.match(/,/g) || []).length;
+        const c3 = (primeiroBloco.match(/\t/g) || []).length;
+        if (c1 >= c2 && c1 >= c3) return ';';
+        if (c2 >= c1 && c2 >= c3) return ',';
+        return '\t';
       };
-
-      const iniciarEdicao = (id) => {
-        const p = perguntas.find(x => x.id === id);
-        if (!p) return;
-        setEditId(id); setEditCat(p.categoria); setEditTexto(p.texto); setEditFoto(!!p.fotoObrigatoria);
+      const parseBooleanLoose = (v) => ['sim','yes','true','1'].includes(normalizarTexto(v));
+      const parseCSVToPerguntas = (text) => {
+        const linhas = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+        if (linhas.length === 0) return [];
+        const delim = detectarDelimitador(text);
+        const headerCells = linhas[0].split(delim).map(c => normalizarTexto(c));
+        const hasHeader = ['categoria','pergunta','perguntas','foto_obrigatoria','foto obrigatoria','foto-obrigatoria','foto obrigatoria?'].some(h => headerCells.includes(h));
+        const out = [];
+        if (hasHeader) {
+          const idxCategoria = headerCells.findIndex(h => h === 'categoria');
+          const idxPergunta = headerCells.findIndex(h => ['pergunta','perguntas'].includes(h));
+          const idxFoto = headerCells.findIndex(h => ['foto_obrigatoria','foto obrigatoria','foto-obrigatoria','foto obrigatoria?'].includes(h));
+          for (let i = 1; i < linhas.length; i++) {
+            const cols = linhas[i].split(delim).map(c => c.trim());
+            const texto = idxPergunta >= 0 ? (cols[idxPergunta] || '') : '';
+            if (!texto) continue;
+            const categoria = idxCategoria >= 0 ? (cols[idxCategoria] || 'Geral') : 'Geral';
+            const fotoObrigatoria = idxFoto >= 0 ? parseBooleanLoose(cols[idxFoto] || 'não') : false;
+            out.push({ categoria, texto, fotoObrigatoria });
+          }
+        } else {
+          for (const l of linhas) out.push({ categoria: 'Geral', texto: l, fotoObrigatoria: false });
+        }
+        // Uniq
+        const uniq = [], seen = new Set();
+        for (const p of out) {
+          const key = normalizarTexto((p.categoria||'') + '__' + (p.texto||''));
+          if (!seen.has(key)) { seen.add(key); uniq.push(p); }
+        }
+        return uniq;
       };
-
-      const salvarEdicao = () => {
-        if (!editId) return;
-        setPerguntas(perguntas.map(p => p.id === editId ? { ...p, categoria: (editCat || 'Geral').trim(), texto: editTexto.trim(), fotoObrigatoria: editFoto } : p));
-        setEditId(null); setEditCat(''); setEditTexto(''); setEditFoto(false);
-      };
-
-      const removerPergunta = (id) => setPerguntas(perguntas.filter(p => p.id !== id));
-
-      // Sets
-      const salvarSet = () => {
-        const nome = nomeSet.trim();
-        if (!nome || !perguntas.length) { alert('Informe um nome e adicione perguntas.'); return; }
-        storage.set('set::' + nome, perguntas);
-        const meta = storage.get('sets_meta', []);
-        const idx = meta.findIndex(m => m.name === nome);
-        const item = { name: nome, count: perguntas.length, updatedAt: new Date().toISOString() };
-        if (idx >= 0) meta[idx] = item; else meta.push(item);
-        storage.set('sets_meta', meta);
-        setSetsSalvos(meta);
-        setNomeSet('');
-        alert('Conjunto salvo!');
-      };
-
-      const carregarSet = () => {
-        if (!setSelecionado) { alert('Selecione um conjunto.'); return; }
-        const lista = storage.get('set::' + setSelecionado);
-        if (!lista?.length) { alert('Conjunto vazio.'); return; }
-        setPerguntas(lista.map((p, i) => ({ ...p, id: i + 1 })));
-        setRespostas({}); setEvidencias({});
-        alert('Conjunto carregado!');
-      };
-
-      const excluirSet = () => {
-        if (!setSelecionado) { alert('Selecione um conjunto.'); return; }
-        if (!confirm(`Excluir "${setSelecionado}"?`)) return;
-        localStorage.removeItem('set::' + setSelecionado);
-        const meta = storage.get('sets_meta', []).filter(m => m.name !== setSelecionado);
-        storage.set('sets_meta', meta);
-        setSetsSalvos(meta);
-        setSetSelecionado('');
-      };
-
-      // CSV
-      const baixarModeloCSV = () => {
-        const csv = 'categoria;pergunta;foto_obrigatoria\nSegurança;EPIs conferidos?;sim\nOperação;Equipamentos verificados?;nao';
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url; a.download = 'modelo_checklist.csv';
-        document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      };
-
-      const handleCSV = (file) => {
-        if (!file || !file.name.endsWith('.csv')) { alert('Use arquivo CSV.'); return; }
+      const handleArquivoCSV = (file) => {
+        setUploadErro('');
+        if (!file) return;
+        if (!file.name.toLowerCase().endsWith('.csv')) {
+          setUploadErro('Formato não suportado. Use um arquivo .csv');
+          return;
+        }
         const reader = new FileReader();
         reader.onload = (e) => {
           try {
-            const text = e.target.result;
-            const linhas = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-            if (!linhas.length) { alert('CSV vazio.'); return; }
-            const delim = text.includes(';') ? ';' : ',';
-            const header = linhas[0].split(delim).map(c => normalize(c));
-            const hasHeader = header.some(h => ['categoria','pergunta','foto'].includes(h));
-            const dados = [];
-            const start = hasHeader ? 1 : 0;
-            for (let i = start; i < linhas.length; i++) {
-              const cols = linhas[i].split(delim).map(c => c.trim());
-              if (hasHeader) {
-                const idxCat = header.findIndex(h => h === 'categoria');
-                const idxPerg = header.findIndex(h => ['pergunta','perguntas'].includes(h));
-                const idxFoto = header.findIndex(h => h.includes('foto'));
-                const texto = idxPerg >= 0 ? cols[idxPerg] : cols[0];
-                if (!texto) continue;
-                dados.push({
-                  categoria: idxCat >= 0 ? (cols[idxCat] || 'Geral') : 'Geral',
-                  texto,
-                  fotoObrigatoria: idxFoto >= 0 ? ['sim','yes','true','1'].includes(normalize(cols[idxFoto])) : false
-                });
-              } else {
-                if (cols[0]) dados.push({ categoria: 'Geral', texto: cols[0], fotoObrigatoria: false });
-              }
-            }
-            if (!dados.length) { alert('Nenhuma pergunta válida.'); return; }
-            setPerguntas(dados.map((d, i) => ({ id: i + 1, ...d })));
-            setRespostas({}); setEvidencias({});
-            alert('CSV importado!');
+            const dados = parseCSVToPerguntas(e.target.result);
+            if (!dados.length) { setUploadErro('Nenhuma pergunta válida encontrada.'); return; }
+            const novos = dados.map((d, i) => ({
+              id: i + 1, categoria: d.categoria || 'Geral', texto: d.texto, fotoObrigatoria: !!d.fotoObrigatoria
+            }));
+            setPerguntas(novos);
+            setRespostas({});
+            setEvidencias({});
           } catch (err) {
-            alert('Erro ao processar CSV: ' + err.message);
+            setUploadErro('Falha ao processar CSV: ' + (err.message || String(err)));
           }
         };
         reader.readAsText(file, 'utf-8');
       };
-
-      // GPS
-      const capturarGPS = () => {
-        setGeoErro('');
-        if (!navigator.geolocation) { setGeoStatus('erro'); setGeoErro('GPS não suportado.'); return; }
-        setGeoStatus('buscando');
-        navigator.geolocation.getCurrentPosition(async (pos) => {
-          const { latitude, longitude, accuracy } = pos.coords;
-          setCoords({ latitude, longitude, accuracy });
-          setGeoStatus('ok');
-          try {
-            const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`;
-            const resp = await fetch(url, { headers: { 'Accept-Language': 'pt-BR' } });
-            if (resp.ok) {
-              const data = await resp.json();
-              const end = data.display_name || '';
-              setEnderecoGPS(end);
-              if (lojaEndereco.trim()) {
-                const tokensLoja = normalize(lojaEndereco).split(' ').filter(w => w && !/^\d{1,2}$/.test(w));
-                const tokensGPS = normalize(end).split(' ').filter(w => w && !/^\d{1,2}$/.test(w));
-                const inter = tokensLoja.filter(t => tokensGPS.includes(t)).length;
-                setGpsConfere(inter >= 3);
-              }
-            }
-          } catch {}
-        }, (err) => {
-          setGeoStatus('erro'); setGeoErro(err.message || 'Falha ao obter GPS.');
-        }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
+      const baixarModeloCSV = () => {
+        const linhas = [
+          'categoria;pergunta;foto_obrigatoria',
+          'Segurança;EPIs conferidos?;sim',
+          'Operação;Equipamentos verificados?;nao',
+          'Documentação;Documentos atualizados?;nao'
+        ];
+        const csv = linhas.join('\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'modelo_perguntas_checklist.csv';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        URL.revokeObjectURL(url);
       };
 
-      // Checklist
-      const requisitosOk = () => lojaNome.trim() && lojaEndereco.trim() && coords && gpsConfere === true && perguntas.length > 0;
+      // Sets locais
+      const carregarMeta = () => { try { return JSON.parse(localStorage.getItem(LS_META_KEY) || '[]'); } catch { return []; } };
+      const salvarMeta = (meta) => localStorage.setItem(LS_META_KEY, JSON.stringify(meta));
+      const salvarSetLocal = (nome, lista) => {
+        if (!nome || !lista || !lista.length) return;
+        localStorage.setItem('checklist_set::' + nome, JSON.stringify(lista));
+        const meta = carregarMeta();
+        const idx = meta.findIndex(m => m.name === nome);
+        const item = { name: nome, count: lista.length, updatedAt: new Date().toISOString() };
+        if (idx >= 0) meta[idx] = item; else meta.push(item);
+        salvarMeta(meta);
+        setSetsSalvos(meta);
+      };
+      const carregarSetLocal = (nome) => { try { return JSON.parse(localStorage.getItem('checklist_set::' + nome) || 'null'); } catch { return null; } };
+      const excluirSetLocal = (nome) => {
+        localStorage.removeItem('checklist_set::' + nome);
+        const meta = carregarMeta().filter(m => m.name !== nome);
+        salvarMeta(meta);
+        setSetsSalvos(meta);
+      };
+
+      // GPS
+      const extrairTokensEndereco = (s) => normalizarTexto(s).split(' ').filter(w => w && !/^\d{1,2}$/.test(w));
+      const enderecoCoincide = (endLoja, endGPS) => {
+        const a = new Set(extrairTokensEndereco(endLoja));
+        const b = new Set(extrairTokensEndereco(endGPS));
+        let inter = 0;
+        for (const token of a) if (b.has(token)) inter++;
+        return inter >= 3;
+      };
+      const validarEnderecoGPS = (endGPS, endLoja) => {
+        setGpsValidando(true);
+        try {
+          const ok = enderecoCoincide(endLoja, endGPS);
+          setGpsConfereEndereco(ok);
+        } finally { setGpsValidando(false); }
+      };
+      const capturarLocalizacao = () => {
+        setGeoErro('');
+        if (!('geolocation' in navigator)) {
+          setGeoStatus('erro'); setGeoErro('Seu celular/navegador não permite localizar agora.');
+          return;
+        }
+        setGeoStatus('buscando');
+        navigator.geolocation.getCurrentPosition(
+          async (pos) => {
+            const { latitude, longitude, accuracy } = pos.coords;
+            const c = { latitude, longitude, accuracy };
+            setCoords(c);
+            setGeoStatus('ok');
+
+            // Calcular distância a alvo (se já definido), senão definir alvo agora
+            if (!alvoLat || !alvoLon) {
+              setAlvoLat(latitude.toString());
+              setAlvoLon(longitude.toString());
+              setDistancia(0);
+              setDentroDaArea(true);
+            } else {
+              const d = haversineMeters(latitude, longitude, parseFloat(alvoLat), parseFloat(alvoLon));
+              setDistancia(d);
+              setDentroDaArea(d <= (parseFloat(alvoRaio) || 0));
+            }
+
+            // Reverse geocode (OpenStreetMap)
+            try {
+              const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`;
+              const resp = await fetch(url, { headers: { 'Accept-Language': 'pt-BR' } });
+              if (resp.ok) {
+                const data = await resp.json();
+                const end = data.display_name || '';
+                setEnderecoGPS(end);
+                if (lojaEndereco.trim()) validarEnderecoGPS(end, lojaEndereco);
+              }
+            } catch (e) {
+              // Silencia falha do reverse geocode
+            }
+          },
+          (err) => {
+            setGeoStatus('erro');
+            setGeoErro('Não conseguimos obter sua localização agora. Dica: ative o GPS e tente novamente.');
+          },
+          { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+        );
+      };
+
+      // Perguntas CRUD
+      const proximoId = useMemo(
+        () => (perguntas.length ? Math.max(...perguntas.map(p => p.id)) + 1 : 1),
+        [perguntas]
+      );
+      const adicionarPergunta = () => {
+        if (!novaPergunta.trim()) return;
+        const cat = novaCategoria.trim() || 'Geral';
+        setPerguntas(p => [...p, { id: proximoId, categoria: cat, texto: novaPergunta.trim(), fotoObrigatoria: !!novaFotoObrigatoria }]);
+        setNovaPergunta(''); setNovaCategoria(''); setNovaFotoObrigatoria(false);
+      };
+      const removerPergunta = (id) => setPerguntas(perguntas.filter(p => p.id !== id));
+      const iniciarEdicao = (id) => {
+        const item = perguntas.find(p => p.id === id);
+        if (!item) return;
+        setEditandoId(id); setTextoEdicao(item.texto); setCategoriaEdicao(item.categoria); setFotoObrigatoriaEdicao(!!item.fotoObrigatoria);
+      };
+      const salvarEdicao = () => {
+        if (editandoId == null) return;
+        const novas = perguntas.map(p => p.id === editandoId ? ({
+          ...p, texto: textoEdicao.trim() || p.texto, categoria: (categoriaEdicao.trim() || 'Geral'), fotoObrigatoria: !!fotoObrigatoriaEdicao
+        }) : p);
+        setPerguntas(novas);
+        setEditandoId(null); setTextoEdicao(''); setCategoriaEdicao(''); setFotoObrigatoriaEdicao(false);
+      };
+
+      // Evidências
+      const limitarImagem = (file, maxW = 1280, maxH = 1280, quality = 0.8) => new Promise((resolve, reject) => {
+        const img = new Image();
+        const reader = new FileReader();
+        reader.onload = (e) => { img.src = e.target.result; };
+        reader.onerror = reject;
+        img.onload = () => {
+          let { width, height } = img;
+          let scale = Math.min(maxW / width, maxH / height, 1);
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.round(width * scale);
+          canvas.height = Math.round(height * scale);
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          const out = canvas.toDataURL('image/jpeg', quality);
+          resolve(out);
+        };
+        reader.readAsDataURL(file);
+      });
+
+      const handleEvidenciaUpload = async (id, file) => {
+        setErroImagem('');
+        if (!file) return;
+        try {
+          // Limita tamanho da imagem para evitar travamentos e grandes dataURLs
+          const dataURL = await limitarImagem(file);
+          setEvidencias((ev) => ({ ...ev, [id]: dataURL }));
+        } catch (e) {
+          setErroImagem('Não foi possível processar a imagem. Tente outra foto.');
+        }
+      };
+
+      // Responder
+      const responderPergunta = (id, resp) => {
+        setRespostas(prev => ({ ...prev, [id]: resp }));
+      };
+
+      // Iniciar / Validar
+      const requisitosAtendidosParaIniciar = () => {
+        const baseOK = lojaNome.trim() && lojaEndereco.trim() && totalPerguntas > 0;
+        // GPS obrigatório, mas com opção de seguir com justificativa
+        const gpsOK = (coords && dentroDaArea && gpsConfereEndereco === true)
+                      || permitirProsseguirSemGPS;
+        return !!baseOK && !!gpsOK;
+      };
 
       const iniciarChecklist = () => {
-        if (!requisitosOk()) {
-          alert('Complete: nome da loja, endereço, GPS validado e perguntas.');
+        if (!requisitosAtendidosParaIniciar()) {
+          alert('Verifique os dados da loja e a localização. Se o GPS não funcionar, você pode justificar e seguir.');
           return;
         }
         setChecklistIniciado(true);
-        setInicioISO(new Date().toISOString());
-        setFimISO(null);
-      };
-
-      const responder = (id, v) => setRespostas({ ...respostas, [id]: v });
-
-      const handleEvidencia = (id, file) => {
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (e) => setEvidencias({ ...evidencias, [id]: e.target.result });
-        reader.readAsDataURL(file);
+        if (!inicioISO) setInicioISO(new Date().toISOString());
+        setPasso(4);
       };
 
       const todasRespondidas = perguntas.every(p => respostas[p.id]);
-      const fotosOk = perguntas.every(p => p.fotoObrigatoria ? !!evidencias[p.id] : true);
-
-      const calcularNota = () => {
-        const total = perguntas.length;
-        const pos = perguntas.filter(p => respostas[p.id] === 'sim').length;
-        return total ? ((pos / total) * 10).toFixed(1) : '0.0';
-      };
+      const evidenciasOk = perguntas.every(p => p.fotoObrigatoria ? !!evidencias[p.id] : true);
 
       const finalizarChecklist = () => {
         if (!todasRespondidas) { alert('Responda todas as perguntas.'); return; }
-        if (!fotosOk) { alert('Há fotos obrigatórias pendentes.'); return; }
-        
-        const fim = new Date().toISOString();
-        setFimISO(fim);
-        const nota = calcularNota();
-        const tipo = setSelecionado || 'Checklist Atual';
-
-        // Escolher contato
-        let numero = '';
-        if (contatos.length > 0) {
-          const opcoes = contatos.map((c, i) => `${i + 1}. ${c.nome} - ${c.telefone}`).join('\n');
-          const escolha = prompt(`Escolha o contato para enviar:\n${opcoes}\n\nOu digite 0 para informar outro número:`);
-          if (escolha && escolha !== '0') {
-            const idx = parseInt(escolha) - 1;
-            if (idx >= 0 && idx < contatos.length) numero = contatos[idx].telefone.replace(/\D/g, '');
-          } else if (escolha === '0') {
-            numero = prompt('Informe o número com DDI (ex: 5511999999999):');
-            if (numero) numero = numero.replace(/\D/g, '');
-          }
-        } else {
-          numero = prompt('Informe o número WhatsApp com DDI (ex: 5511999999999):');
-          if (numero) numero = numero.replace(/\D/g, '');
-        }
-
-        const item = {
-          id: uid(),
-          lojaNome,
-          lojaEndereco,
-          tipo,
-          inicioISO,
-          fimISO: fim,
-          nota,
-          perguntas,
-          respostas,
-          evidencias,
-          coords,
-          enderecoGPS,
-          createdAt: fim
-        };
-
-        const novoHist = [item, ...historico].slice(0, 50);
-        setHistorico(novoHist);
-        storage.set('historico', novoHist);
-
-        if (numero) {
-          const resumo = `Checklist: ${tipo}\nLoja: ${lojaNome}\nEndereço: ${lojaEndereco}\nInício: ${fmtDateTime(inicioISO)}\nTérmino: ${fmtDateTime(fim)}\nNota: ${nota}`;
-          window.open(`https://wa.me/${numero}?text=${encodeURIComponent(resumo)}`, '_blank');
-        }
-
+        if (!evidenciasOk) { alert('Faltam fotos obrigatórias.'); return; }
+        setFimISO(new Date().toISOString());
         setChecklistFinalizado(true);
+        // Salva assinatura (se houver) já está em assinaturaDataURL/LS
+      };
+
+      const calcularNota = () => {
+        const pos = perguntas.filter(p => respostas[p.id] === 'sim').length;
+        return totalPerguntas > 0 ? ((pos / totalPerguntas) * 10).toFixed(1) : '0.0';
       };
 
       const reiniciar = () => {
@@ -369,504 +469,683 @@
         setEnderecoGPS('');
         setGeoStatus('idle');
         setGeoErro('');
-        setGpsConfere(null);
+        setDistancia(null);
+        setDentroDaArea(false);
+        setGpsConfereEndereco(null);
         setInicioISO(null);
         setFimISO(null);
+        setAlvoLat('');
+        setAlvoLon('');
+        setAssinaturaDataURL('');
+        localStorage.removeItem(LS_IN_PROGRESS);
+        localStorage.removeItem(LS_SIGNATURE);
+        setPasso(1);
       };
 
-      // Contatos
-      const adicionarContato = () => {
-        const nome = novoContatoNome.trim();
-        const tel = novoContatoTel.trim();
-        if (!nome || !tel) { alert('Preencha nome e telefone.'); return; }
-        const novos = [...contatos, { id: uid(), nome, telefone: tel }];
-        setContatos(novos);
-        storage.set('contatos', novos);
-        setNovoContatoNome('');
-        setNovoContatoTel('');
+      // Assinatura (canvas simples com mouse/touch)
+      useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.strokeStyle = '#111827';
+        let drawing = false;
+
+        const getPos = (e) => {
+          const rect = canvas.getBoundingClientRect();
+          if (e.touches && e.touches[0]) {
+            return { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top };
+          }
+          return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+        };
+
+        const start = (e) => { drawing = true; setAssinando(true); const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); e.preventDefault(); };
+        const move = (e) => { if (!drawing) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); e.preventDefault(); };
+        const end = () => { drawing = false; setAssinando(false); };
+
+        canvas.addEventListener('mousedown', start);
+        canvas.addEventListener('mousemove', move);
+        canvas.addEventListener('mouseup', end);
+        canvas.addEventListener('mouseleave', end);
+        canvas.addEventListener('touchstart', start, { passive: false });
+        canvas.addEventListener('touchmove', move, { passive: false });
+        canvas.addEventListener('touchend', end);
+
+        return () => {
+          canvas.removeEventListener('mousedown', start);
+          canvas.removeEventListener('mousemove', move);
+          canvas.removeEventListener('mouseup', end);
+          canvas.removeEventListener('mouseleave', end);
+          canvas.removeEventListener('touchstart', start);
+          canvas.removeEventListener('touchmove', move);
+          canvas.removeEventListener('touchend', end);
+        };
+      }, [canvasRef]);
+
+      const limparAssinatura = () => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        setAssinaturaDataURL('');
+        localStorage.removeItem(LS_SIGNATURE);
+      };
+      const salvarAssinatura = () => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const dataURL = canvas.toDataURL('image/png');
+        setAssinaturaDataURL(dataURL);
+        localStorage.setItem(LS_SIGNATURE, dataURL);
+        alert('Assinatura salva.');
       };
 
-      const removerContato = (id) => {
-        const novos = contatos.filter(c => c.id !== id);
-        setContatos(novos);
-        storage.set('contatos', novos);
-      };
-
-      // Histórico por loja/tipo
-      const historicoFiltrado = useMemo(() => {
-        if (!lojaNome) return [];
-        const tipo = setSelecionado || 'Checklist Atual';
-        return historico.filter(h => h.lojaNome === lojaNome && h.tipo === tipo).slice(0, 5);
-      }, [historico, lojaNome, setSelecionado]);
-
-      // ========== RENDERIZAÇÃO ==========
-
-      // Relatório
+      // Telas
       if (checklistFinalizado) {
         const nota = calcularNota();
-        const total = perguntas.length;
         const pos = perguntas.filter(p => respostas[p.id] === 'sim').length;
-        const dur = inicioISO && fimISO ? humanDuration(new Date(fimISO) - new Date(inicioISO)) : '';
-
+        const duracao = inicioISO && fimISO ? duracaoHumana(new Date(fimISO) - new Date(inicioISO)) : '';
         return (
-          <div className="max-w-6xl mx-auto p-6">
-            <div className="flex items-center gap-4 mb-6 no-print">
-              {brandLogo && <img src={brandLogo} alt="logo" className="h-12"/>}
-              <h1 className="text-3xl font-bold" style={{color: 'var(--brand-primary)'}}>Relatório do Checklist</h1>
-            </div>
+          <div className="min-h-screen bg-gradient-to-br from-green-400 to-blue-500 p-4 print:bg-white print:p-0">
+            <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-2xl p-4 sm:p-8 print:shadow-none">
+              <h1 className="text-2xl sm:text-3xl font-bold text-center mb-4 sm:mb-6 text-green-700">
+                <i className="fas fa-file-alt mr-2"></i>Relatório do Checklist
+              </h1>
 
-            <div className="grid lg:grid-cols-3 gap-6 mb-6">
-              <div className="card p-6 lg:col-span-2">
-                <div className="section-title">Informações</div>
-                <div className="grid sm:grid-cols-2 gap-3 text-sm">
-                  <div><b>Loja:</b> {lojaNome}</div>
-                  <div><b>Tipo:</b> {setSelecionado || 'Checklist Atual'}</div>
-                  <div className="sm:col-span-2"><b>Endereço:</b> {lojaEndereco}</div>
-                  <div><b>Início:</b> {fmtDateTime(inicioISO)}</div>
-                  <div><b>Término:</b> {fmtDateTime(fimISO)}</div>
-                  <div><b>Duração:</b> {dur}</div>
+              <div className="mb-4 sm:mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <h3 className="font-bold text-base sm:text-lg mb-2 text-blue-700"><i className="fas fa-store mr-2"></i>Dados da Loja</h3>
+                  <div className="text-sm text-gray-700 space-y-1">
+                    <div><strong>Nome:</strong> {lojaNome}</div>
+                    <div><strong>Endereço:</strong> {lojaEndereco}</div>
+                  </div>
+                </div>
+                <div className="bg-indigo-50 p-4 rounded-lg">
+                  <h3 className="font-bold text-base sm:text-lg mb-2 text-indigo-700"><i className="fas fa-user-check mr-2"></i>Auditor</h3>
+                  <div className="text-sm text-gray-700 space-y-1">
+                    <div><strong>Nome:</strong> {auditorNome || '-'}</div>
+                    {assinaturaDataURL && (
+                      <div className="mt-2">
+                        <div className="text-xs text-gray-500 mb-1">Assinatura:</div>
+                        <img src={assinaturaDataURL} alt="Assinatura do Auditor" className="h-16 object-contain border rounded bg-white" />
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-              <div className="card p-6 flex flex-col items-center justify-center bg-gradient-to-br from-green-50 to-green-100">
-                <div className="text-6xl font-bold" style={{color:'var(--brand-accent)'}}>{nota}</div>
-                <div className="text-sm text-gray-700 mt-2">Nota Final</div>
-                <div className="text-xs text-gray-600">{pos}/{total} SIM</div>
+
+              <div className="grid grid-cols-1 gap-4 sm:gap-6 mb-4 sm:mb-6">
+                <div className="text-sm text-gray-700 space-y-1">
+                  <div><strong>Início:</strong> {formatarDataHora(inicioISO)}</div>
+                  <div><strong>Término:</strong> {formatarDataHora(fimISO)}</div>
+                  <div><strong>Duração:</strong> {duracao}</div>
+                  {coords && (
+                    <div className="mt-2 space-y-1">
+                      <div className="break-all"><strong>Lat:</strong> {coords.latitude.toFixed(6)} | <strong>Lon:</strong> {coords.longitude.toFixed(6)}</div>
+                      {coords.accuracy && (<div><strong>Precisão:</strong> ±{Math.round(coords.accuracy)} m</div>)}
+                      {enderecoGPS && (<div className="break-words"><strong>Endereço GPS:</strong> {enderecoGPS}</div>)}
+                      {distancia != null && (
+                        <div>
+                          <strong>Distância ao alvo:</strong> {Math.round(distancia)} m | <strong>Status:</strong> {dentroDaArea ? 'Dentro da área' : 'Fora da área'}
+                        </div>
+                      )}
+                      {permitirProsseguirSemGPS && justificativaGPS && (
+                        <div className="text-yellow-700"><strong>Justificativa GPS:</strong> {justificativaGPS}</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="bg-green-50 rounded-lg p-4 sm:p-6 mb-4 sm:mb-6 text-center">
+                <h2 className="text-4xl sm:text-5xl font-bold text-green-700 mb-2">{nota}</h2>
+                <p className="text-sm sm:text-base text-gray-600">Nota Final — {pos} de {totalPerguntas} respostas positivas</p>
+              </div>
+
+              <div className="mb-4 sm:mb-6">
+                <h3 className="font-bold text-base sm:text-lg mb-3">Resumo por Categoria</h3>
+                <div className="space-y-4">
+                  {categorias.map(([cat, itens]) => (
+                    <div key={cat} className="border rounded-lg">
+                      <div className="px-3 py-2 bg-gray-100 font-semibold">{cat}</div>
+                      <div className="p-3 space-y-2">
+                        {itens.map((p) => (
+                          <div key={p.id} className="p-3 bg-gray-50 rounded">
+                            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                              <div className="flex-1">
+                                <div className="text-sm font-semibold mb-1 break-words">{p.texto}</div>
+                                <div className={'text-sm font-bold ' + (respostas[p.id] === 'sim' ? 'text-green-600' : 'text-red-600')}>
+                                  {respostas[p.id] === 'sim' ? '✓ SIM' : '✗ NÃO'}
+                                </div>
+                                {p.fotoObrigatoria && (
+                                  <div className="mt-1 badge bg-yellow-100 text-yellow-700">
+                                    <i className="fas fa-camera mr-1"></i>Foto obrigatória
+                                  </div>
+                                )}
+                              </div>
+                              <div className="w-full sm:w-40 text-center">
+                                {evidencias[p.id] ? (
+                                  <img src={evidencias[p.id]} alt={'Evidência ' + p.id} className="w-full sm:w-40 h-28 object-cover rounded border mx-auto" />
+                                ) : (
+                                  <div className="text-xs text-gray-500">Sem evidência</div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3 print:hidden">
+                <button onClick={() => window.print()} className="flex-1 bg-indigo-600 text-white py-3 rounded-lg font-bold hover:bg-indigo-700 transition">
+                  <i className="fas fa-print mr-2"></i>Imprimir / Salvar em PDF
+                </button>
+                <button onClick={reiniciar} className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition">
+                  <i className="fas fa-redo mr-2"></i>Novo Checklist
+                </button>
               </div>
             </div>
+          </div>
+        );
+      }
 
-            <div className="card p-6 mb-6">
-              <div className="section-title">Respostas</div>
-              <div className="space-y-6">
+      // Tela do checklist em andamento
+      if (checklistIniciado) {
+        return (
+          <div className="min-h-screen bg-gradient-to-br from-purple-400 to-pink-500 p-4">
+            <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-2xl p-4 sm:p-8">
+              <div className="flex items-center justify-between mb-4">
+                <h1 className="text-2xl sm:text-3xl font-bold text-purple-700">
+                  <i className="fas fa-clipboard-check mr-2"></i>Checklist
+                </h1>
+                <div className="text-sm text-gray-600">{respondidas} de {totalPerguntas} respondidas</div>
+              </div>
+
+              <div className="w-full bg-gray-200 rounded progress-wrapper mb-4">
+                <div className="bg-purple-600 rounded progress-bar" style={{ width: pct + '%' }}></div>
+              </div>
+
+              <div className="mb-4 bg-blue-50 p-3 rounded-lg">
+                <div className="text-sm text-gray-700">
+                  <strong>Loja:</strong> {lojaNome}
+                </div>
+                <div className="text-xs text-gray-600">{lojaEndereco}</div>
+                {auditorNome && <div className="text-xs text-gray-600 mt-1"><strong>Auditor:</strong> {auditorNome}</div>}
+              </div>
+
+              <div className="space-y-6 mb-6">
                 {categorias.map(([cat, itens]) => (
-                  <div key={cat}>
-                    <div className="font-bold text-lg mb-3" style={{color:'var(--brand-primary)'}}>{cat}</div>
-                    <div className="space-y-3">
-                      {itens.map(p => (
-                        <div key={p.id} className="bg-gray-50 rounded-lg p-4">
-                          <div className="flex justify-between mb-2">
-                            <div className="flex-1 font-medium">{p.texto}</div>
-                            <span className={'badge text-sm ' + (respostas[p.id] === 'sim' ? 'bg-green-500 text-white' : 'bg-red-500 text-white')}>
-                              {respostas[p.id] === 'sim' ? '✓ SIM' : '✗ NÃO'}
-                            </span>
+                  <div key={cat} className="border rounded-lg">
+                    <div className="px-3 py-2 bg-gray-100 font-semibold">{cat}</div>
+                    <div className="p-3 space-y-4">
+                      {itens.map((p) => (
+                        <div key={p.id} className="bg-gray-50 p-3 sm:p-4 rounded-lg">
+                          <p className="font-semibold mb-3 text-base break-words">{p.texto}</p>
+                          <div className="flex flex-col gap-3">
+                            <div className="grid grid-cols-2 gap-3">
+                              <button
+                                onClick={() => responderPergunta(p.id, 'sim')}
+                                className={'btn ' + (respostas[p.id] === 'sim' ? 'bg-green-600 text-white' : 'btn-secondary')}
+                                style={{ fontSize: '1rem', paddingTop: '14px', paddingBottom: '14px' }}
+                              >
+                                <i className="fas fa-thumbs-up mr-2"></i>SIM
+                              </button>
+                              <button
+                                onClick={() => responderPergunta(p.id, 'nao')}
+                                className={'btn ' + (respostas[p.id] === 'nao' ? 'bg-red-600 text-white' : 'btn-secondary')}
+                                style={{ fontSize: '1rem', paddingTop: '14px', paddingBottom: '14px' }}
+                              >
+                                <i className="fas fa-thumbs-down mr-2"></i>NÃO
+                              </button>
+                            </div>
+
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                              <label className="text-sm text-gray-700 whitespace-nowrap">
+                                Foto de evidência {p.fotoObrigatoria && <span className="text-yellow-700 font-semibold">(obrigatória)</span>}:
+                              </label>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                capture="environment"
+                                onChange={(e) => handleEvidenciaUpload(p.id, e.target.files[0])}
+                                className="text-xs w-full sm:w-auto"
+                              />
+                              {evidencias[p.id] && <span className="text-green-700 text-xs whitespace-nowrap"><i className="fas fa-check mr-1"></i>Anexada</span>}
+                            </div>
+                            {erroImagem && <div className="text-xs text-red-600">{erroImagem}</div>}
                           </div>
-                          {evidencias[p.id] && <img src={evidencias[p.id]} alt="Evidência" className="w-full max-w-md h-48 object-cover rounded-lg mt-2"/>}
                         </div>
                       ))}
                     </div>
                   </div>
                 ))}
               </div>
-            </div>
 
-            {historicoFiltrado.length > 0 && (
-              <div className="card p-6 mb-6">
-                <div className="section-title">Histórico desta Loja</div>
-                <table className="min-w-full text-sm">
-                  <thead>
-                    <tr className="border-b-2">
-                      <th className="py-2 text-left">Data</th>
-                      <th className="py-2 text-left">Nota</th>
-                      <th className="py-2 text-left">Duração</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {historicoFiltrado.map(h => (
-                      <tr key={h.id} className="border-b">
-                        <td className="py-2">{fmtDateTime(h.fimISO)}</td>
-                        <td className="py-2 font-bold">{h.nota}</td>
-                        <td className="py-2">{h.inicioISO && h.fimISO ? humanDuration(new Date(h.fimISO) - new Date(h.inicioISO)) : ''}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            <div className="flex gap-3 no-print">
-              <button onClick={() => window.print()} className="btn btn-primary"><i className="fa fa-print mr-2"></i>Imprimir</button>
-              <button onClick={reiniciar} className="btn btn-ghost">Novo Checklist</button>
-            </div>
-          </div>
-        );
-      }
-
-      // Checklist em andamento
-      if (checklistIniciado) {
-        return (
-          <div className="max-w-5xl mx-auto p-6">
-            <div className="flex items-center gap-4 mb-6">
-              {brandLogo && <img src={brandLogo} alt="logo" className="h-10"/>}
-              <h1 className="text-2xl font-bold" style={{color: 'var(--brand-primary)'}}>Checklist em Andamento</h1>
-            </div>
-
-            <div className="card p-6 mb-6 bg-gradient-to-r from-blue-50 to-indigo-50">
-              <div className="grid sm:grid-cols-2 gap-2 text-sm">
-                <div><b>Loja:</b> {lojaNome}</div>
-                <div><b>Tipo:</b> {setSelecionado || 'Checklist Atual'}</div>
-                <div className="sm:col-span-2"><b>Endereço:</b> {lojaEndereco}</div>
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              {categorias.map(([cat, itens]) => (
-                <div key={cat} className="card p-6">
-                  <div className="font-bold text-xl mb-4" style={{color:'var(--brand-primary)'}}>{cat}</div>
-                  <div className="space-y-4">
-                    {itens.map(p => (
-                      <div key={p.id} className="bg-gray-50 rounded-lg p-4">
-                        <div className="font-medium mb-3">{p.texto}</div>
-                        <div className="flex flex-wrap gap-3 mb-3">
-                          <button onClick={() => responder(p.id, 'sim')} className={'btn ' + (respostas[p.id] === 'sim' ? 'btn-accent' : 'btn-ghost')}>
-                            <i className="fa fa-check mr-2"></i>SIM
-                          </button>
-                          <button onClick={() => responder(p.id, 'nao')} className={'btn ' + (respostas[p.id] === 'nao' ? 'bg-red-500 text-white' : 'btn-ghost')}>
-                            <i className="fa fa-times mr-2"></i>NÃO
-                          </button>
-                          {p.fotoObrigatoria && <span className="badge bg-yellow-400 text-gray-900 self-center"><i className="fa fa-camera mr-1"></i>Foto obrigatória</span>}
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <input type="file" accept="image/*" capture="environment" className="text-sm" onChange={(e) => handleEvidencia(p.id, e.target.files[0])}/>
-                          {evidencias[p.id] && <span className="text-sm text-green-700 font-bold"><i className="fa fa-check-circle mr-1"></i>Anexada</span>}
-                        </div>
-                      </div>
-                    ))}
+              {/* Assinatura do Auditor antes de finalizar */}
+              <div className="mb-6">
+                <h3 className="font-bold text-lg mb-2"><i className="fas fa-pen-nib mr-2"></i>Assinatura do Auditor</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-semibold mb-1 text-gray-700">Nome do Auditor</label>
+                    <input
+                      type="text"
+                      value={auditorNome}
+                      onChange={(e) => salvarAuditorNome(e.target.value)}
+                      placeholder="Digite seu nome"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+                    />
+                    <p className="hint mt-1">Este nome aparece no relatório final.</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold mb-1 text-gray-700">Assine abaixo</label>
+                    <div className="border rounded bg-white p-2">
+                      <canvas ref={canvasRef} width="500" height="150" style={{ width: '100%', height: '150px' }}></canvas>
+                    </div>
+                    <div className="flex gap-2 mt-2">
+                      <button className="btn btn-secondary" onClick={limparAssinatura}><i className="fas fa-eraser mr-2"></i>Limpar</button>
+                      <button className="btn btn-primary" onClick={salvarAssinatura}><i className="fas fa-save mr-2"></i>Salvar Assinatura</button>
+                    </div>
+                    {assinando && <div className="hint mt-1">Solte o dedo para finalizar o traço.</div>}
+                    {assinaturaDataURL && <div className="hint mt-1 text-green-700"><i className="fas fa-check mr-1"></i>Assinatura salva.</div>}
                   </div>
                 </div>
-              ))}
-            </div>
+              </div>
 
-            <button onClick={finalizarChecklist} disabled={!todasRespondidas || !fotosOk}
-              className={'btn btn-primary w-full text-lg py-4 mt-8 ' + ((todasRespondidas && fotosOk) ? '' : 'opacity-50 cursor-not-allowed')}>
-              <i className="fa fa-flag-checkered mr-2"></i>Finalizar
-            </button>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={() => setPasso(3)}
+                  className="flex-1 btn btn-secondary"
+                >
+                  <i className="fas fa-arrow-left mr-2"></i>Voltar
+                </button>
+                <button
+                  onClick={finalizarChecklist}
+                  disabled={!todasRespondidas || !evidenciasOk || !auditorNome || !assinaturaDataURL}
+                  className={'flex-1 py-3 rounded-lg font-bold text-base ' + (
+                    (todasRespondidas && evidenciasOk && auditorNome && assinaturaDataURL)
+                      ? 'bg-purple-600 text-white hover:bg-purple-700'
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  )}
+                >
+                  <i className="fas fa-flag-checkered mr-2"></i>Finalizar e Gerar Relatório
+                </button>
+              </div>
+            </div>
           </div>
         );
       }
 
-      // Dashboard
+      // Wizard: passo 1..3
       return (
-        <div className="min-h-screen pb-12">
-          <div className="bg-white shadow-sm border-b sticky top-0 z-50">
-            <div className="max-w-7xl mx-auto px-6 py-4 flex items-center gap-4">
-              {brandLogo && <img src={brandLogo} alt="logo" className="h-12"/>}
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">Checklist Auditoria</h1>
+        <div className="min-h-screen bg-gradient-to-br from-blue-400 to-purple-500 p-4">
+          <div className="max-w-5xl mx-auto bg-white rounded-lg shadow-2xl p-4 sm:p-8">
+            <div className="flex items-center justify-between mb-4">
+              <h1 className="text-2xl sm:text-3xl font-bold text-blue-700">
+                <i className="fas fa-tasks mr-2"></i>Checklist de Auditoria
+              </h1>
+              <button
+                onClick={() => setMostrarAjuda(v => !v)}
+                className="text-sm text-blue-700 underline"
+              >
+                {mostrarAjuda ? 'Ocultar ajuda' : 'Mostrar ajuda'}
+              </button>
             </div>
-          </div>
 
-          <div className="max-w-7xl mx-auto px-6 py-6">
-            <div className="grid grid-cols-3 md:grid-cols-6 gap-3 mb-8">
-              {[
-                { id: 'inicio', icon: 'home', label: 'Início' },
-                { id: 'loja', icon: 'store', label: 'Loja' },
-                { id: 'perguntas', icon: 'clipboard-list', label: 'Perguntas' },
-                { id: 'contatos', icon: 'address-book', label: 'Contatos' },
-                { id: 'historico', icon: 'history', label: 'Histórico' },
-                { id: 'personalizacao', icon: 'palette', label: 'Marca' }
-              ].map(t => (
-                <div key={t.id} className={'tab-btn ' + (aba === t.id ? 'active' : 'bg-white')} onClick={() => setAba(t.id)}>
-                  <div className="icon"><i className={'fas fa-' + t.icon}></i></div>
-                  <div className="label">{t.label}</div>
+            {/* Indicador de passos */}
+            <div className="flex items-center gap-2 mb-6">
+              {[1,2,3,4].map((n) => (
+                <div key={n} className={'flex items-center ' + (n !== 4 ? 'flex-1' : '')}>
+                  <div className={'w-8 h-8 flex items-center justify-center rounded-full font-bold ' + (passo >= n ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-600')}>
+                    {n}
+                  </div>
+                  {n !== 4 && <div className={'h-1 flex-1 ' + (passo > n ? 'bg-green-600' : 'bg-gray-200')}></div>}
                 </div>
               ))}
             </div>
 
-            {aba === 'inicio' && (
+            {mostrarAjuda && (
+              <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 p-3 rounded mb-6 text-sm">
+                Dica rápida:
+                <ul className="list-disc ml-5 mt-2 space-y-1">
+                  <li>Preencha o nome e endereço da loja.</li>
+                  <li>Toque em Capturar Localização (ative o GPS do celular).</li>
+                  <li>Prepare as perguntas (ou use um arquivo .csv simples).</li>
+                  <li>Inicie o checklist e responda SIM ou NÃO.</li>
+                  <li>Anexe fotos onde for obrigatório. Assine e finalize.</li>
+                </ul>
+              </div>
+            )}
+
+            {/* Passo 1 - Dados da Loja e Auditor */}
+            {passo === 1 && (
               <div className="space-y-6">
-                <div className="card p-8 text-center bg-gradient-to-br from-blue-50 to-indigo-50">
-                  <i className="fas fa-clipboard-check text-6xl mb-4" style={{color:'var(--brand-primary)'}}></i>
-                  <h2 className="text-2xl font-bold mb-4" style={{color:'var(--brand-primary)'}}>Sistema de Checklist</h2>
-                  <p className="text-gray-700 mb-6">Configure loja, GPS e perguntas antes de iniciar.</p>
-                  
-                  <div className="grid md:grid-cols-3 gap-4 max-w-3xl mx-auto mb-6">
-                    <div className="bg-white rounded-lg p-4 shadow-sm">
-                      <div className="flex items-center gap-3 mb-2">
-                        <i className="fas fa-store text-2xl" style={{color:'var(--brand-primary)'}}></i>
-                        <div className="font-semibold">Loja</div>
-                      </div>
-                      <div className="text-sm">
-                        {lojaNome ? <span className="text-green-600"><i className="fa fa-check mr-1"></i>OK</span> : <span className="text-red-600"><i className="fa fa-times mr-1"></i>Pendente</span>}
-                      </div>
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <h2 className="text-xl sm:text-2xl font-bold mb-4 text-blue-700">
+                    <i className="fas fa-store mr-2"></i>1. Dados da Loja
+                  </h2>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-semibold mb-2 text-gray-700">Nome da Loja</label>
+                      <input
+                        type="text" value={lojaNome} onChange={(e) => salvarLojaNome(e.target.value)}
+                        placeholder="Ex.: Loja Centro - Matriz"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                      />
                     </div>
-                    <div className="bg-white rounded-lg p-4 shadow-sm">
-                      <div className="flex items-center gap-3 mb-2">
-                        <i className="fas fa-map-marker-alt text-2xl" style={{color:'var(--brand-primary)'}}></i>
-                        <div className="font-semibold">GPS</div>
-                      </div>
-                      <div className="text-sm">
-                        {coords && gpsConfere ? <span className="text-green-600"><i className="fa fa-check mr-1"></i>OK</span> : <span className="text-red-600"><i className="fa fa-times mr-1"></i>Pendente</span>}
-                      </div>
-                    </div>
-                    <div className="bg-white rounded-lg p-4 shadow-sm">
-                      <div className="flex items-center gap-3 mb-2">
-                        <i className="fas fa-clipboard-list text-2xl" style={{color:'var(--brand-primary)'}}></i>
-                        <div className="font-semibold">Perguntas</div>
-                      </div>
-                      <div className="text-sm">
-                        {perguntas.length > 0 ? <span className="text-green-600"><i className="fa fa-check mr-1"></i>{perguntas.length}</span> : <span className="text-red-600"><i className="fa fa-times mr-1"></i>0</span>}
-                      </div>
+                    <div>
+                      <label className="block text-sm font-semibold mb-2 text-gray-700">Endereço da Loja</label>
+                      <input
+                        type="text" value={lojaEndereco} onChange={(e) => salvarLojaEndereco(e.target.value)}
+                        placeholder="Ex.: Rua das Flores, 123 - Centro, Cidade/UF"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                      />
                     </div>
                   </div>
+                </div>
 
-                  <button onClick={iniciarChecklist} disabled={!requisitosOk()}
-                    className={'btn btn-accent text-xl py-4 px-8 ' + (requisitosOk() ? '' : 'opacity-50 cursor-not-allowed')}>
-                    <i className="fa fa-play mr-2"></i>Iniciar Checklist
-                  </button>
-
-                  {!requisitosOk() && (
-                    <div className="mt-4 text-sm text-red-600">
-                      <div className="font-semibold mb-2">Pendências:</div>
-                      <ul className="list-disc list-inside">
-                        {!lojaNome.trim() && <li>Nome da loja</li>}
-                        {!lojaEndereco.trim() && <li>Endereço da loja</li>}
-                        {!coords && <li>Capturar GPS</li>}
-                        {coords && gpsConfere !== true && <li>Validar GPS</li>}
-                        {perguntas.length === 0 && <li>Adicionar perguntas</li>}
-                      </ul>
+                <div className="bg-indigo-50 p-4 rounded-lg">
+                  <h2 className="text-xl sm:text-2xl font-bold mb-4 text-indigo-700">
+                    <i className="fas fa-user-check mr-2"></i>1b. Auditor
+                  </h2>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-semibold mb-2 text-gray-700">Nome do Auditor</label>
+                      <input
+                        type="text" value={auditorNome} onChange={(e) => salvarAuditorNome(e.target.value)}
+                        placeholder="Seu nome completo"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                      />
+                      <p className="hint mt-1">Você também assinará mais adiante.</p>
                     </div>
-                  )}
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setPasso(2)}
+                    disabled={!lojaNome.trim() || !lojaEndereco.trim()}
+                    className={'btn flex-1 ' + (!lojaNome.trim() || !lojaEndereco.trim() ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'btn-primary')}
+                  >
+                    Continuar para Localização <i className="fas fa-arrow-right ml-2"></i>
+                  </button>
                 </div>
               </div>
             )}
 
-            {aba === 'loja' && (
+            {/* Passo 2 - GPS */}
+            {passo === 2 && (
               <div className="space-y-6">
-                <div className="card p-6">
-                  <div className="section-title"><i className="fas fa-store mr-2"></i>Dados da Loja</div>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-semibold mb-2">Nome</label>
-                      <input type="text" className="w-full border-2 rounded-lg px-4 py-3" value={lojaNome}
-                        onChange={(e) => { setLojaNome(e.target.value); storage.setString('loja_nome', e.target.value); }}
-                        placeholder="Ex: Loja Centro"/>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold mb-2">Endereço</label>
-                      <input type="text" className="w-full border-2 rounded-lg px-4 py-3" value={lojaEndereco}
-                        onChange={(e) => { setLojaEndereco(e.target.value); storage.setString('loja_endereco', e.target.value); }}
-                        placeholder="Rua, número - Cidade/UF"/>
-                    </div>
+                <div className="bg-indigo-50 p-4 rounded-lg">
+                  <h2 className="text-xl sm:text-2xl font-bold mb-4 text-indigo-700">
+                    <i className="fas fa-map-marker-alt mr-2"></i>2. Localização GPS
+                  </h2>
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 mb-3">
+                    <button
+                      onClick={capturarLocalizacao}
+                      className="w-full sm:w-auto bg-indigo-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-indigo-700 transition text-sm sm:text-base"
+                    >
+                      <i className="fas fa-location-arrow mr-2"></i>Capturar Localização
+                    </button>
+                    {geoStatus === 'buscando' && (<span className="text-xs sm:text-sm text-gray-600 animate-pulse">Buscando…</span>)}
+                    {geoStatus === 'ok' && (<span className="text-xs sm:text-sm text-green-700"><i className="fas fa-check-circle mr-1"></i>Capturada</span>)}
                   </div>
-                </div>
 
-                <div className="card p-6">
-                  <div className="section-title"><i className="fas fa-map-marker-alt mr-2"></i>GPS</div>
-                  <button className="btn btn-primary mb-4" onClick={capturarGPS}>
-                    <i className="fa fa-location-arrow mr-2"></i>Capturar
-                  </button>
-                  {geoStatus === 'buscando' && <div className="text-sm text-gray-600"><i className="fa fa-spinner fa-spin mr-2"></i>Buscando...</div>}
-                  {geoErro && <div className="text-sm text-red-600"><i className="fa fa-exclamation-circle mr-2"></i>{geoErro}</div>}
-                  
+                  {geoErro && (<div className="mb-3 text-sm text-red-700 bg-red-50 p-2 rounded">{geoErro}</div>)}
+
                   {coords && (
-                    <div className="bg-green-50 rounded-lg p-4 space-y-2 text-sm">
-                      <div className="flex items-center gap-2">
-                        <i className="fa fa-check-circle text-green-600"></i>
-                        <span className="font-semibold">GPS Capturado</span>
+                    <div className="text-sm text-gray-700 mb-2 space-y-1">
+                      <div className="break-all"><strong>Lat:</strong> {coords.latitude.toFixed(6)} | <strong>Lon:</strong> {coords.longitude.toFixed(6)}</div>
+                      {coords.accuracy && (<div><strong>Precisão:</strong> ±{Math.round(coords.accuracy)} m</div>)}
+                      {enderecoGPS && (<div className="break-words"><strong>Endereço aproximado:</strong> {enderecoGPS}</div>)}
+                      <div className={'font-semibold ' + (gpsConfereEndereco === true ? 'text-green-700' : gpsConfereEndereco === false ? 'text-red-700' : 'text-gray-600')}>
+                        {gpsValidando ? 'Validando endereço...' :
+                          gpsConfereEndereco === true ? '✓ O endereço confere com o da loja.' :
+                          gpsConfereEndereco === false ? 'Atenção: o endereço pode não ser o mesmo da loja.' :
+                          'Capture a localização para validar com o endereço da loja.'
+                        }
                       </div>
-                      <div><b>Coordenadas:</b> {coords.latitude.toFixed(6)}, {coords.longitude.toFixed(6)}</div>
-                      {enderecoGPS && <div><b>Endereço GPS:</b> {enderecoGPS}</div>}
-                      <div className={'font-bold ' + (gpsConfere === true ? 'text-green-700' : gpsConfere === false ? 'text-red-700' : 'text-gray-600')}>
-                        {gpsConfere === true ? '✓ Endereço confere' : gpsConfere === false ? '✗ Endereço NÃO confere' : 'Aguardando validação'}
+                      {distancia != null && (
+                        <div className={'font-semibold ' + (dentroDaArea ? 'text-green-700' : 'text-red-700')}>
+                          Distância: {Math.round(distancia)} m — {dentroDaArea ? 'Dentro' : 'Fora'} da área definida
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="mt-4 bg-white border rounded p-3 space-y-2">
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <div className="flex-1">
+                        <label className="block text-xs text-gray-600">Latitude Alvo</label>
+                        <input type="number" value={alvoLat} onChange={(e) => setAlvoLat(e.target.value)} className="w-full px-2 py-1 border rounded text-sm" placeholder="ex.: -23.55" />
                       </div>
+                      <div className="flex-1">
+                        <label className="block text-xs text-gray-600">Longitude Alvo</label>
+                        <input type="number" value={alvoLon} onChange={(e) => setAlvoLon(e.target.value)} className="w-full px-2 py-1 border rounded text-sm" placeholder="ex.: -46.63" />
+                      </div>
+                      <div className="w-28">
+                        <label className="block text-xs text-gray-600">Raio (m)</label>
+                        <input type="number" value={alvoRaio} onChange={(e) => setAlvoRaio(e.target.value)} className="w-full px-2 py-1 border rounded text-sm" />
+                      </div>
+                      <button
+                        className="btn btn-secondary self-end"
+                        onClick={() => {
+                          if (!coords) return;
+                          const d = haversineMeters(coords.latitude, coords.longitude, parseFloat(alvoLat || coords.latitude), parseFloat(alvoLon || coords.longitude));
+                          setDistancia(d);
+                          setDentroDaArea(d <= (parseFloat(alvoRaio) || 0));
+                        }}
+                      >
+                        Recalcular
+                      </button>
                     </div>
-                  )}
+
+                    <div className="mt-2">
+                      <label className="flex items-start gap-2 text-sm">
+                        <input type="checkbox" checked={permitirProsseguirSemGPS} onChange={(e) => setPermitirProsseguirSemGPS(e.target.checked)} />
+                        <span>Não consigo validar a localização agora. Desejo continuar com justificativa.</span>
+                      </label>
+                      {permitirProsseguirSemGPS && (
+                        <textarea
+                          value={justificativaGPS}
+                          onChange={(e) => setJustificativaGPS(e.target.value)}
+                          placeholder="Explique rapidamente (ex.: Sem sinal de GPS dentro da loja)"
+                          className="w-full mt-2 p-2 border rounded text-sm"
+                          rows={2}
+                        />
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <button className="btn btn-secondary flex-1" onClick={() => setPasso(1)}>
+                    <i className="fas fa-arrow-left mr-2"></i>Voltar
+                  </button>
+                  <button
+                    className={'btn flex-1 ' + ((coords || permitirProsseguirSemGPS) ? 'btn-primary' : 'bg-gray-300 text-gray-500 cursor-not-allowed')}
+                    onClick={() => setPasso(3)}
+                    disabled={!(coords || permitirProsseguirSemGPS)}
+                  >
+                    Continuar para Perguntas <i className="fas fa-arrow-right ml-2"></i>
+                  </button>
                 </div>
               </div>
             )}
 
-            {aba === 'perguntas' && (
+            {/* Passo 3 - Gerenciar Perguntas */}
+            {passo === 3 && (
               <div className="space-y-6">
-                <div className="card p-6">
-                  <div className="section-title"><i className="fas fa-plus-circle mr-2"></i>Adicionar</div>
-                  <div className="grid md:grid-cols-12 gap-3 mb-4">
-                    <input className="md:col-span-3 border-2 rounded-lg px-4 py-3" placeholder="Categoria" value={novaCategoria} onChange={(e) => setNovaCategoria(e.target.value)}/>
-                    <input className="md:col-span-7 border-2 rounded-lg px-4 py-3" placeholder="Pergunta..." value={novaPergunta}
-                      onChange={(e) => setNovaPergunta(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && adicionarPergunta()}/>
-                    <label className="md:col-span-2 flex items-center gap-2">
-                      <input type="checkbox" checked={novaFotoObrig} onChange={(e) => setNovaFotoObrig(e.target.checked)} className="w-5 h-5"/>
-                      <span className="text-sm font-semibold">Foto</span>
-                    </label>
-                  </div>
-                  <button className="btn btn-accent" onClick={adicionarPergunta}><i className="fa fa-plus mr-2"></i>Adicionar</button>
-                </div>
+                <div className="bg-purple-50 p-4 rounded-lg">
+                  <h2 className="text-xl sm:text-2xl font-bold mb-1 text-purple-700">
+                    <i className="fas fa-edit mr-2"></i>3. Gerenciar Perguntas
+                  </h2>
+                  <p className="text-sm text-gray-700 mb-4">
+                    Você pode digitar perguntas, importar de um arquivo .csv simples, salvar e carregar conjuntos prontos.
+                  </p>
 
-                <div className="card p-6">
-                  <div className="section-title"><i className="fas fa-file-csv mr-2"></i>CSV</div>
-                  <div className="flex gap-3">
-                    <input type="file" accept=".csv" className="text-sm" onChange={(e) => handleCSV(e.target.files[0])}/>
-                    <button className="btn btn-ghost" onClick={baixarModeloCSV}><i className="fa fa-download mr-2"></i>Modelo</button>
-                  </div>
-                </div>
+                  <div className="flex flex-col gap-3 mb-4">
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-2">
+                      <input
+                        type="text" value={novaCategoria} onChange={(e) => setNovaCategoria(e.target.value)}
+                        placeholder="Categoria (ex.: Segurança)"
+                        className="md:col-span-3 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+                      />
+                      <input
+                        type="text" value={novaPergunta} onChange={(e) => setNovaPergunta(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') adicionarPergunta(); }}
+                        placeholder="Digite uma nova pergunta..."
+                        className="md:col-span-7 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+                      />
+                      <label className="md:col-span-2 flex items-center gap-2 px-2 text-sm">
+                        <input type="checkbox" checked={novaFotoObrigatoria} onChange={(e) => setNovaFotoObrigatoria(e.target.checked)} />
+                        Foto obrigatória
+                      </label>
+                    </div>
+                    <div className="flex gap-2">
+                      <button onClick={adicionarPergunta} className="btn bg-purple-600 text-white hover:bg-purple-700 whitespace-nowrap">
+                        <i className="fas fa-plus mr-2"></i>Adicionar
+                      </button>
+                    </div>
 
-                <div className="grid lg:grid-cols-2 gap-6">
-                  <div className="card p-6">
-                    <div className="section-title"><i className="fas fa-save mr-2"></i>Salvar Conjunto</div>
-                    <div className="flex gap-3">
-                      <input className="flex-1 border-2 rounded-lg px-4 py-3" placeholder="Nome" value={nomeSet} onChange={(e) => setNomeSet(e.target.value)}/>
-                      <button className="btn btn-primary" onClick={salvarSet}><i className="fa fa-save"></i></button>
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                      <input
+                        type="file" accept=".csv" onChange={(e) => handleArquivoCSV(e.target.files[0])}
+                        className="block text-xs sm:text-sm w-full"
+                        title="Importar perguntas (CSV)"
+                      />
+                      <button onClick={baixarModeloCSV} className="text-purple-700 hover:text-purple-900 underline text-xs sm:text-sm whitespace-nowrap">
+                        Baixar modelo CSV
+                      </button>
                     </div>
                   </div>
 
-                  <div className="card p-6">
-                    <div className="section-title"><i className="fas fa-folder-open mr-2"></i>Carregar</div>
-                    <div className="flex gap-3">
-                      <select className="flex-1 border-2 rounded-lg px-4 py-3" value={setSelecionado} onChange={(e) => setSetSelecionado(e.target.value)}>
-                        <option value="">Selecione</option>
-                        {setsSalvos.map(s => <option key={s.name} value={s.name}>{s.name} ({s.count})</option>)}
-                      </select>
-                      <button className="btn btn-ghost" onClick={carregarSet}><i className="fa fa-upload"></i></button>
-                      <button className="btn btn-ghost" onClick={excluirSet}><i className="fa fa-trash"></i></button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="card p-6">
-                  <div className="section-title"><i className="fas fa-list mr-2"></i>Lista ({perguntas.length})</div>
-                  {perguntas.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">
-                      <i className="fas fa-inbox text-4xl mb-3"></i>
-                      <div>Nenhuma pergunta</div>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {perguntas.map(p => (
-                        <div key={p.id} className="flex items-center gap-3 bg-gray-50 rounded-lg p-4 border-l-4" style={{borderColor:'var(--brand-primary)'}}>
-                          {editId === p.id ? (
-                            <>
-                              <input className="w-32 border-2 rounded px-3 py-2" value={editCat} onChange={(e) => setEditCat(e.target.value)} placeholder="Categoria"/>
-                              <input className="flex-1 border-2 rounded px-3 py-2" value={editTexto} onChange={(e) => setEditTexto(e.target.value)}/>
-                              <label className="flex items-center gap-2 text-sm">
-                                <input type="checkbox" checked={editFoto} onChange={(e) => setEditFoto(e.target.checked)} className="w-4 h-4"/>
-                                Foto
-                              </label>
-                              <button className="text-green-600 text-xl" onClick={salvarEdicao}><i className="fa fa-check"></i></button>
-                              <button className="text-gray-600 text-xl" onClick={() => setEditId(null)}><i className="fa fa-times"></i></button>
-                            </>
-                          ) : (
-                            <>
-                              <span className="badge bg-blue-100 text-blue-700 font-semibold">{p.categoria || 'Geral'}</span>
-                              <span className="flex-1 font-medium">{p.texto}</span>
-                              {p.fotoObrigatoria && <span className="badge bg-yellow-400 text-gray-900"><i className="fa fa-camera mr-1"></i>Foto</span>}
-                              <button className="text-blue-600 text-lg" onClick={() => iniciarEdicao(p.id)}><i className="fa fa-edit"></i></button>
-                              <button className="text-red-600 text-lg" onClick={() => removerPergunta(p.id)}><i className="fa fa-trash"></i></button>
-                            </>
-                          )}
-                        </div>
-                      ))}
+                  {uploadErro && (
+                    <div className="bg-red-50 text-red-700 p-3 rounded mb-3 text-sm">
+                      <i className="fas fa-exclamation-triangle mr-2"></i>{uploadErro}
                     </div>
                   )}
-                </div>
-              </div>
-            )}
 
-            {aba === 'contatos' && (
-              <div className="space-y-6">
-                <div className="card p-6">
-                  <div className="section-title"><i className="fas fa-user-plus mr-2"></i>Adicionar Contato</div>
-                  <div className="grid md:grid-cols-12 gap-3 mb-4">
-                    <input className="md:col-span-5 border-2 rounded-lg px-4 py-3" placeholder="Nome" value={novoContatoNome} onChange={(e) => setNovoContatoNome(e.target.value)}/>
-                    <input className="md:col-span-5 border-2 rounded-lg px-4 py-3" placeholder="Telefone (com DDI)" value={novoContatoTel} onChange={(e) => setNovoContatoTel(e.target.value)}/>
-                    <button className="md:col-span-2 btn btn-accent" onClick={adicionarContato}><i className="fa fa-plus mr-2"></i>Adicionar</button>
-                  </div>
-                </div>
-
-                <div className="card p-6">
-                  <div className="section-title"><i className="fas fa-address-book mr-2"></i>Lista de Contatos ({contatos.length})</div>
-                  {contatos.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">
-                      <i className="fas fa-address-book text-4xl mb-3"></i>
-                      <div>Nenhum contato cadastrado</div>
+                  <div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-3">
+                    <div className="bg-white p-3 rounded-lg border">
+                      <div className="font-semibold text-sm mb-2">💾 Salvar como conjunto</div>
+                      <div className="flex gap-2">
+                        <input
+                          type="text" value={nomeSet} onChange={(e) => setNomeSet(e.target.value)}
+                          placeholder="Nome do conjunto (ex.: Auditoria Padrão)"
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+                        />
+                        <button
+                          onClick={() => {
+                            const nome = (nomeSet || '').trim();
+                            if (!nome) { alert('Informe um nome.'); return; }
+                            if (!perguntas.length) { alert('Não há perguntas para salvar.'); return; }
+                            salvarSetLocal(nome, perguntas);
+                            alert('Conjunto salvo!');
+                            setNomeSet('');
+                          }}
+                          className="btn bg-green-600 text-white hover:bg-green-700 text-sm whitespace-nowrap"
+                        >
+                          Salvar
+                        </button>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-2">Os conjuntos ficam salvos neste navegador.</p>
                     </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {contatos.map(c => (
-                        <div key={c.id} className="flex items-center justify-between bg-gray-50 rounded-lg p-4">
-                          <div>
-                            <div className="font-semibold">{c.nome}</div>
-                            <div className="text-sm text-gray-600">{c.telefone}</div>
-                          </div>
-                          <button className="text-red-600 text-lg" onClick={() => removerContato(c.id)}><i className="fa fa-trash"></i></button>
-                        </div>
-                      ))}
+
+                    <div className="bg-white p-3 rounded-lg border">
+                      <div className="font-semibold text-sm mb-2">📂 Carregar conjunto salvo</div>
+                      <div className="flex gap-2">
+                        <select
+                          value={setSelecionado} onChange={(e) => setSetSelecionado(e.target.value)}
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+                        >
+                          <option value="">Selecione um conjunto</option>
+                          {setsSalvos.sort((a,b) => a.name.localeCompare(b.name)).map(item => (
+                            <option key={item.name} value={item.name}>{item.name} ({item.count})</option>
+                          ))}
+                        </select>
+                        <button
+                          onClick={() => {
+                            if (!setSelecionado) { alert('Selecione um conjunto.'); return; }
+                            const lista = carregarSetLocal(setSelecionado);
+                            if (!lista || !Array.isArray(lista) || !lista.length) { alert('Conjunto vazio ou inválido.'); return; }
+                            const mapped = lista.map((p, i) => ({ ...p, id: i + 1, categoria: p.categoria || 'Geral', fotoObrigatoria: !!p.fotoObrigatoria }));
+                            setPerguntas(mapped); setRespostas({}); setEvidencias({});
+                            alert('Conjunto carregado!');
+                          }}
+                          className="btn bg-blue-600 text-white hover:bg-blue-700 text-sm whitespace-nowrap"
+                        >
+                          Carregar
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (!setSelecionado) { alert('Selecione um conjunto.'); return; }
+                            if (confirm('Excluir o conjunto "' + setSelecionado + '"?')) {
+                              excluirSetLocal(setSelecionado);
+                              setSetSelecionado('');
+                            }
+                          }}
+                          className="btn btn-danger text-sm"
+                          title="Excluir conjunto selecionado"
+                        >
+                          <i className="fas fa-trash"></i>
+                        </button>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-2">Você pode manter conjuntos diferentes para cada tipo de auditoria.</p>
                     </div>
-                  )}
+                  </div>
+
+                  <div className="space-y-2 mt-4">
+                    {perguntas.map((p) => (
+                      <div key={p.id} className="flex items-center gap-2 bg-white p-3 rounded-lg shadow">
+                        {editandoId === p.id ? (
+                          <>
+                            <input
+                              type="text" value={categoriaEdicao} onChange={(e) => setCategoriaEdicao(e.target.value)}
+                              placeholder="Categoria"
+                              className="w-40 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+                            />
+                            <input
+                              type="text" value={textoEdicao} onChange={(e) => setTextoEdicao(e.target.value)}
+                              className="flex-1 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+                            />
+                            <label className="flex items-center gap-2 text-sm">
+                              <input type="checkbox" checked={fotoObrigatoriaEdicao} onChange={(e) => setFotoObrigatoriaEdicao(e.target.checked)} />
+                              Foto obrigatória
+                            </label>
+                            <button onClick={salvarEdicao} className="btn bg-green-600 text-white hover:bg-green-700 text-sm">
+                              <i className="fas fa-check"></i>
+                            </button>
+                            <button onClick={() => setEditandoId(null)} className="btn btn-secondary text-sm">
+                              <i className="fas fa-times"></i>
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <span className="badge bg-gray-100 text-gray-700">{p.categoria || 'Geral'}</span>
+                            <span className="flex-1 text-sm break-words">{p.texto}</span>
+                            {p.fotoObrigatoria && <span className="badge bg-yellow-100 text-yellow-700"><i className="fas fa-camera mr-1"></i>Foto obrigatória</span>}
+                            <button onClick={() => iniciarEdicao(p.id)} className="text-blue-600 hover:text-blue-800 px-2"><i className="fas fa-edit"></i></button>
+                            <button onClick={() => removerPergunta(p.id)} className="text-red-600 hover:text-red-800 px-2"><i className="fas fa-trash"></i></button>
+                          </>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
 
-            {aba === 'historico' && (
-              <div className="card p-6">
-                <div className="section-title"><i className="fas fa-history mr-2"></i>Histórico</div>
-                {historico.length === 0 ? (
-                  <div className="text-center py-12 text-gray-500">
-                    <i className="fas fa-clipboard text-5xl mb-4"></i>
-                    <div className="text-lg">Nenhum checklist realizado</div>
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full">
-                      <thead>
-                        <tr className="border-b-2">
-                          <th className="py-3 px-4 text-left font-bold">Data</th>
-                          <th className="py-3 px-4 text-left font-bold">Loja</th>
-                          <th className="py-3 px-4 text-left font-bold">Tipo</th>
-                          <th className="py-3 px-4 text-left font-bold">Nota</th>
-                          <th className="py-3 px-4 text-left font-bold">Ações</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {historico.map(h => (
-                          <tr key={h.id} className="border-b hover:bg-gray-50">
-                            <td className="py-3 px-4">{fmtDateTime(h.fimISO || h.createdAt)}</td>
-                            <td className="py-3 px-4 font-medium">{h.lojaNome}</td>
-                            <td className="py-3 px-4">{h.tipo}</td>
-                            <td className="py-3 px-4"><span className="badge bg-green-500 text-white font-bold">{h.nota}</span></td>
-                            <td className="py-3 px-4">
-                              <button className="text-blue-600 underline" onClick={() => {
-                                setLojaNome(h.lojaNome);
-                                setLojaEndereco(h.lojaEndereco);
-                                setRespostas(h.respostas || {});
-                                setEvidencias(h.evidencias || {});
-                                setCoords(h.coords || null);
-                                setEnderecoGPS(h.enderecoGPS || '');
-                                setInicioISO(h.inicioISO || h.createdAt);
-                                setFimISO(h.fimISO || h.createdAt);
-                                setChecklistIniciado(true);
-                                setChecklistFinalizado(true);
-                                if (h.perguntas?.length) setPerguntas(h.perguntas.map((p, i) => ({ ...p, id: i + 1 })));
-                              }}>Ver</button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {aba === 'personalizacao' && (
-              <div className="card p-6">
-                <div className="section-title"><i className="fas fa-palette mr-2"></i>Personalização</div>
-                <div className="grid md:grid-cols-3 gap-6">
-                  <div>
-                    <label className="block text-sm font-semibold mb-2">Cor Primária</label>
-                    <input type="color" value={brandPrimary} onChange={(e) => { setBrandPrimary(e.target.value); salvarMarca(); }} className="w-20 h-12 border rounded"/>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold mb-2">Cor de Destaque</label>
-                    <input type="color" value={brandAccent} onChange={(e) => { setBrandAccent(e.target.value); salvarMarca(); }} className="w-20 h-12 border rounded"/>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold mb-2">Logo</label>
-                    <input type="file" accept="image/*" onChange={(e) => {
-                      const f = e.target.files?.[0];
-                      if (!f) return;
-                      const r = new FileReader();
-                      r.onload = ev => { setBrandLogo(ev.target.result); salvarMarca(); };
-                      r.readAsDataURL(f);
-                    }} className="text-sm"/>
-                    {brandLogo && <div className="text-xs text-green-600 mt-1"><i className="fa fa-check mr-1"></i>Logo carregado</div>}
-                  </div>
+                <div className="flex gap-3">
+                  <button className="btn btn-secondary flex-1" onClick={() => setPasso(2)}>
+                    <i className="fas fa-arrow-left mr-2"></i>Voltar
+                  </button>
+                  <button
+                    onClick={iniciarChecklist}
+                    disabled={!requisitosAtendidosParaIniciar() || gpsValidando}
+                    className={'btn flex-1 ' + (requisitosAtendidosParaIniciar() && !gpsValidando ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-gray-300 text-gray-500 cursor-not-allowed')}
+                    title={gpsConfereEndereco === false && !permitirProsseguirSemGPS ? 'Endereço GPS diferente do da loja. Você pode justificar para seguir.' : ''}
+                  >
+                    Iniciar Checklist <i className="fas fa-play-circle ml-2"></i>
+                  </button>
                 </div>
               </div>
             )}
