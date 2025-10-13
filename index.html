@@ -1,459 +1,931 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta name="description" content="Cresça no Instagram com seguidores reais e conteúdo impulsionado. Planos acessíveis, resultados garantidos. Operação Upgran para quem quer ser visto."/>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Operação Upgran</title>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Inter:wght@400;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Checklist Auditoria</title>
+
+  <!-- Tailwind + FontAwesome -->
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+  <!-- React -->
+  <script src="https://unpkg.com/react@17/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
   <style>
-
-header.scrolled {
-  background-color: #FBC02D;
-  color: #000000;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-}
-
-header.scrolled nav a {
-  color: #000;
-}
-
-header.scrolled nav a:hover {
-  color: #444;
-}
-
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+    :root {
+      --brand-primary: #2563eb; /* Azul padrão */
+      --brand-accent: #16a34a;  /* Verde padrão */
     }
-
-    body {
-      font-family: 'Inter', sans-serif;
-  background-color: #111;
-  color: #f1f1f1;
-  line-height: 1.7;
-  padding-top: 180px; /* ajuste conforme o tamanho do header */
-  body {
-  padding-top: 140px;
-}
-
+    .btn {
+      @apply px-4 py-2 rounded-lg font-semibold transition;
     }
-
-    header {
-      background-color: #1f1f1f;
-  color: #fff;
-  padding: 30px 0 20px;
-  text-align: center;
-  border-bottom: 1px solid #333;
-  position: fixed;
-  top: 0;
-  width: 100%;
-  text-align: center;
-  padding: 10px 0;
-  z-index: 1000;
-  background-color: transparent;
-  transition: background-color 0.4s ease, padding 0.4s ease;
-  
-    }
-
-    header h1 {
-      font-family: 'Montserrat', sans-serif;
-      font-size: 2.4rem;
-      font-weight: 600;
-    }
-
-    nav a {
-      color: #bbb;
-      margin: 0 12px;
-      text-decoration: none;
-      font-weight: 500;
-      transition: color 0.3s;
-    }
-
-    nav a:hover {
-      color: #FBC02D;
-    }
-
-    section {
-      padding: 80px 20px;
-      max-width: 1000px;
-      margin: auto;
-      text-align: center;
-    }
-
-    section h2 {
-      font-size: 2rem;
-      color: #FBC02D;
-      margin-bottom: 20px;
-    }
-
-    section p {
-      font-size: 1.1rem;
-      color: #ccc;
-      margin-bottom: 30px;
-    }
-
-    .pacotes {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 30px;
-      justify-content: center;
-    }
-
-    .pacote {
-      background-color: #1f1f1f;
-      border: 1px solid #333;
-      border-radius: 12px;
-      padding: 30px;
-      max-width: 300px;
-      transition: 0.3s;
-    }
-
-    .pacote:hover {
-      transform: scale(1.02);
-      border-color: #FBC02D;
-    }
-
-    .pacote h3 {
-      font-size: 1.5rem;
+    .btn-primary {
+      background: var(--brand-primary);
       color: #fff;
-      margin-bottom: 10px;
     }
-
-    .pacote .preco {
-      font-size: 1.3rem;
-      color: #FBC02D;
-      margin: 15px 0;
-      font-weight: bold;
+    .btn-primary:hover { filter: brightness(0.95); }
+    .btn-accent {
+      background: var(--brand-accent);
+      color: #fff;
     }
-
-    .botao {
-      background-color: #FBC02D;
-      color: #000;
-      padding: 12px 24px;
-      font-size: 1rem;
-      border: none;
-      border-radius: 30px;
-      cursor: pointer;
-      text-decoration: none;
-      font-weight: 600;
-      transition: 0.3s;
-      display: inline-block;
+    .btn-accent:hover { filter: brightness(0.95); }
+    .btn-ghost {
+      @apply bg-gray-100 text-gray-700;
     }
-
-    .botao:hover {
-      background-color: #d89d00;
+    .badge {
+      @apply inline-block px-2 py-0.5 rounded-full text-xs font-bold;
     }
-
-    .depoimentos blockquote {
-      font-style: italic;
-      margin-bottom: 10px;
-      color: #ddd;
-      border-left: 3px solid #FBC02D;
-      padding-left: 15px;
+    .card {
+      @apply bg-white rounded-lg border border-gray-200;
     }
-
-    .depoimentos p {
-      color: #FBC02D;
-      font-weight: 500;
+    .section-title {
+      @apply text-lg font-bold mb-3;
+      color: var(--brand-primary);
     }
-
-    .faq ul {
-      list-style: none;
-      padding-left: 0;
+    @media print {
+      .no-print { display: none !important; }
+      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     }
-
-    .faq li {
-      text-align: left;
-      margin-bottom: 15px;
-      color: #bbb;
-    }
-
-    footer {
-      text-align: center;
-      padding: 30px;
-      font-size: 0.9rem;
-      color: #666;
-      border-top: 1px solid #333;
-    }
-
-    @media (max-width: 768px) {
-      .pacotes {
-        flex-direction: column;
-        align-items: center;
-      }
-    }
-
-    .whatsapp-float {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background-color: #25D366;
-      border-radius: 50%;
-      padding: 15px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-      z-index: 999;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .whatsapp-float img {
-      width: 32px;
-      height: 32px;
-    }
-
-    .whatsapp-float:hover {
-      background-color: #128C7E;
-    }
-
-    .pacote.destaque {
-  border: 2px solid #FBC02D;
-  box-shadow: 0 0 20px rgba(251,192,45,0.3);
-  position: relative;
-  animation: brilho-caixa 3s ease-in-out infinite;
-}
-
-.selo-mais-vendido {
-  position: absolute;
-  top: -12px;
-  right: -12px;
-  background: #FBC02D;
-  color: #000;
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-weight: bold;
-  font-size: 0.8rem;
-  animation: pulsar 1.8s infinite;
-}
-
-@keyframes pulsar {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  50% {
-    transform: scale(1.1);
-    opacity: 0.8;
-  }
-}
-
-@keyframes brilho-caixa {
-  0%, 100% {
-    box-shadow: 0 0 15px rgba(251,192,45,0.3);
-  }
-  50% {
-    box-shadow: 0 0 25px rgba(251,192,45,0.6);
-  }
-}
-
-.botao.destaque-botao:hover {
-  background: linear-gradient(90deg, #fbc02d, #ffd54f, #fbc02d);
-  background-size: 200% auto;
-  animation: brilho-botao 1.5s linear infinite;
-}
-
-@keyframes brilho-botao {
-  0% {
-    background-position: 0% center;
-  }
-  100% {
-    background-position: 200% center;
-  }
-}
-
-header {
-  position: fixed;
-  top: 0;
-  width: 100%;
-  text-align: center;
-  padding: 10px 0;
-  z-index: 1000;
-  background-color: transparent;
-  transition: background-color 0.5s ease, padding 0.5s ease;
-}
-
-header .promo-bar,
-header .titulo {
-  transition: opacity 0.5s ease, max-height 0.5s ease, padding 0.5s ease, margin 0.5s ease;
-}
-
-/* Para quando a header estiver "scrolled" */
-header.scrolled {
-  background-color: #FBC02D;
-  padding: 5px 0;
-}
-
-header.scrolled .promo-bar,
-header.scrolled .titulo {
-  opacity: 0;
-  max-height: 0;
-  overflow: hidden;
-  padding: 0;
-  margin: 0;
-}
-
-header nav {
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-  margin-top: 10px;
-}
-
-header nav a {
-  text-decoration: none;
-  font-weight: 600;
-  font-size: 1rem;
-  color: #fff;
-  transition: color 0.3s;
-}
-
-header nav a:hover {
-  color: #FBC02D;
-}
-
-header.scrolled {
-  background-color: #FBC02D;
-}
-
-header.scrolled nav a {
-  color: #000;
-}
-
-header.scrolled nav a:hover {
-  color: #333;
-}
-
-header.scrolled .promo-bar,
-header.scrolled .titulo {
-  opacity: 0;
-  max-height: 0;
-  overflow: hidden;
-  padding: 0;
-  margin: 0;
-}
-
   </style>
 </head>
+<body class="bg-gray-50 text-gray-900">
+  <div id="root"></div>
 
-<script>
-  window.addEventListener('scroll', function() {
-    const header = document.querySelector('header');
-    if (window.scrollY > 80) {
-      header.classList.add('scrolled');
-    } else {
-      header.classList.remove('scrolled');
+  <script type="text/babel">
+    const { useState, useEffect, useMemo } = React;
+
+    // Utils
+    const uid = () => Math.random().toString(36).slice(2, 10);
+    const normalize = (s) => (s || '')
+      .toString().toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[.,;:]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    const fmtDateTime = (iso) => {
+      if (!iso) return '';
+      const d = new Date(iso);
+      return d.toLocaleString('pt-BR');
+    };
+    const fmtDate = (iso) => {
+      if (!iso) return '';
+      const d = new Date(iso);
+      return d.toLocaleDateString('pt-BR');
+    };
+    const humanDuration = (ms) => {
+      if (!ms || ms < 0) return '';
+      const s = Math.floor(ms / 1000);
+      const h = Math.floor(s / 3600);
+      const m = Math.floor((s % 3600) / 60);
+      const seg = s % 60;
+      return [h ? h + 'h' : null, (m || h) ? m + 'm' : null, seg + 's'].filter(Boolean).join(' ');
+    };
+    const toRad = (deg) => (deg * Math.PI) / 180;
+    const haversineMeters = (lat1, lon1, lat2, lon2) => {
+      const R = 6371000;
+      const dLat = toRad(lat2 - lat1);
+      const dLon = toRad(lon2 - lon1);
+      const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      return R * c;
+    };
+
+    // Storage keys
+    const LS_SETS_META = 'checklist_sets_meta';
+    const LS_SET_PREFIX = 'checklist_set::';
+    const LS_STORE_NAME = 'loja_nome';
+    const LS_STORE_ADDR = 'loja_endereco';
+    const LS_BRAND = 'brand_prefs'; // {primary, accent, logoDataUrl}
+    const LS_HISTORY = 'checklist_history'; // array de objetos
+
+    function App() {
+      // Marca
+      const [brandPrimary, setBrandPrimary] = useState('#2563eb');
+      const [brandAccent, setBrandAccent] = useState('#16a34a');
+      const [brandLogo, setBrandLogo] = useState(''); // DataURL
+
+      // Loja
+      const [lojaNome, setLojaNome] = useState('');
+      const [lojaEndereco, setLojaEndereco] = useState('');
+
+      // Perguntas
+      const [perguntas, setPerguntas] = useState([
+        { id: 1, categoria: 'Segurança', texto: 'EPIs conferidos?', fotoObrigatoria: true },
+        { id: 2, categoria: 'Operação', texto: 'Equipamentos verificados?', fotoObrigatoria: false },
+        { id: 3, categoria: 'Documentação', texto: 'Documentos atualizados?', fotoObrigatoria: false },
+      ]);
+      const [novaPergunta, setNovaPergunta] = useState('');
+      const [novaCategoria, setNovaCategoria] = useState('');
+      const [novaFotoObrigatoria, setNovaFotoObrigatoria] = useState(false);
+      const [editandoId, setEditandoId] = useState(null);
+      const [textoEdicao, setTextoEdicao] = useState('');
+      const [categoriaEdicao, setCategoriaEdicao] = useState('');
+      const [fotoObrigatoriaEdicao, setFotoObrigatoriaEdicao] = useState(false);
+
+      // CSV
+      const [uploadErro, setUploadErro] = useState('');
+
+      // Sets de perguntas (nomeados)
+      const [nomeSet, setNomeSet] = useState('');
+      const [setsSalvos, setSetsSalvos] = useState([]);
+      const [setSelecionado, setSetSelecionado] = useState('');
+
+      // Geo
+      const [geoStatus, setGeoStatus] = useState('idle');
+      const [coords, setCoords] = useState(null);
+      const [enderecoGPS, setEnderecoGPS] = useState('');
+      const [geoErro, setGeoErro] = useState('');
+      const [alvoLat, setAlvoLat] = useState('');
+      const [alvoLon, setAlvoLon] = useState('');
+      const [alvoRaio, setAlvoRaio] = useState(100);
+      const [distancia, setDistancia] = useState(null);
+      const [dentroDaArea, setDentroDaArea] = useState(false);
+      const [gpsConfereEndereco, setGpsConfereEndereco] = useState(null);
+      const [gpsValidando, setGpsValidando] = useState(false);
+
+      // Fluxo checklist
+      const [checklistIniciado, setChecklistIniciado] = useState(false);
+      const [checklistFinalizado, setChecklistFinalizado] = useState(false);
+      const [respostas, setRespostas] = useState({});
+      const [evidencias, setEvidencias] = useState({});
+      const [inicioISO, setInicioISO] = useState(null);
+      const [fimISO, setFimISO] = useState(null);
+
+      // Histórico
+      const [historico, setHistorico] = useState([]); // lista dos checklists anteriores
+      const [whatsNumeroPadrao, setWhatsNumeroPadrao] = useState(''); // opcional: lembrar último número
+
+      // Aplicar tema ao CSS root
+      useEffect(() => {
+        document.documentElement.style.setProperty('--brand-primary', brandPrimary || '#2563eb');
+        document.documentElement.style.setProperty('--brand-accent', brandAccent || '#16a34a');
+      }, [brandPrimary, brandAccent]);
+
+      // Carregamento inicial
+      useEffect(() => {
+        // Loja
+        setLojaNome(localStorage.getItem(LS_STORE_NAME) || '');
+        setLojaEndereco(localStorage.getItem(LS_STORE_ADDR) || '');
+        // Sets meta
+        try {
+          setSetsSalvos(JSON.parse(localStorage.getItem(LS_SETS_META) || '[]'));
+        } catch { setSetsSalvos([]); }
+        // Marca
+        try {
+          const b = JSON.parse(localStorage.getItem(LS_BRAND) || 'null');
+          if (b) {
+            if (b.primary) setBrandPrimary(b.primary);
+            if (b.accent) setBrandAccent(b.accent);
+            if (b.logoDataUrl) setBrandLogo(b.logoDataUrl);
+          }
+        } catch {}
+        // Histórico
+        try {
+          setHistorico(JSON.parse(localStorage.getItem(LS_HISTORY) || '[]'));
+        } catch { setHistorico([]); }
+      }, []);
+
+      // Persistir marca
+      const salvarMarca = (obj) => {
+        const novo = { primary: brandPrimary, accent: brandAccent, logoDataUrl: brandLogo, ...obj };
+        localStorage.setItem(LS_BRAND, JSON.stringify(novo));
+      };
+
+      // Persistir loja
+      const salvarLojaNome = (v) => {
+        setLojaNome(v);
+        localStorage.setItem(LS_STORE_NAME, v);
+      };
+      const salvarLojaEndereco = (v) => {
+        setLojaEndereco(v);
+        localStorage.setItem(LS_STORE_ADDR, v);
+      };
+
+      // Sets perguntas
+      const carregarMeta = () => {
+        try { return JSON.parse(localStorage.getItem(LS_SETS_META) || '[]'); } catch { return []; }
+      };
+      const salvarMeta = (meta) => {
+        localStorage.setItem(LS_SETS_META, JSON.stringify(meta));
+      };
+      const salvarSetLocal = (nome, listaPerguntas) => {
+        if (!nome || !listaPerguntas?.length) return;
+        localStorage.setItem(LS_SET_PREFIX + nome, JSON.stringify(listaPerguntas));
+        const meta = carregarMeta();
+        const idx = meta.findIndex(m => m.name === nome);
+        const item = { name: nome, count: listaPerguntas.length, updatedAt: new Date().toISOString() };
+        if (idx >= 0) meta[idx] = item; else meta.push(item);
+        salvarMeta(meta);
+        setSetsSalvos(meta);
+      };
+      const carregarSetLocal = (nome) => {
+        try { return JSON.parse(localStorage.getItem(LS_SET_PREFIX + nome) || 'null'); } catch { return null; }
+      };
+      const excluirSetLocal = (nome) => {
+        localStorage.removeItem(LS_SET_PREFIX + nome);
+        const meta = carregarMeta().filter(m => m.name !== nome);
+        salvarMeta(meta);
+        setSetsSalvos(meta);
+      };
+
+      // Agrupar categorias
+      const categorias = useMemo(() => {
+        const map = new Map();
+        for (const p of perguntas) {
+          const c = p.categoria || 'Geral';
+          if (!map.has(c)) map.set(c, []);
+          map.get(c).push(p);
+        }
+        return Array.from(map.entries()).sort((a,b) => a[0].localeCompare(b[0]));
+      }, [perguntas]);
+
+      // Edição/adicionar perguntas
+      const proxId = useMemo(() => (perguntas.length ? Math.max(...perguntas.map(p => p.id)) + 1 : 1), [perguntas]);
+      const adicionarPergunta = () => {
+        if (!novaPergunta.trim()) return;
+        const cat = (novaCategoria || 'Geral').trim();
+        setPerguntas(prev => [...prev, { id: proxId, categoria: cat, texto: novaPergunta.trim(), fotoObrigatoria: !!novaFotoObrigatoria }]);
+        setNovaCategoria(''); setNovaPergunta(''); setNovaFotoObrigatoria(false);
+      };
+      const iniciarEdicao = (id) => {
+        const p = perguntas.find(x => x.id === id);
+        if (!p) return;
+        setEditandoId(id);
+        setCategoriaEdicao(p.categoria);
+        setTextoEdicao(p.texto);
+        setFotoObrigatoriaEdicao(!!p.fotoObrigatoria);
+      };
+      const salvarEdicao = () => {
+        if (editandoId == null) return;
+        setPerguntas(prev => prev.map(p => p.id === editandoId ? ({
+          ...p,
+          categoria: (categoriaEdicao || 'Geral').trim(),
+          texto: (textoEdicao || p.texto).trim(),
+          fotoObrigatoria: !!fotoObrigatoriaEdicao
+        }) : p));
+        setEditandoId(null);
+        setCategoriaEdicao('');
+        setTextoEdicao('');
+        setFotoObrigatoriaEdicao(false);
+      };
+      const removerPergunta = (id) => setPerguntas(perguntas.filter(p => p.id !== id));
+
+      // CSV
+      const detectarDelim = (text) => {
+        const head = text.split(/\r?\n/).slice(0, 5).join('\n');
+        const c1 = (head.match(/;/g) || []).length;
+        const c2 = (head.match(/,/g) || []).length;
+        const c3 = (head.match(/\t/g) || []).length;
+        if (c1 >= c2 && c1 >= c3) return ';';
+        if (c2 >= c1 && c2 >= c3) return ',';
+        return '\t';
+      };
+      const parseBoolLoose = (v) => ['sim','yes','true','1'].includes(normalize(v));
+      const parseCSVToPerguntas = (text) => {
+        const linhas = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+        if (!linhas.length) return [];
+        const delim = detectarDelim(text);
+        const header = linhas[0].split(delim).map(c => normalize(c));
+        const hasHeader = ['categoria','pergunta','perguntas','foto_obrigatoria','foto obrigatoria','foto-obrigatoria','foto obrigatoria?'].some(h => header.includes(h));
+        const out = [];
+        if (hasHeader) {
+          const idxCategoria = header.findIndex(h => h === 'categoria');
+          const idxPergunta = header.findIndex(h => ['pergunta','perguntas'].includes(h));
+          const idxFoto = header.findIndex(h => ['foto_obrigatoria','foto obrigatoria','foto-obrigatoria','foto obrigatoria?'].includes(h));
+          for (let i = 1; i < linhas.length; i++) {
+            const cols = linhas[i].split(delim).map(c => c.trim());
+            const texto = idxPergunta >= 0 ? (cols[idxPergunta] || '') : '';
+            if (!texto) continue;
+            const categoria = idxCategoria >= 0 ? (cols[idxCategoria] || 'Geral') : 'Geral';
+            const fotoObrigatoria = idxFoto >= 0 ? parseBoolLoose(cols[idxFoto] || 'não') : false;
+            out.push({ categoria, texto, fotoObrigatoria });
+          }
+        } else {
+          for (const l of linhas) out.push({ categoria: 'Geral', texto: l, fotoObrigatoria: false });
+        }
+        // uniq
+        const seen = new Set(); const uniq = [];
+        for (const p of out) {
+          const key = normalize((p.categoria||'Geral') + '::' + p.texto);
+          if (!seen.has(key)) { seen.add(key); uniq.push(p); }
+        }
+        return uniq;
+      };
+      const handleArquivoCSV = (file) => {
+        setUploadErro('');
+        if (!file) return;
+        if (!file.name.toLowerCase().endsWith('.csv')) {
+          setUploadErro('Formato não suportado. Use CSV (.csv).');
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const dados = parseCSVToPerguntas(e.target.result);
+            if (!dados.length) { setUploadErro('Nenhuma pergunta válida encontrada.'); return; }
+            const novos = dados.map((d, i) => ({ id: i+1, categoria: d.categoria || 'Geral', texto: d.texto, fotoObrigatoria: !!d.fotoObrigatoria }));
+            setPerguntas(novos);
+            setRespostas({});
+            setEvidencias({});
+          } catch (err) {
+            setUploadErro('Erro processando CSV: ' + err.message);
+          }
+        };
+        reader.readAsText(file, 'utf-8');
+      };
+      const baixarModeloCSV = () => {
+        const linhas = [
+          'categoria;pergunta;foto_obrigatoria',
+          'Segurança;EPIs conferidos?;sim',
+          'Operação;Equipamentos verificados?;nao',
+          'Documentação;Documentos atualizados?;nao'
+        ];
+        const blob = new Blob([linhas.join('\n')], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'modelo_perguntas_checklist.csv';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      };
+
+      // Geo + validação endereço
+      const tokensEndereco = (s) => normalize(s).split(' ').filter(w => w && !/^\d{1,2}$/.test(w));
+      const enderecoCoincide = (loja, gps) => {
+        const a = new Set(tokensEndereco(loja));
+        const b = new Set(tokensEndereco(gps));
+        let inter = 0; for (const t of a) if (b.has(t)) inter++;
+        return inter >= 3;
+      };
+      const validarEnderecoGPS = (endGPS, endLoja) => {
+        setGpsValidando(true);
+        try { setGpsConfereEndereco(enderecoCoincide(endLoja, endGPS)); }
+        finally { setGpsValidando(false); }
+      };
+      const capturarLocalizacao = () => {
+        setGeoErro('');
+        if (!('geolocation' in navigator)) { setGeoStatus('erro'); setGeoErro('Geolocalização não suportada.'); return; }
+        setGeoStatus('buscando');
+        navigator.geolocation.getCurrentPosition(async (pos) => {
+          const { latitude, longitude, accuracy } = pos.coords;
+          const c = { latitude, longitude, accuracy };
+          setCoords(c);
+          setGeoStatus('ok');
+          if (!alvoLat || !alvoLon) {
+            setAlvoLat(String(latitude)); setAlvoLon(String(longitude)); setDistancia(0); setDentroDaArea(true);
+          } else {
+            const d = haversineMeters(latitude, longitude, parseFloat(alvoLat), parseFloat(alvoLon));
+            setDistancia(d); setDentroDaArea(d <= (parseFloat(alvoRaio) || 0));
+          }
+          try {
+            const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`;
+            const resp = await fetch(url, { headers: { 'Accept-Language': 'pt-BR' } });
+            if (resp.ok) {
+              const data = await resp.json();
+              const end = data.display_name || '';
+              setEnderecoGPS(end);
+              if (lojaEndereco.trim()) validarEnderecoGPS(end, lojaEndereco);
+            }
+          } catch (e) {}
+        }, (err) => {
+          setGeoStatus('erro'); setGeoErro(err.message || 'Falha ao obter localização.');
+        }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
+      };
+
+      // Evidências
+      const handleEvidenciaUpload = (id, file) => {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => setEvidencias(prev => ({ ...prev, [id]: e.target.result }));
+        reader.readAsDataURL(file);
+      };
+
+      // Fluxo checklist
+      const responder = (id, v) => setRespostas(prev => ({ ...prev, [id]: v }));
+      const requisitosParaIniciar = () =>
+        lojaNome.trim() && lojaEndereco.trim() && coords && dentroDaArea && gpsConfereEndereco === true && perguntas.length > 0;
+      const iniciarChecklist = () => {
+        if (!requisitosParaIniciar()) {
+          alert('Para iniciar: loja preenchida, GPS ok, dentro da área e endereço GPS deve coincidir.');
+          return;
+        }
+        setChecklistIniciado(true);
+        setInicioISO(new Date().toISOString());
+        setFimISO(null);
+      };
+      const todasRespondidas = perguntas.every(p => respostas[p.id]);
+      const fotosOk = perguntas.every(p => p.fotoObrigatoria ? !!evidencias[p.id] : true);
+      const calcularNota = () => {
+        const total = perguntas.length;
+        const pos = perguntas.filter(p => respostas[p.id] === 'sim').length;
+        return total ? ((pos / total) * 10).toFixed(1) : '0.0';
+      };
+
+      // Histórico: salvar no fim, com WhatsApp
+      const finalizarChecklist = async () => {
+        if (!todasRespondidas) { alert('Responda todas as perguntas.'); return; }
+        if (!fotosOk) { alert('Há itens com foto obrigatória sem evidência.'); return; }
+        const fim = new Date().toISOString();
+        setFimISO(fim);
+
+        // Escolher número WhatsApp
+        let numero = prompt('Informe o número (WhatsApp) para enviar o relatório, com DDI. Ex.: 55XXXXXXXXXXX', whatsNumeroPadrao || '');
+        if (numero) {
+          numero = numero.replace(/\D/g, '');
+          setWhatsNumeroPadrao(numero);
+        }
+
+        // Preparar payload histórico
+        const nota = calcularNota();
+        const tipoChecklist = setSelecionado || 'Checklist Atual';
+        const historicoItem = {
+          id: uid(),
+          lojaNome,
+          lojaEndereco,
+          tipoChecklist,
+          inicioISO,
+          fimISO: fim,
+          nota,
+          perguntas,
+          respostas,
+          evidencias, // armazenado inline (dataURL) — pode ficar grande; para produção, use backend/links
+          coords,
+          enderecoGPS,
+          distancia,
+          dentroDaArea,
+          createdAt: new Date().toISOString(),
+        };
+
+        // Atualizar histórico (máx. 50)
+        const novoHist = [historicoItem, ...historico].slice(0, 50);
+        setHistorico(novoHist);
+        localStorage.setItem(LS_HISTORY, JSON.stringify(novoHist));
+
+        // Enviar WhatsApp (texto resumido + dados chave)
+        if (numero) {
+          const resumo = [
+            `Checklist: ${tipoChecklist}`,
+            `Loja: ${lojaNome}`,
+            `Endereço: ${lojaEndereco}`,
+            `Início: ${fmtDateTime(inicioISO)}`,
+            `Término: ${fmtDateTime(fim)}`,
+            `Nota: ${nota}`,
+          ].join('\n');
+          const url = `https://wa.me/${numero}?text=${encodeURIComponent(resumo)}`;
+          window.open(url, '_blank');
+        }
+
+        setChecklistFinalizado(true);
+      };
+
+      const reiniciar = () => {
+        setChecklistIniciado(false);
+        setChecklistFinalizado(false);
+        setRespostas({});
+        setEvidencias({});
+        setCoords(null);
+        setEnderecoGPS('');
+        setGeoStatus('idle');
+        setGeoErro('');
+        setDistancia(null);
+        setDentroDaArea(false);
+        setGpsConfereEndereco(null);
+        setInicioISO(null);
+        setFimISO(null);
+        // mantém loja e preferências
+      };
+
+      // Histórico por loja/tipo para relatório final
+      const historicoDaLojaEPorTipo = useMemo(() => {
+        if (!lojaNome) return [];
+        const tipoAtual = setSelecionado || 'Checklist Atual';
+        return historico
+          .filter(h => h.lojaNome === lojaNome && h.tipoChecklist === tipoAtual)
+          .slice(0, 5); // últimas 5
+      }, [historico, lojaNome, setSelecionado]);
+
+      // UI minimalista
+      if (checklistFinalizado) {
+        const nota = calcularNota();
+        const total = perguntas.length;
+        const pos = perguntas.filter(p => respostas[p.id] === 'sim').length;
+        const dur = inicioISO && fimISO ? humanDuration(new Date(fimISO) - new Date(inicioISO)) : '';
+
+        return (
+          <div className="max-w-5xl mx-auto p-4 sm:p-6">
+            <div className="flex items-center gap-3 mb-4">
+              {brandLogo && <img src={brandLogo} alt="logo" className="h-10 w-auto"/>}
+              <h1 className="text-2xl font-bold" style={{color: 'var(--brand-primary)'}}>Relatório do Checklist</h1>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-4">
+              <div className="card p-4 md:col-span-2">
+                <div className="section-title">Dados</div>
+                <div className="grid sm:grid-cols-2 gap-y-2 text-sm">
+                  <div><span className="font-semibold">Loja:</span> {lojaNome}</div>
+                  <div><span className="font-semibold">Tipo:</span> {setSelecionado || 'Checklist Atual'}</div>
+                  <div className="sm:col-span-2"><span className="font-semibold">Endereço:</span> {lojaEndereco}</div>
+                  <div><span className="font-semibold">Início:</span> {fmtDateTime(inicioISO)}</div>
+                  <div><span className="font-semibold">Término:</span> {fmtDateTime(fimISO)}</div>
+                  <div><span className="font-semibold">Duração:</span> {dur}</div>
+                </div>
+              </div>
+              <div className="card p-4 flex flex-col items-center justify-center">
+                <div className="text-5xl font-bold" style={{color:'var(--brand-accent)'}}>{nota}</div>
+                <div className="text-sm text-gray-600">Nota — {pos} de {total} SIM</div>
+              </div>
+            </div>
+
+            <div className="card p-4 mt-4">
+              <div className="section-title">Resumo por Categoria</div>
+              <div className="space-y-3">
+                {categorias.map(([cat, itens]) => (
+                  <div key={cat}>
+                    <div className="font-semibold mb-2">{cat}</div>
+                    <div className="space-y-2">
+                      {itens.map(p => (
+                        <div key={p.id} className="grid md:grid-cols-6 gap-2 items-start">
+                          <div className="md:col-span-4 text-sm">{p.texto}</div>
+                          <div className="md:col-span-1">
+                            <span className={'badge ' + (respostas[p.id] === 'sim' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700')}>
+                              {respostas[p.id] === 'sim' ? 'SIM' : 'NÃO'}
+                            </span>
+                          </div>
+                          <div className="md:col-span-1">
+                            {p.fotoObrigatoria && <span className="badge bg-yellow-100 text-yellow-700"><i className="fa fa-camera mr-1"></i>Foto</span>}
+                          </div>
+                          {evidencias[p.id] && (
+                            <div className="md:col-span-6">
+                              <img src={evidencias[p.id]} alt={'Evidência '+p.id} className="w-full max-w-sm h-36 object-cover rounded border"/>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="card p-4 mt-4">
+              <div className="section-title">Histórico desta loja — {setSelecionado || 'Checklist Atual'}</div>
+              {historicoDaLojaEPorTipo.length === 0 ? (
+                <div className="text-sm text-gray-500">Sem histórico anterior para esta loja e tipo.</div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full text-sm">
+                    <thead>
+                      <tr className="text-left border-b">
+                        <th className="py-2">Data</th>
+                        <th className="py-2">Nota</th>
+                        <th className="py-2">Duração</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {historicoDaLojaEPorTipo.map(h => {
+                        const dur = h.inicioISO && h.fimISO ? humanDuration(new Date(h.fimISO) - new Date(h.inicioISO)) : '';
+                        return (
+                          <tr key={h.id} className="border-b">
+                            <td className="py-2">{fmtDateTime(h.fimISO)}</td>
+                            <td className="py-2">{h.nota}</td>
+                            <td className="py-2">{dur}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-2 mt-4 no-print">
+              <button onClick={() => window.print()} className="btn btn-primary"><i className="fa fa-print mr-2"></i>Imprimir / PDF</button>
+              <button onClick={reiniciar} className="btn btn-ghost">Novo Checklist</button>
+            </div>
+          </div>
+        );
+      }
+
+      if (checklistIniciado) {
+        return (
+          <div className="max-w-5xl mx-auto p-4 sm:p-6">
+            <div className="flex items-center gap-3 mb-4">
+              {brandLogo && <img src={brandLogo} alt="logo" className="h-8 w-auto"/>}
+              <h1 className="text-xl font-bold" style={{color: 'var(--brand-primary)'}}>Checklist em andamento</h1>
+            </div>
+
+            <div className="card p-4 mb-4">
+              <div className="grid sm:grid-cols-2 gap-2 text-sm">
+                <div><span className="font-semibold">Loja:</span> {lojaNome}</div>
+                <div><span className="font-semibold">Tipo:</span> {setSelecionado || 'Checklist Atual'}</div>
+                <div className="sm:col-span-2"><span className="font-semibold">Endereço:</span> {lojaEndereco}</div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {categorias.map(([cat, itens]) => (
+                <div key={cat} className="card p-4">
+                  <div className="font-semibold mb-2">{cat}</div>
+                  <div className="space-y-3">
+                    {itens.map(p => (
+                      <div key={p.id} className="bg-gray-50 rounded p-3">
+                        <div className="text-sm font-medium mb-3">{p.texto}</div>
+                        <div className="flex flex-wrap gap-2 mb-2">
+                          <button
+                            onClick={() => responder(p.id, 'sim')}
+                            className={'btn ' + (respostas[p.id] === 'sim' ? 'btn-accent' : 'btn-ghost')}
+                          >
+                            <i className="fa fa-check mr-1"></i>SIM
+                          </button>
+                          <button
+                            onClick={() => responder(p.id, 'nao')}
+                            className={'btn ' + (respostas[p.id] === 'nao' ? 'bg-red-500 text-white' : 'btn-ghost')}
+                          >
+                            <i className="fa fa-times mr-1"></i>NÃO
+                          </button>
+                          {p.fotoObrigatoria && <span className="badge bg-yellow-100 text-yellow-700"><i className="fa fa-camera mr-1"></i>Foto obrigatória</span>}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <input type="file" accept="image/*" capture="environment" className="text-xs"
+                                 onChange={(e) => handleEvidenciaUpload(p.id, e.target.files[0])}/>
+                          {evidencias[p.id] && <span className="text-xs text-green-700"><i className="fa fa-check mr-1"></i>Foto anexada</span>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-6">
+              <button
+                onClick={finalizarChecklist}
+                disabled={!todasRespondidas || !fotosOk}
+                className={'btn btn-primary w-full ' + ((todasRespondidas && fotosOk) ? '' : 'opacity-60 cursor-not-allowed')}
+              >
+                <i className="fa fa-flag-checkered mr-2"></i>Finalizar e gerar relatório
+              </button>
+            </div>
+          </div>
+        );
+      }
+
+      // Primeira página (Dashboard minimal)
+      return (
+        <div className="max-w-6xl mx-auto p-4 sm:p-6 space-y-6">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {brandLogo && <img src={brandLogo} alt="logo" className="h-10 w-auto"/>}
+              <h1 className="text-2xl sm:text-3xl font-bold" style={{color: 'var(--brand-primary)'}}>Checklist Auditoria</h1>
+            </div>
+          </div>
+
+          {/* Preferências de Marca */}
+          <div className="card p-4">
+            <div className="section-title">Personalização</div>
+            <div className="grid md:grid-cols-3 gap-4 items-center">
+              <div className="space-y-2">
+                <label className="text-sm font-semibold">Cor Primária</label>
+                <input type="color" value={brandPrimary} onChange={(e)=>{ setBrandPrimary(e.target.value); salvarMarca({primary: e.target.value}); }}
+                       className="w-16 h-10 border rounded"/>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold">Cor de Destaque</label>
+                <input type="color" value={brandAccent} onChange={(e)=>{ setBrandAccent(e.target.value); salvarMarca({accent: e.target.value}); }}
+                       className="w-16 h-10 border rounded"/>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold">Logo (PNG/JPG)</label>
+                <input type="file" accept="image/*" onChange={(e)=> {
+                  const f = e.target.files?.[0]; if (!f) return;
+                  const r = new FileReader();
+                  r.onload = ev => { setBrandLogo(ev.target.result); salvarMarca({logoDataUrl: ev.target.result}); };
+                  r.readAsDataURL(f);
+                }} className="text-sm"/>
+                {brandLogo && <div className="text-xs text-gray-500">Logo carregado.</div>}
+              </div>
+            </div>
+          </div>
+
+          {/* Dados da loja + Localização */}
+          <div className="grid lg:grid-cols-2 gap-6">
+            <div className="card p-4">
+              <div className="section-title">Dados da Loja</div>
+              <div className="space-y-3">
+                <div>
+                  <label className="text-sm font-semibold">Nome</label>
+                  <input type="text" className="w-full border rounded px-3 py-2"
+                         value={lojaNome} onChange={(e)=> setLojaNome(e.target.value)} onBlur={(e)=> localStorage.setItem(LS_STORE_NAME, e.target.value)}
+                         placeholder="Ex.: Loja Centro - Matriz"/>
+                </div>
+                <div>
+                  <label className="text-sm font-semibold">Endereço</label>
+                  <input type="text" className="w-full border rounded px-3 py-2"
+                         value={lojaEndereco} onChange={(e)=> setLojaEndereco(e.target.value)} onBlur={(e)=> localStorage.setItem(LS_STORE_ADDR, e.target.value)}
+                         placeholder="Rua, número - Bairro, Cidade/UF"/>
+                </div>
+                <div className="text-xs text-gray-500">Salvamos automaticamente no seu navegador.</div>
+              </div>
+            </div>
+
+            <div className="card p-4">
+              <div className="section-title">Localização</div>
+              <div className="flex gap-2">
+                <button className="btn btn-primary" onClick={capturarLocalizacao}><i className="fa fa-location-arrow mr-2"></i>Capturar GPS</button>
+                {geoStatus === 'buscando' && <span className="text-sm text-gray-600">Buscando...</span>}
+                {geoStatus === 'ok' && <span className="text-sm text-green-700"><i className="fa fa-check mr-1"></i>Capturada</span>}
+              </div>
+              {geoErro && <div className="text-sm text-red-600 mt-2">{geoErro}</div>}
+              {coords && (
+                <div className="mt-3 text-sm space-y-1">
+                  <div><span className="font-semibold">Lat/Lon:</span> {coords.latitude.toFixed(6)}, {coords.longitude.toFixed(6)}</div>
+                  {coords.accuracy && <div><span className="font-semibold">Precisão:</span> ±{Math.round(coords.accuracy)} m</div>}
+                  {enderecoGPS && <div><span className="font-semibold">Endereço GPS:</span> {enderecoGPS}</div>}
+                  <div className={(gpsConfereEndereco === true ? 'text-green-700' : gpsConfereEndereco === false ? 'text-red-700' : 'text-gray-600') + ' font-semibold'}>
+                    {gpsValidando ? 'Validando...' :
+                      gpsConfereEndereco === true ? 'Endereço GPS confere.' :
+                      gpsConfereEndereco === false ? 'Endereço GPS NÃO confere.' :
+                      'Capture o GPS para validar.'
+                    }
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Gerenciar perguntas */}
+          <div className="card p-4">
+            <div className="section-title">Perguntas (por categoria + foto obrigatória)</div>
+            <div className="grid md:grid-cols-12 gap-2">
+              <input className="md:col-span-3 border rounded px-3 py-2" placeholder="Categoria" value={novaCategoria} onChange={(e)=> setNovaCategoria(e.target.value)}/>
+              <input className="md:col-span-7 border rounded px-3 py-2" placeholder="Nova pergunta..." value={novaPergunta}
+                     onChange={(e)=> setNovaPergunta(e.target.value)} onKeyPress={(e)=> { if (e.key==='Enter') adicionarPergunta(); }}/>
+              <label className="md:col-span-2 flex items-center gap-2">
+                <input type="checkbox" checked={novaFotoObrigatoria} onChange={(e)=> setNovaFotoObrigatoria(e.target.checked)}/>
+                <span className="text-sm">Foto obrigatória</span>
+              </label>
+            </div>
+            <div className="flex items-center gap-2 mt-2">
+              <button className="btn btn-accent" onClick={adicionarPergunta}><i className="fa fa-plus mr-1"></i>Adicionar</button>
+              <input type="file" accept=".csv" className="text-sm" onChange={(e)=> handleArquivoCSV(e.target.files?.[0])}/>
+              <button className="text-sm underline" onClick={baixarModeloCSV}>Baixar modelo CSV</button>
+            </div>
+            {uploadErro && <div className="text-sm text-red-600 mt-2">{uploadErro}</div>}
+
+            {/* Sets */}
+            <div className="grid lg:grid-cols-2 gap-3 mt-4">
+              <div className="card p-3">
+                <div className="text-sm font-semibold mb-2">Salvar conjunto</div>
+                <div className="flex gap-2">
+                  <input className="flex-1 border rounded px-3 py-2 text-sm" placeholder="Nome do conjunto" value={nomeSet} onChange={(e)=> setNomeSet(e.target.value)}/>
+                  <button className="btn btn-primary"
+                    onClick={()=> {
+                      const nome = (nomeSet || '').trim();
+                      if (!nome) { alert('Informe um nome.'); return; }
+                      if (perguntas.length === 0) { alert('Sem perguntas para salvar.'); return; }
+                      salvarSetLocal(nome, perguntas); setNomeSet('');
+                      alert('Conjunto salvo.');
+                    }}>Salvar</button>
+                </div>
+              </div>
+              <div className="card p-3">
+                <div className="text-sm font-semibold mb-2">Carregar conjunto</div>
+                <div className="flex gap-2">
+                  <select className="flex-1 border rounded px-3 py-2 text-sm" value={setSelecionado} onChange={(e)=> setSetSelecionado(e.target.value)}>
+                    <option value="">Selecione</option>
+                    {setsSalvos.sort((a,b)=> a.name.localeCompare(b.name)).map(s => (
+                      <option key={s.name} value={s.name}>{s.name} ({s.count})</option>
+                    ))}
+                  </select>
+                  <button className="btn btn-ghost" onClick={()=>{
+                    if (!setSelecionado) { alert('Selecione um conjunto.'); return; }
+                    const lista = carregarSetLocal(setSelecionado);
+                    if (!lista?.length) { alert('Conjunto vazio ou inválido.'); return; }
+                    const mapped = lista.map((p,i)=> ({...p, id: i+1, categoria: p.categoria||'Geral', fotoObrigatoria: !!p.fotoObrigatoria}));
+                    setPerguntas(mapped); setRespostas({}); setEvidencias({});
+                  }}>Carregar</button>
+                  <button className="btn btn-ghost" onClick={()=>{
+                    if (!setSelecionado) { alert('Selecione um conjunto.'); return; }
+                    if (confirm(`Excluir conjunto "${setSelecionado}"?`)) {
+                      excluirSetLocal(setSelecionado); setSetSelecionado('');
+                    }
+                  }}>Excluir</button>
+                </div>
+              </div>
+            </div>
+
+            {/* Lista */}
+            <div className="mt-4 space-y-2">
+              {perguntas.map(p => (
+                <div key={p.id} className="flex items-center gap-2 bg-white border rounded p-2">
+                  {editandoId === p.id ? (
+                    <>
+                      <input className="w-40 border rounded px-2 py-1" value={categoriaEdicao} onChange={(e)=> setCategoriaEdicao(e.target.value)} placeholder="Categoria"/>
+                      <input className="flex-1 border rounded px-2 py-1" value={textoEdicao} onChange={(e)=> setTextoEdicao(e.target.value)} />
+                      <label className="flex items-center gap-1 text-sm">
+                        <input type="checkbox" checked={fotoObrigatoriaEdicao} onChange={(e)=> setFotoObrigatoriaEdicao(e.target.checked)}/>
+                        Foto
+                      </label>
+                      <button className="text-green-600" onClick={salvarEdicao}><i className="fa fa-check"></i></button>
+                      <button className="text-gray-600" onClick={()=> setEditandoId(null)}><i className="fa fa-times"></i></button>
+                    </>
+                  ) : (
+                    <>
+                      <span className="badge bg-gray-100 text-gray-700">{p.categoria || 'Geral'}</span>
+                      <span className="flex-1 text-sm">{p.texto}</span>
+                      {p.fotoObrigatoria && <span className="badge bg-yellow-100 text-yellow-700"><i className="fa fa-camera mr-1"></i>Foto</span>}
+                      <button className="text-blue-600" onClick={()=> iniciarEdicao(p.id)}><i className="fa fa-edit"></i></button>
+                      <button className="text-red-600" onClick={()=> removerPergunta(p.id)}><i className="fa fa-trash"></i></button>
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Histórico de checklists */}
+          <div className="card p-4">
+            <div className="section-title">Histórico de Checklists</div>
+            {historico.length === 0 ? (
+              <div className="text-sm text-gray-500">Sem checklists salvos ainda.</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-sm">
+                  <thead>
+                    <tr className="text-left border-b">
+                      <th className="py-2">Data</th>
+                      <th className="py-2">Loja</th>
+                      <th className="py-2">Tipo</th>
+                      <th className="py-2">Nota</th>
+                      <th className="py-2">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {historico.map(h => (
+                      <tr key={h.id} className="border-b">
+                        <td className="py-2">{fmtDateTime(h.fimISO || h.createdAt)}</td>
+                        <td className="py-2">{h.lojaNome}</td>
+                        <td className="py-2">{h.tipoChecklist}</td>
+                        <td className="py-2">{h.nota}</td>
+                        <td className="py-2">
+                          <button className="text-blue-600 underline" onClick={()=>{
+                            // Visualizar: carrega os dados desse histórico e abre relatório
+                            setLojaNome(h.lojaNome);
+                            setLojaEndereco(h.lojaEndereco);
+                            setRespostas(h.respostas || {});
+                            setEvidencias(h.evidencias || {});
+                            setCoords(h.coords || null);
+                            setEnderecoGPS(h.enderecoGPS || '');
+                            setDistancia(h.distancia ?? null);
+                            setDentroDaArea(!!h.dentroDaArea);
+                            setInicioISO(h.inicioISO || h.createdAt);
+                            setFimISO(h.fimISO || h.createdAt);
+                            setChecklistIniciado(true);
+                            setChecklistFinalizado(true);
+                            // carrega perguntas do item (mantém categorias/foto flags)
+                            if (h.perguntas?.length) {
+                              const mapped = h.perguntas.map((p,i)=> ({...p, id: i+1, categoria: p.categoria || 'Geral', fotoObrigatoria: !!p.fotoObrigatoria}));
+                              setPerguntas(mapped);
+                            }
+                          }}>Ver</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          {/* Botão iniciar */}
+          <div className="card p-4">
+            <div className="section-title">Iniciar</div>
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="text-sm">
+                Status: {requisitosParaIniciar() ? <span className="text-green-700 font-semibold">Pronto</span> : <span className="text-gray-600">Pendente</span>}
+              </div>
+              <button className="btn btn-accent" disabled={!requisitosParaIniciar() || gpsValidando}
+                      onClick={iniciarChecklist}>
+                <i className="fa fa-play mr-2"></i>Iniciar Checklist
+              </button>
+            </div>
+            {!requisitosParaIniciar() && (
+              <ul className="list-disc ml-5 mt-2 text-xs text-gray-600">
+                {!lojaNome.trim() && <li>Informe o nome da loja.</li>}
+                {!lojaEndereco.trim() && <li>Informe o endereço da loja.</li>}
+                {!coords && <li>Capture o GPS.</li>}
+                {coords && gpsConfereEndereco !== true && <li>Endereço GPS deve coincidir com o da loja.</li>}
+              </ul>
+            )}
+          </div>
+        </div>
+      );
     }
-  });
-</script>
 
-<body>
-  <header>
-    <div class="promo-bar" style="background:#FBC02D;color:#000;padding:10px 20px;font-weight:600;font-size:0.95rem;">
-      🎯 Assine hoje e ganhe uma análise gratuita do seu Instagram!
-    </div>
-    <h1>Operação Upgran</h1>
-    <nav>
-      <a href="#sobre">Sobre</a>
-      <a href="#pacotes">Planos</a>
-      <a href="#depoimentos">Resultados</a>
-      <a href="#faq">FAQ</a>
-    </nav>
-  </header>
-  
-  <section id="sobre">
-    <h2>Seu Perfil Visto. Seu Negócio em Alta.</h2>
-    <p>Impulsione seu perfil com estratégias que vão além do engajamento. Ter seguidores e visualizações consistentes aumenta sua credibilidade e autoridade no mercado local. Chega de invisibilidade: posicione-se como referência em sua área e comece a atrair mais oportunidades em menos de 30 dias. Hoje, muitas pessoas escolhem serviços e contratam profissionais pelas métricas do perfil. Um nutricionista com 20 anos de experiência pode ser ignorado por ter poucos seguidores, enquanto um recém-formado conquista mais clientes simplesmente por transmitir autoridade e relevância nas redes sociais. Sua imagem digital importa, e a Upgran te ajuda a se destacar.</p>
-  </section>
-
-  <section>
-    <h2>O Que é a Operação Upgran?</h2>
-    <p><strong>Você pode ser excelente no que faz, ter anos de experiência, resultados reais, clientes satisfeitos… e mesmo assim ser ignorado.</strong></p>
-    <p>Isso acontece todos os dias. Profissionais incríveis perdendo espaço para quem acabou de começar — só porque o outro aparece mais no Instagram.</p>
-    <p>Hoje, as pessoas contratam com base no que veem nas redes sociais. Seguidores, visualizações, consistência… tudo isso constrói percepção de autoridade. E quem transmite autoridade, atrai atenção, respeito e oportunidades.</p>
-    <p><strong>Se você não trabalha sua imagem digital, alguém menos qualificado vai ocupar o seu lugar.</strong> Não porque é melhor, mas porque sabe se mostrar.</p>
-    <p>A <strong>Operação Upgran</strong> é sua chance de virar esse jogo. Nada de fórmulas mágicas ou promessas vazias — aqui tem estratégia de verdade. A gente aplica as mesmas táticas que os grandes nomes usam para crescer, gerar engajamento real e conquistar visibilidade.</p>
-    <p><strong>Você envia os vídeos. A gente faz o seu perfil aparecer. Chega de ser invisível.</strong> Seu nome precisa ser lembrado — e a hora de agir é agora.</p>
-  </section>
-
-  <section id="pacotes">
-    <h2>Escolha seu Plano de Crescimento</h2>
-    <div class="pacotes">
-      <div class="pacote">
-        <h3><i class="fas fa-seedling"></i> Essencial</h3>
-        <p>Ideal para profissionais que desejam gerar autoridade e serem percebidos como referência local nas redes.</p>
-        <div class="preco">R$149,90/mês</div>
-        <p><i class="fas fa-video"></i> 6 reels impulsionados<br><i class="fas fa-user-plus"></i> +1.000 seguidores/mês</p>
-        <a href="https://wa.me/558596117925?text=Estou%20pronto%20para%20crescer%20meu%20perfil%20com%20o%20plano%20Essencial" class="botao">Quero Crescer Agora</a>
-      </div>
-    
-      <div class="pacote destaque">
-        <div class="selo-mais-vendido">🔥 Mais vendido</div>
-        <h3><i class="fas fa-star"></i> Profissional</h3>
-        <p>Para quem quer se destacar entre concorrentes e atrair clientes mostrando consistência e relevância.</p>
-        <div class="preco">R$199,90/mês</div>
-        <p><i class="fas fa-video"></i> 9 reels impulsionados<br><i class="fas fa-user-plus"></i> +2.000 seguidores/mês</p>
-        <a href="https://wa.me/558596117925?text=Estou%20pronto%20para%20crescer%20meu%20perfil%20com%20o%20plano%20Profissional" class="botao destaque-botao">Quero Crescer Agora</a>
-      </div>
-    
-      <div class="pacote">
-        <h3><i class="fas fa-rocket"></i> Performance</h3>
-        <p>Feito para quem entende que presença online impacta diretamente nos resultados do seu negócio.</p>
-        <div class="preco">R$249,90/mês</div>
-        <p><i class="fas fa-video"></i> 12 reels impulsionados<br><i class="fas fa-user-plus"></i> +3.000 seguidores/mês</p>
-        <a href="https://wa.me/558596117925?text=Estou%20pronto%20para%20crescer%20meu%20perfil%20com%20o%20plano%20Performance" class="botao">Quero Crescer Agora</a>
-      </div>
-    </div>    
-  </section>
-
-  <section id="depoimentos" class="depoimentos">
-    <h2>Resultados Reais de Quem Se Destacou no Digital</h2>
-    <blockquote>"Ganhei mais de 1.500 seguidores em um mês e meus vídeos triplicaram o alcance. Vale cada centavo!"</blockquote>
-    <p>- Mariana, terapeuta</p>
-    <blockquote>"Meu Instagram estava parado. Com a Upgran, ganhei visibilidade e novos clientes!"</blockquote>
-    <p>- Diego, personal trainer</p>
-  </section>
-
-  <section id="faq" class="faq">
-    <h2>Dúvidas Frequentes</h2>
-    <ul>
-      <li><strong>Por que seguidores importam?</strong> Porque eles geram percepção de relevância. Em muitos casos, clientes escolhem com base em quem transmite mais autoridade nas redes. Um profissional experiente pode perder oportunidades para um recém-chegado que sabe se posicionar digitalmente.</li>
-      <li><strong>Preciso criar conteúdo?</strong> Sim! Você envia os vídeos e a gente turbina o alcance.</li>
-      <li><strong>É seguro?</strong> Totalmente. Seguidores reais, estratégia ética.</li>
-      <li><strong>Em quanto tempo vejo resultado?</strong> Em até 30 dias você já nota o crescimento.</li>
-      <li><strong>Posso cancelar quando quiser?</strong> Sim, sem burocracia.</li>
-    </ul>
-  </section>
-
-  <footer>
-    Operação Upgran &copy; 2025 — Todos os direitos reservados.
-  </footer>
-
-  <a href="https://wa.me/558596117925" class="whatsapp-float" target="_blank" title="Fale conosco no WhatsApp">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp" />
-  </a>
-  <script>
-    window.addEventListener('scroll', function() {
-      const header = document.querySelector('header');
-      if (window.scrollY > 50) {
-        header.classList.add('scrolled');
-      } else {
-        header.classList.remove('scrolled');
-      }
-    });
-  </script>  
-  <script>
-    window.addEventListener('scroll', function() {
-      const header = document.querySelector('header');
-      if (window.scrollY > 50) {
-        header.classList.add('scrolled');
-      } else {
-        header.classList.remove('scrolled');
-      }
-    });
+    ReactDOM.render(<App />, document.getElementById('root'));
   </script>
-  
 </body>
 </html>
