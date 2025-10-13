@@ -1,10 +1,9 @@
 <!doctype html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
   <meta charset="utf-8" />
-  <title>Checklist Pro — Simple Compliance Tool</title>
+  <title>Checklist Simples - Ferramenta de Inspeção</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="color-scheme" content="light dark" />
   <style>
     :root{
       --bg:#f7f9fb;
@@ -21,340 +20,403 @@
       --focus:#93c5fd;
       --shadow:0 8px 24px rgba(15,23,42,0.08);
       --radius:14px;
-      --radius-sm:10px;
-      --radius-xs:8px;
     }
     *{box-sizing:border-box}
-    html,body{height:100%}
+    html,body{height:100%; margin:0; padding:0}
     body{
-      margin:0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
       color:var(--ink);
       background:linear-gradient(180deg,#f7f9fb 0%, #eef2f7 100%);
+      font-size:16px;
     }
     .container{
-      max-width:1100px;
-      margin:32px auto;
-      padding:0 16px;
+      max-width:900px;
+      margin:0 auto;
+      padding:16px;
     }
     header.appbar{
-      display:flex; align-items:center; justify-content:space-between;
-      gap:16px; padding:16px 18px; background:var(--panel); border:1px solid var(--border);
-      border-radius:var(--radius); box-shadow:var(--shadow); position:sticky; top:12px; z-index:20;
-      backdrop-filter:saturate(1.2) blur(6px);
-    }
-    .brand{display:flex; align-items:center; gap:12px}
-    .logo{
-      width:36px; height:36px; border-radius:10px; display:grid; place-items:center;
-      background:linear-gradient(135deg, #2563eb, #60a5fa); color:white; font-weight:800;
-      letter-spacing:0.5px;
-      box-shadow:0 6px 18px rgba(37,99,235,0.35);
-    }
-    .brand h1{font-size:18px; margin:0;}
-    .brand small{color:var(--muted)}
-    .toolbar{display:flex; gap:8px; flex-wrap:wrap}
-    button, .btn{
-      appearance:none; border:none; background:var(--primary); color:var(--primary-ink);
-      padding:10px 14px; border-radius:12px; font-weight:600; cursor:pointer;
-      box-shadow:0 6px 16px rgba(37,99,235,0.25);
-    }
-    button.secondary{
-      background:var(--soft); color:var(--ink); box-shadow:none; border:1px solid var(--border);
-    }
-    button.ghost{
-      background:transparent; color:var(--ink); box-shadow:none; border:1px solid var(--border);
-    }
-    button:disabled{opacity:.6; cursor:not-allowed}
-    button:focus-visible, .input:focus-visible, select:focus-visible, textarea:focus-visible{
-      outline:3px solid var(--focus); outline-offset:2px;
-    }
-    .layout{
-      display:grid; grid-template-columns: 280px 1fr; gap:16px; margin-top:16px;
-    }
-    @media (max-width: 900px){
-      .layout{grid-template-columns:1fr}
-    }
-    .panel{
-      background:var(--panel); border:1px solid var(--border); border-radius:var(--radius);
+      background:var(--panel);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
       box-shadow:var(--shadow);
+      padding:20px;
+      margin-bottom:20px;
+      text-align:center;
     }
-    .panel .hd{
-      padding:16px 16px 0; display:flex; align-items:center; justify-content:space-between; gap:8px;
+    .brand h1{
+      font-size:24px;
+      margin:0 0 8px 0;
+      color:var(--primary);
     }
-    .panel .bd{padding:16px}
-    .muted{color:var(--muted)}
+    .brand small{color:var(--muted); font-size:14px}
+    .toolbar{
+      display:flex;
+      gap:10px;
+      justify-content:center;
+      margin-top:16px;
+      flex-wrap:wrap;
+    }
+    button, .btn{
+      appearance:none;
+      border:none;
+      background:var(--primary);
+      color:var(--primary-ink);
+      padding:12px 20px;
+      border-radius:12px;
+      font-weight:600;
+      cursor:pointer;
+      font-size:15px;
+      box-shadow:0 4px 12px rgba(37,99,235,0.25);
+      transition:all 0.2s;
+    }
+    button:hover{transform:translateY(-1px); box-shadow:0 6px 16px rgba(37,99,235,0.35)}
+    button.secondary{
+      background:var(--soft);
+      color:var(--ink);
+      box-shadow:none;
+      border:1px solid var(--border);
+    }
+    button:disabled{opacity:.5; cursor:not-allowed; transform:none}
+    .panel{
+      background:var(--panel);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:24px;
+      margin-bottom:20px;
+    }
+    .panel h2{
+      margin:0 0 20px 0;
+      font-size:20px;
+      color:var(--primary);
+      border-bottom:2px solid var(--border);
+      padding-bottom:12px;
+    }
     .input, select, textarea{
-      width:100%; padding:10px 12px; border-radius:12px; border:1px solid var(--border);
-      background:white; color:var(--ink);
+      width:100%;
+      padding:12px 14px;
+      border-radius:10px;
+      border:2px solid var(--border);
+      background:white;
+      color:var(--ink);
+      font-size:15px;
+      transition:border-color 0.2s;
     }
-    label{font-weight:600; display:block; margin-bottom:6px}
-    .row{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+    .input:focus, textarea:focus{
+      outline:none;
+      border-color:var(--primary);
+    }
+    label{
+      font-weight:600;
+      display:block;
+      margin-bottom:8px;
+      font-size:15px;
+    }
+    .form-group{margin-bottom:20px}
+    .row{display:grid; grid-template-columns:1fr 1fr; gap:16px}
     @media (max-width:700px){ .row{grid-template-columns:1fr} }
     .chip{
-      display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px;
-      border:1px solid var(--border); background:var(--soft); color:var(--muted); font-size:12px;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 14px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:var(--soft);
+      color:var(--muted);
+      font-size:13px;
+      font-weight:500;
     }
-    .status{display:flex; gap:8px; flex-wrap:wrap}
+    .status{display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin:16px 0}
     .status .chip[data-variant="ok"]{background:#ecfdf5; color:#065f46; border-color:#a7f3d0}
     .status .chip[data-variant="warn"]{background:#fffbeb; color:#92400e; border-color:#fde68a}
     .status .chip[data-variant="bad"]{background:#fef2f2; color:#991b1b; border-color:#fecaca}
-    .list{display:flex; flex-direction:column; gap:10px}
     .card{
-      border:1px solid var(--border); border-radius:14px; padding:12px; background:white;
-      display:flex; gap:12px; align-items:flex-start;
+      border:2px solid var(--border);
+      border-radius:12px;
+      padding:20px;
+      background:white;
+      margin-bottom:16px;
     }
-    .card .grow{flex:1}
-    .card h4{margin:0 0 6px; font-size:15px}
-    .card small{color:var(--muted)}
-    .split{display:flex; align-items:center; gap:8px; flex-wrap:wrap}
-    .tag{padding:3px 8px; border-radius:999px; font-size:12px; border:1px solid var(--border); background:var(--soft)}
+    .card h4{
+      margin:0 0 16px;
+      font-size:16px;
+      color:var(--ink);
+      line-height:1.5;
+    }
+    .answer-buttons{
+      display:flex;
+      gap:10px;
+      margin-bottom:16px;
+      flex-wrap:wrap;
+    }
+    .answer-buttons button{
+      flex:1;
+      min-width:80px;
+      padding:14px;
+      font-size:16px;
+      font-weight:700;
+    }
+    .answer-buttons button.active{
+      background:var(--success);
+      box-shadow:0 4px 12px rgba(22,163,74,0.35);
+    }
+    .answer-buttons button[data-a="no"].active{
+      background:var(--danger);
+      box-shadow:0 4px 12px rgba(220,38,38,0.35);
+    }
+    .answer-buttons button[data-a="na"].active{
+      background:var(--warn);
+      box-shadow:0 4px 12px rgba(217,119,6,0.35);
+    }
+    .tag{
+      padding:6px 12px;
+      border-radius:999px;
+      font-size:13px;
+      font-weight:600;
+      border:1px solid var(--border);
+      background:var(--soft);
+    }
     .tag.ok{background:#ecfdf5; color:#065f46; border-color:#a7f3d0}
-    .tag.na{background:#eef2ff; color:#3730a3; border-color:#c7d2fe}
     .tag.no{background:#fef2f2; color:#991b1b; border-color:#fecaca}
+    .tag.na{background:#fffbeb; color:#92400e; border-color:#fde68a}
     .tag.pending{background:#eff6ff; color:#1e40af; border-color:#bfdbfe}
-    .inline{display:flex; gap:8px; align-items:center}
-    .hr{height:1px; background:var(--border); margin:12px 0}
+    .hidden{display:none !important}
     .toast{
-      position:fixed; right:16px; bottom:16px; display:flex; flex-direction:column; gap:8px; z-index:50;
+      position:fixed;
+      right:16px;
+      bottom:16px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      z-index:50;
     }
     .toast .item{
-      background:var(--ink); color:white; padding:10px 12px; border-radius:12px; box-shadow:var(--shadow);
-      display:flex; gap:10px; align-items:flex-start; max-width:360px;
+      background:var(--ink);
+      color:white;
+      padding:14px 18px;
+      border-radius:12px;
+      box-shadow:var(--shadow);
+      max-width:360px;
+      font-size:14px;
     }
-    .kbd{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size:12px; background:#0f172a; color:#e2e8f0; padding:2px 6px; border-radius:6px}
     .empty{
-      text-align:center; padding:24px; border:1px dashed var(--border); border-radius:12px; color:var(--muted); background:linear-gradient(180deg,#fff, #fafbfc)
+      text-align:center;
+      padding:40px 24px;
+      border:2px dashed var(--border);
+      border-radius:12px;
+      color:var(--muted);
+      background:var(--soft);
+      font-size:15px;
     }
-    .wizard-steps{display:flex; gap:10px; flex-wrap:wrap}
-    .wizard-steps .step{
-      display:flex; align-items:center; gap:8px; padding:10px 12px; border-radius:12px; border:1px solid var(--border); background:var(--soft);
-      cursor:pointer;
+    .help-box{
+      background:#eff6ff;
+      border:1px solid #bfdbfe;
+      border-radius:10px;
+      padding:16px;
+      margin:16px 0;
+      font-size:14px;
+      color:#1e40af;
     }
-    .wizard-steps .step[data-active="true"]{border-color:#93c5fd; background:#eff6ff}
-    .help{font-size:13px; color:var(--muted)}
-    .foot-actions{display:flex; justify-content:space-between; gap:8px; padding-top:4px}
-    .pill{border-radius:999px}
-    .hidden{display:none !important}
+    .signature-section{
+      border-top:3px solid var(--border);
+      padding-top:24px;
+      margin-top:32px;
+    }
+    .signature-canvas{
+      border:2px solid var(--border);
+      border-radius:10px;
+      background:white;
+      cursor:crosshair;
+      touch-action:none;
+      width:100%;
+      max-width:500px;
+      height:200px;
+    }
+    .gps-optional{
+      background:#fef3c7;
+      border:1px solid #fde68a;
+      padding:12px;
+      border-radius:8px;
+      font-size:13px;
+      color:#92400e;
+      margin-top:8px;
+    }
+    @media print{
+      .toolbar, button, .no-print{display:none !important}
+    }
   </style>
 </head>
 <body>
-  <div class="container" role="application" aria-label="Checklist Pro">
-    <header class="appbar" aria-label="Header">
+  <div class="container">
+    <header class="appbar">
       <div class="brand">
-        <div class="logo" aria-hidden="true">CP</div>
-        <div>
-          <h1>Checklist Pro</h1>
-          <small class="muted">Simple, guided compliance checklists</small>
-        </div>
+        <h1>📋 Checklist Simples</h1>
+        <small>Ferramenta fácil para inspeções e auditorias</small>
       </div>
-      <div class="toolbar" role="toolbar" aria-label="Main actions">
-        <button id="btnStartNew" class="secondary" title="Start a new checklist">New checklist</button>
-        <button id="btnImport" class="ghost" title="Import from file">Import</button>
-        <button id="btnExport" class="" title="Export your data">Export</button>
+      <div class="toolbar no-print">
+        <button id="btnStartNew" class="secondary">🔄 Novo Checklist</button>
+        <button id="btnImport" class="secondary">📥 Importar</button>
+        <button id="btnExport">💾 Salvar/Exportar</button>
       </div>
     </header>
 
-    <main class="layout" id="app">
-      <!-- Left: Setup & Navigation -->
-      <section class="panel" aria-label="Setup">
-        <div class="hd">
-          <h2 style="margin:0;font-size:16px">Setup</h2>
+    <main id="app">
+      <!-- Etapa 1: Informações Básicas -->
+      <section id="sectionProfile" class="panel">
+        <h2>1️⃣ Informações Básicas</h2>
+        
+        <div class="form-group">
+          <label for="orgName">Nome da Empresa/Organização</label>
+          <input id="orgName" class="input" placeholder="Ex: Empresa ABC Ltda" />
         </div>
-        <div class="bd">
-          <div class="wizard-steps" role="tablist" aria-label="Checklist setup steps">
-            <div class="step" data-step="profile" data-active="true" role="tab" aria-selected="true" tabindex="0">
-              1. Profile
-            </div>
-            <div class="step" data-step="questions" role="tab" aria-selected="false" tabindex="-1">
-              2. Questions
-            </div>
-            <div class="step" data-step="run" role="tab" aria-selected="false" tabindex="-1">
-              3. Run
-            </div>
-            <div class="step" data-step="report" role="tab" aria-selected="false" tabindex="-1">
-              4. Report
-            </div>
-          </div>
 
-          <div id="panelProfile" class="setup-panel" style="margin-top:14px">
-            <div class="row">
-              <div>
-                <label for="orgName">Organization</label>
-                <input id="orgName" class="input" placeholder="e.g., ACME Foods Ltd." />
-              </div>
-              <div>
-                <label for="siteName">Site / Location</label>
-                <input id="siteName" class="input" placeholder="e.g., Plant 02 - North" />
-              </div>
-            </div>
-            <div class="row" style="margin-top:10px">
-              <div>
-                <label for="auditorName">Auditor</label>
-                <input id="auditorName" class="input" placeholder="Your name" />
-              </div>
-              <div>
-                <label for="datePlanned">Planned Date</label>
-                <input id="datePlanned" type="date" class="input" />
-              </div>
-            </div>
-            <div class="hr"></div>
-            <div class="split">
-              <div>
-                <div class="inline" aria-live="polite">
-                  <span class="chip" id="geoStatus">GPS not checked</span>
-                </div>
-                <div class="help">Enable GPS to validate presence on site</div>
-              </div>
-              <button id="btnGetGeo" class="secondary">Check GPS</button>
-            </div>
-          </div>
-
-          <div id="panelQuestions" class="setup-panel hidden" style="margin-top:14px">
-            <div class="split" style="justify-content:space-between">
-              <h3 style="margin:0; font-size:16px">Questions</h3>
-              <div class="inline">
-                <button id="btnAddQuestion" class="secondary">Add</button>
-                <button id="btnResetQuestions" class="ghost">Reset</button>
-              </div>
-            </div>
-            <div id="questionList" class="list" style="margin-top:10px" aria-live="polite"></div>
-            <div id="emptyQuestions" class="empty" role="status">
-              No questions yet. Click “Add” or use Import to load a template.
-            </div>
-          </div>
-
-          <div id="panelRun" class="setup-panel hidden" style="margin-top:14px">
-            <div class="split" style="justify-content:space-between">
-              <h3 style="margin:0; font-size:16px">Run Checklist</h3>
-              <div class="status" id="runStatus"></div>
-            </div>
-            <div id="runList" class="list" style="margin-top:10px"></div>
-          </div>
-
-          <div id="panelReport" class="setup-panel hidden" style="margin-top:14px">
-            <div class="split" style="justify-content:space-between">
-              <h3 style="margin:0; font-size:16px">Report</h3>
-              <div class="inline">
-                <button id="btnCopySummary" class="secondary">Copy Summary</button>
-                <button id="btnClearAll" class="ghost">Clear All</button>
-              </div>
-            </div>
-            <div id="reportBody" class="bd" style="padding:0; margin-top:10px">
-              <div class="empty">Run the checklist to generate a report.</div>
-            </div>
-          </div>
-
+        <div class="form-group">
+          <label for="siteName">Local da Inspeção</label>
+          <input id="siteName" class="input" placeholder="Ex: Fábrica - Setor Norte" />
         </div>
+
+        <div class="row">
+          <div class="form-group">
+            <label for="auditorName">Nome do Inspetor</label>
+            <input id="auditorName" class="input" placeholder="Seu nome completo" />
+          </div>
+          <div class="form-group">
+            <label for="datePlanned">Data da Inspeção</label>
+            <input id="datePlanned" type="date" class="input" />
+          </div>
+        </div>
+
+        <div class="help-box">
+          <strong>📍 Localização GPS (Opcional)</strong>
+          <p style="margin:8px 0 12px">O GPS ajuda a confirmar que você está no local, mas não é obrigatório. Alguns aparelhos antigos podem ter dificuldade.</p>
+          <button id="btnGetGeo" class="secondary">📍 Capturar Localização</button>
+          <div id="geoStatus" style="margin-top:12px"></div>
+        </div>
+
+        <button id="btnGoToQuestions" style="width:100%; margin-top:16px">Próximo: Perguntas ➡️</button>
       </section>
 
-      <!-- Right: Context panel -->
-      <section class="panel" aria-label="Context and Help">
-        <div class="hd">
-          <h2 style="margin:0;font-size:16px">Help & Tips</h2>
-          <span class="chip">Offline ready</span>
+      <!-- Etapa 2: Perguntas -->
+      <section id="sectionQuestions" class="panel hidden">
+        <h2>2️⃣ Perguntas do Checklist</h2>
+        
+        <div style="display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap">
+          <button id="btnAddQuestion" class="secondary">➕ Adicionar Pergunta</button>
+          <button id="btnLoadTemplate" class="secondary">📝 Carregar Modelo</button>
+          <button id="btnResetQuestions" class="secondary">🗑️ Limpar Tudo</button>
         </div>
-        <div class="bd">
-          <p class="muted" style="margin-top:0">
-            Keep it simple. Answer each question as Yes, No, or N/A. Add a note or photo when needed.
-          </p>
-          <ul>
-            <li>Use Import/Export to share templates with your team.</li>
-            <li>Tap Check GPS to confirm you are at the site.</li>
-            <li>All data stays on this device unless you export it.</li>
-          </ul>
-          <div class="hr"></div>
-          <details>
-            <summary><strong>Accessibility</strong></summary>
-            <p class="help">Keyboard: Tab/Shift+Tab to move, Enter to activate. Screen readers announce statuses and errors.</p>
-          </details>
-          <div class="hr"></div>
-          <details>
-            <summary><strong>Quick template</strong></summary>
-            <p class="help">Add a starter set of questions.</p>
-            <button id="btnLoadTemplate" class="secondary">Load sample template</button>
-          </details>
+
+        <div id="questionList"></div>
+        <div id="emptyQuestions" class="empty">
+          Nenhuma pergunta ainda.<br>Clique em "Adicionar Pergunta" ou "Carregar Modelo" para começar.
+        </div>
+
+        <button id="btnGoToRun" style="width:100%; margin-top:16px">Próximo: Responder ➡️</button>
+      </section>
+
+      <!-- Etapa 3: Responder -->
+      <section id="sectionRun" class="panel hidden">
+        <h2>3️⃣ Responder Checklist</h2>
+        
+        <div class="status" id="runStatus"></div>
+
+        <div id="runList"></div>
+
+        <button id="btnGoToReport" style="width:100%; margin-top:16px">Próximo: Relatório Final ➡️</button>
+      </section>
+
+      <!-- Etapa 4: Relatório -->
+      <section id="sectionReport" class="panel hidden">
+        <h2>4️⃣ Relatório Final</h2>
+        
+        <div id="reportBody"></div>
+
+        <!-- Seção de Assinatura -->
+        <div class="signature-section">
+          <h3 style="margin:0 0 20px; font-size:18px">✍️ Assinatura e Finalização</h3>
+          
+          <div class="row">
+            <div class="form-group">
+              <label for="signerName">Nome Completo</label>
+              <input id="signerName" class="input" placeholder="Nome de quem assina" />
+            </div>
+            <div class="form-group">
+              <label for="signerRole">Cargo/Função</label>
+              <input id="signerRole" class="input" placeholder="Ex: Supervisor de Qualidade" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Assinatura Digital</label>
+            <p style="color:var(--muted); font-size:14px; margin:8px 0">Desenhe sua assinatura abaixo usando o mouse ou dedo:</p>
+            <canvas id="signatureCanvas" class="signature-canvas"></canvas>
+            <button id="btnClearSignature" class="secondary" style="margin-top:10px">🗑️ Limpar Assinatura</button>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:10px; margin-top:24px; flex-wrap:wrap">
+          <button id="btnCopySummary" class="secondary">📋 Copiar Resumo</button>
+          <button id="btnPrint" class="secondary">🖨️ Imprimir</button>
+          <button id="btnBackToProfile">⬅️ Voltar ao Início</button>
         </div>
       </section>
     </main>
 
-    <!-- Hidden file inputs -->
     <input type="file" id="fileImport" accept=".json" class="hidden" />
-
-    <!-- Toasts -->
     <div class="toast" id="toast"></div>
   </div>
 
   <script>
-    // Simple state and persistence
-    const LS_KEY = 'checklist_pro_v1';
+    const LS_KEY = 'checklist_simples_v1';
     const $ = sel => document.querySelector(sel);
-    const $$ = sel => Array.from(document.querySelectorAll(sel));
     const state = {
       profile: { orgName:'', siteName:'', auditorName:'', datePlanned:'', geo:null },
       questions: [],
-      runs: {}, // qid -> {answer:'yes'|'no'|'na'|null, note:'', photo: dataURL|null}
+      runs: {},
+      signature: { name:'', role:'', data:null },
       createdAt: new Date().toISOString()
     };
 
+    // Carregar dados salvos
     function load(){
       try{
         const raw = localStorage.getItem(LS_KEY);
-        if(!raw) return;
-        const data = JSON.parse(raw);
-        Object.assign(state, data);
-      }catch(e){ console.warn('Load failed', e); }
+        if(raw){
+          const data = JSON.parse(raw);
+          Object.assign(state, data);
+        }
+      }catch(e){ console.warn('Erro ao carregar', e); }
     }
+
     function save(){
       localStorage.setItem(LS_KEY, JSON.stringify(state));
     }
 
-    // Toast system
+    // Sistema de notificações
     function toast(msg, type='info'){
       const t = document.createElement('div');
       t.className = 'item';
-      t.setAttribute('role','status');
-      t.innerHTML = `
-        <div style="font-weight:700">${type === 'error' ? 'Error' : type === 'success' ? 'Success' : 'Info'}</div>
-        <div style="flex:1">${msg}</div>
-        <button class="ghost" style="padding:6px 8px" aria-label="Dismiss">Close</button>
-      `;
+      t.textContent = msg;
       $('#toast').appendChild(t);
-      const close = t.querySelector('button');
-      const remove = () => t.remove();
-      close.addEventListener('click', remove);
-      setTimeout(remove, 4000);
+      setTimeout(() => t.remove(), 3000);
     }
 
-    // Wizard navigation
-    function setStep(step){
-      $$('.wizard-steps .step').forEach(el=>{
-        const active = el.dataset.step === step;
-        el.dataset.active = active ? 'true' : 'false';
-        el.setAttribute('aria-selected', active ? 'true':'false');
-        el.tabIndex = active ? 0 : -1;
+    // Navegação entre seções
+    function showSection(section){
+      ['sectionProfile','sectionQuestions','sectionRun','sectionReport'].forEach(s=>{
+        $(`#${s}`).classList.toggle('hidden', s !== section);
       });
-      $('#panelProfile').classList.toggle('hidden', step!=='profile');
-      $('#panelQuestions').classList.toggle('hidden', step!=='questions');
-      $('#panelRun').classList.toggle('hidden', step!=='run');
-      $('#panelReport').classList.toggle('hidden', step!=='report');
-      if(step==='questions') renderQuestions();
-      if(step==='run') renderRun();
-      if(step==='report') renderReport();
+      if(section === 'sectionQuestions') renderQuestions();
+      if(section === 'sectionRun') renderRun();
+      if(section === 'sectionReport') renderReport();
+      window.scrollTo(0,0);
     }
 
-    // IDs
-    function uid(){ return Math.random().toString(36).slice(2,9); }
-
-    // Profile bindings
+    // Vincular campos do perfil
     function bindProfile(){
-      const map = [
-        ['#orgName','orgName'],
-        ['#siteName','siteName'],
-        ['#auditorName','auditorName'],
-        ['#datePlanned','datePlanned'],
-      ];
-      map.forEach(([sel,key])=>{
-        const el = $(sel);
+      ['orgName','siteName','auditorName','datePlanned'].forEach(key=>{
+        const el = $(`#${key}`);
         el.value = state.profile[key] || '';
         el.addEventListener('input', ()=>{
           state.profile[key] = el.value;
@@ -364,382 +426,338 @@
       updateGeoStatus();
     }
 
-    // Geolocation
+    // GPS (menos rigoroso)
     async function getGeo(){
-      if(!('geolocation' in navigator)){
-        toast('Geolocation not supported on this device','error'); return;
-      }
       $('#btnGetGeo').disabled = true;
+      $('#geoStatus').innerHTML = '<span class="chip">🔄 Buscando localização...</span>';
+      
+      if(!('geolocation' in navigator)){
+        $('#geoStatus').innerHTML = '<div class="gps-optional">⚠️ Seu aparelho não suporta GPS. Tudo bem, você pode continuar sem ele!</div>';
+        $('#btnGetGeo').disabled = false;
+        return;
+      }
+
       try{
-        const pos = await new Promise((res, rej)=>navigator.geolocation.getCurrentPosition(res, rej, {enableHighAccuracy:true, timeout:10000}));
+        const pos = await new Promise((res, rej)=>
+          navigator.geolocation.getCurrentPosition(res, rej, {
+            enableHighAccuracy:false,
+            timeout:15000,
+            maximumAge:60000
+          })
+        );
         const {latitude, longitude, accuracy} = pos.coords;
         state.profile.geo = { latitude, longitude, accuracy, at: new Date().toISOString() };
         save();
         updateGeoStatus();
-        toast('GPS location captured','success');
+        toast('✅ Localização capturada!','success');
       }catch(err){
-        console.warn(err);
-        toast('Could not get GPS location. Check permissions and signal.','error');
+        $('#geoStatus').innerHTML = '<div class="gps-optional">⚠️ Não foi possível obter a localização. Tudo bem, você pode continuar sem ela!</div>';
+        toast('GPS não disponível, mas você pode continuar','info');
       }finally{
         $('#btnGetGeo').disabled = false;
       }
     }
+
     function updateGeoStatus(){
       const el = $('#geoStatus');
       if(state.profile.geo){
         const {latitude, longitude, accuracy} = state.profile.geo;
-        el.textContent = `GPS OK • ${latitude.toFixed(5)}, ${longitude.toFixed(5)} • ±${Math.round(accuracy)}m`;
-        el.className = 'chip';
-        el.style.background = '#ecfdf5';
-        el.style.borderColor = '#a7f3d0';
-        el.style.color = '#065f46';
+        el.innerHTML = `<span class="chip" data-variant="ok">✅ GPS: ${latitude.toFixed(4)}, ${longitude.toFixed(4)} (±${Math.round(accuracy)}m)</span>`;
       }else{
-        el.textContent = 'GPS not checked';
-        el.className = 'chip';
-        el.style = '';
+        el.innerHTML = '<span class="chip">📍 GPS não capturado (opcional)</span>';
       }
     }
 
-    // Questions CRUD
+    // Gerenciar perguntas
     function renderQuestions(){
       const list = $('#questionList');
       const empty = $('#emptyQuestions');
       list.innerHTML = '';
+      
       if(state.questions.length === 0){
         empty.classList.remove('hidden');
         return;
       }
       empty.classList.add('hidden');
 
-      state.questions.forEach(q=>{
+      state.questions.forEach((q, idx)=>{
         const card = document.createElement('div');
         card.className = 'card';
         card.innerHTML = `
-          <div class="grow">
-            <h4>${escapeHTML(q.text)}</h4>
-            <div class="inline">
-              <span class="tag ${q.category ? '' : 'pending'}">${q.category || 'Uncategorized'}</span>
-              <span class="tag pill">${q.weight ?? 1} pt</span>
-              ${q.requireEvidence ? '<span class="tag pending">Requires evidence</span>' : ''}
+          <div style="display:flex; justify-content:space-between; align-items:start; gap:12px">
+            <div style="flex:1">
+              <h4>${idx+1}. ${escapeHTML(q.text)}</h4>
+              <span class="tag">${escapeHTML(q.category||'Geral')}</span>
+            </div>
+            <div style="display:flex; gap:8px">
+              <button class="secondary" onclick="editQuestion('${q.id}')">✏️</button>
+              <button class="secondary" onclick="deleteQuestion('${q.id}')">🗑️</button>
             </div>
           </div>
-          <div class="inline">
-            <button class="secondary" aria-label="Edit question">Edit</button>
-            <button class="ghost" aria-label="Delete question">Delete</button>
-          </div>
         `;
-        const [btnEdit, btnDel] = card.querySelectorAll('button');
-        btnEdit.addEventListener('click', ()=> openQuestionEditor(q.id));
-        btnDel.addEventListener('click', ()=>{
-          if(confirm('Delete this question?')){
-            state.questions = state.questions.filter(x=>x.id!==q.id);
-            delete state.runs[q.id];
-            save();
-            renderQuestions();
-            toast('Question deleted','success');
-          }
-        });
         list.appendChild(card);
       });
     }
 
-    function openQuestionEditor(id=null){
-      const isNew = !id;
-      const q = isNew ? { id: uid(), text:'', category:'', weight:1, requireEvidence:false } : state.questions.find(x=>x.id===id);
-      const dlg = document.createElement('div');
-      dlg.role = 'dialog';
-      dlg.ariaModal = 'true';
-      dlg.style.position='fixed';
-      dlg.style.inset='0';
-      dlg.style.background='rgba(15,23,42,0.35)';
-      dlg.style.display='grid';
-      dlg.style.placeItems='center';
-      dlg.innerHTML = `
-        <div class="panel" style="max-width:600px; width:95%">
-          <div class="hd"><h3 style="margin:0;font-size:16px">${isNew?'Add':'Edit'} Question</h3></div>
-          <div class="bd">
-            <div>
-              <label for="qText">Question</label>
-              <textarea id="qText" class="input" rows="3" placeholder="Describe what should be checked..."></textarea>
-            </div>
-            <div class="row" style="margin-top:10px">
-              <div>
-                <label for="qCat">Category</label>
-                <input id="qCat" class="input" placeholder="e.g., Safety" />
-              </div>
-              <div>
-                <label for="qWeight">Weight (points)</label>
-                <input id="qWeight" type="number" min="1" max="10" step="1" class="input" />
-              </div>
-            </div>
-            <div class="inline" style="margin-top:10px">
-              <input id="qReq" type="checkbox" />
-              <label for="qReq" style="margin:0">Requires evidence (photo/note)</label>
-            </div>
-            <div class="foot-actions">
-              <button class="ghost" id="qCancel">Cancel</button>
-              <button id="qSave">Save</button>
-            </div>
-          </div>
-        </div>
-      `;
-      document.body.appendChild(dlg);
-      $('#qText', dlg)?.focus;
+    function uid(){ return Math.random().toString(36).slice(2,9); }
 
-      dlg.querySelector('#qText').value = q.text || '';
-      dlg.querySelector('#qCat').value = q.category || '';
-      dlg.querySelector('#qWeight').value = q.weight ?? 1;
-      dlg.querySelector('#qReq').checked = !!q.requireEvidence;
-
-      dlg.querySelector('#qCancel').addEventListener('click', ()=> dlg.remove());
-      dlg.querySelector('#qSave').addEventListener('click', ()=>{
-        const text = dlg.querySelector('#qText').value.trim();
-        const cat = dlg.querySelector('#qCat').value.trim();
-        const weight = clamp(parseInt(dlg.querySelector('#qWeight').value||'1',10),1,10);
-        const req = dlg.querySelector('#qReq').checked;
-        if(text.length < 3){ toast('Please enter a clear question','error'); return; }
-        q.text = text; q.category = cat; q.weight = weight; q.requireEvidence = req;
-
-        if(isNew) state.questions.push(q);
-        else state.questions = state.questions.map(x=> x.id===q.id ? q : x);
-
-        save();
-        renderQuestions();
-        dlg.remove();
-        toast(isNew?'Question added':'Question updated','success');
-      });
+    window.editQuestion = function(id){
+      const q = state.questions.find(x=>x.id===id) || { id: uid(), text:'', category:'' };
+      const text = prompt('Digite a pergunta:', q.text);
+      if(!text || text.trim().length < 3) return;
+      const category = prompt('Categoria (opcional):', q.category || '') || 'Geral';
+      
+      if(!state.questions.find(x=>x.id===id)){
+        state.questions.push({ id:q.id, text:text.trim(), category:category.trim() });
+      }else{
+        state.questions = state.questions.map(x=> x.id===id ? {...x, text:text.trim(), category:category.trim()} : x);
+      }
+      save();
+      renderQuestions();
+      toast('✅ Pergunta salva!');
     }
 
-    // Run checklist
+    window.deleteQuestion = function(id){
+      if(!confirm('Tem certeza que deseja excluir esta pergunta?')) return;
+      state.questions = state.questions.filter(x=>x.id!==id);
+      delete state.runs[id];
+      save();
+      renderQuestions();
+      toast('🗑️ Pergunta excluída');
+    }
+
+    // Responder checklist
     function renderRun(){
       const runList = $('#runList');
       const status = $('#runStatus');
       runList.innerHTML = '';
+      
       if(state.questions.length===0){
-        runList.innerHTML = `<div class="empty">No questions to run. Add questions first.</div>`;
+        runList.innerHTML = '<div class="empty">Adicione perguntas primeiro!</div>';
         status.innerHTML = '';
         return;
       }
 
-      // Progress
       const totals = computeProgress();
       status.innerHTML = `
-        <span class="chip" data-variant="ok">Yes: ${totals.yes}</span>
-        <span class="chip" data-variant="bad">No: ${totals.no}</span>
-        <span class="chip" data-variant="warn">N/A: ${totals.na}</span>
-        <span class="chip">Pending: ${totals.pending}</span>
-        <span class="chip">Score: ${totals.score}/${totals.max}</span>
+        <span class="chip" data-variant="ok">✅ Sim: ${totals.yes}</span>
+        <span class="chip" data-variant="bad">❌ Não: ${totals.no}</span>
+        <span class="chip" data-variant="warn">➖ N/A: ${totals.na}</span>
+        <span class="chip">⏳ Pendente: ${totals.pending}</span>
       `;
 
-      state.questions.forEach(q=>{
+      state.questions.forEach((q, idx)=>{
         const ans = state.runs[q.id] || {answer:null, note:'', photo:null};
         const card = document.createElement('div');
         card.className = 'card';
         card.innerHTML = `
-          <div class="grow">
-            <h4>${escapeHTML(q.text)}</h4>
-            <div class="inline" style="gap:6px; margin-top:6px">
-              <button class="pill ${ans.answer==='yes'?'':'secondary'}" data-a="yes">Yes</button>
-              <button class="pill ${ans.answer==='no'?'':'secondary'}" data-a="no">No</button>
-              <button class="pill ${ans.answer==='na'?'':'secondary'}" data-a="na">N/A</button>
-            </div>
-            <div class="row" style="margin-top:10px">
-              <div>
-                <label for="n_${q.id}">Note</label>
-                <input id="n_${q.id}" class="input" placeholder="Optional note" value="${escapeAttr(ans.note||'')}" />
-              </div>
-              <div>
-                <label for="p_${q.id}">Photo</label>
-                <input id="p_${q.id}" type="file" accept="image/*" capture="environment" class="input" />
-                ${ans.photo ? `<div style="margin-top:6px"><img alt="Evidence" style="max-width:100%; border-radius:8px; border:1px solid var(--border)" src="${ans.photo}"/></div>`:''}
-              </div>
-            </div>
-            ${q.requireEvidence ? `<div class="help" style="margin-top:6px">This item requires a note or a photo.</div>`:''}
+          <h4>${idx+1}. ${escapeHTML(q.text)}</h4>
+          <div class="answer-buttons">
+            <button class="${ans.answer==='yes'?'active':''}" data-a="yes" data-qid="${q.id}">✅ Sim</button>
+            <button class="${ans.answer==='no'?'active':''}" data-a="no" data-qid="${q.id}">❌ Não</button>
+            <button class="${ans.answer==='na'?'active':''}" data-a="na" data-qid="${q.id}">➖ N/A</button>
           </div>
-          <div class="inline">
-            <span class="tag ${ans.answer==='yes'?'ok':ans.answer==='no'?'no':ans.answer==='na'?'na':'pending'}">
-              ${ans.answer? ans.answer.toUpperCase() : 'PENDING'}
-            </span>
+          <div class="form-group">
+            <label>Observações (opcional)</label>
+            <textarea class="input" rows="2" placeholder="Adicione comentários se necessário" data-note="${q.id}">${escapeHTML(ans.note||'')}</textarea>
+          </div>
+          <div class="form-group">
+            <label>Foto (opcional)</label>
+            <input type="file" accept="image/*" capture="environment" class="input" data-photo="${q.id}" />
+            ${ans.photo ? `<img src="${ans.photo}" style="max-width:100%; margin-top:10px; border-radius:8px; border:1px solid var(--border)"/>` : ''}
           </div>
         `;
-        // Bindings
+        
         card.querySelectorAll('button[data-a]').forEach(b=>{
           b.addEventListener('click', ()=>{
-            const a = b.dataset.a;
-            setAnswer(q.id, a);
+            setAnswer(q.id, b.dataset.a);
             renderRun();
           });
         });
-        card.querySelector('#n_'+q.id).addEventListener('input', (e)=>{
-          const v = e.target.value;
-          ensureRun(q.id);
-          state.runs[q.id].note = v;
+        
+        card.querySelector(`[data-note="${q.id}"]`).addEventListener('input', (e)=>{
+          if(!state.runs[q.id]) state.runs[q.id] = {answer:null, note:'', photo:null};
+          state.runs[q.id].note = e.target.value;
           save();
         });
-        card.querySelector('#p_'+q.id).addEventListener('change', async (e)=>{
+        
+        card.querySelector(`[data-photo="${q.id}"]`).addEventListener('change', async (e)=>{
           const file = e.target.files?.[0];
-          if(!file){ return; }
+          if(!file) return;
           const dataURL = await fileToDataURL(file);
-          ensureRun(q.id);
+          if(!state.runs[q.id]) state.runs[q.id] = {answer:null, note:'', photo:null};
           state.runs[q.id].photo = dataURL;
           save();
-          toast('Photo attached','success');
+          toast('📷 Foto anexada!');
           renderRun();
         });
-
+        
         runList.appendChild(card);
       });
     }
 
-    function ensureRun(qid){
-      if(!state.runs[qid]) state.runs[qid] = {answer:null, note:'', photo:null};
-    }
-
     function setAnswer(qid, answer){
-      ensureRun(qid);
+      if(!state.runs[qid]) state.runs[qid] = {answer:null, note:'', photo:null};
       state.runs[qid].answer = answer;
       save();
-      // Validate required evidence
-      const q = state.questions.find(x=>x.id===qid);
-      if(q?.requireEvidence){
-        const r = state.runs[qid];
-        if(!(r.note?.trim() || r.photo)){
-          toast('Evidence is required for this item','error');
-        }
-      }
     }
 
     function computeProgress(){
-      let yes=0,no=0,na=0,pending=0,score=0,max=0;
+      let yes=0,no=0,na=0,pending=0;
       for(const q of state.questions){
-        const w = q.weight ?? 1;
-        max += w;
         const r = state.runs[q.id];
         if(!r || !r.answer){ pending++; continue; }
-        if(r.answer==='yes'){ yes++; score += w; }
-        else if(r.answer==='no'){ no++; }
-        else { na++; }
+        if(r.answer==='yes') yes++;
+        else if(r.answer==='no') no++;
+        else na++;
       }
-      return {yes,no,na,pending,score,max};
+      return {yes,no,na,pending};
     }
 
-    // Report
+    // Relatório
     function renderReport(){
       const wrap = $('#reportBody');
       const totals = computeProgress();
+      
       if(state.questions.length===0){
-        wrap.innerHTML = `<div class="empty">No data to report.</div>`;
+        wrap.innerHTML = '<div class="empty">Nenhum dado para exibir</div>';
         return;
       }
+
       const prof = state.profile;
-      const header = `
-        <div class="card" style="align-items:center">
-          <div class="grow">
-            <h4 style="margin:0">Summary</h4>
-            <small class="muted">Created: ${new Date(state.createdAt).toLocaleString()}</small>
-            <div class="hr"></div>
-            <div class="row">
-              <div>
-                <div><strong>Organization:</strong> ${escapeHTML(prof.orgName||'-')}</div>
-                <div><strong>Site:</strong> ${escapeHTML(prof.siteName||'-')}</div>
-                <div><strong>Auditor:</strong> ${escapeHTML(prof.auditorName||'-')}</div>
-              </div>
-              <div>
-                <div><strong>Planned date:</strong> ${escapeHTML(prof.datePlanned||'-')}</div>
-                <div><strong>GPS:</strong> ${prof.geo ? `${prof.geo.latitude.toFixed(5)}, ${prof.geo.longitude.toFixed(5)} (±${Math.round(prof.geo.accuracy)}m)` : 'not verified'}</div>
-                <div><strong>Score:</strong> ${totals.score}/${totals.max}</div>
-              </div>
+      let html = `
+        <div class="card">
+          <h3 style="margin:0 0 16px; color:var(--primary)">📊 Resumo da Inspeção</h3>
+          <div class="row">
+            <div>
+              <p><strong>Empresa:</strong> ${escapeHTML(prof.orgName||'-')}</p>
+              <p><strong>Local:</strong> ${escapeHTML(prof.siteName||'-')}</p>
+              <p><strong>Inspetor:</strong> ${escapeHTML(prof.auditorName||'-')}</p>
+            </div>
+            <div>
+              <p><strong>Data:</strong> ${escapeHTML(prof.datePlanned||'-')}</p>
+              <p><strong>GPS:</strong> ${prof.geo ? `${prof.geo.latitude.toFixed(4)}, ${prof.geo.longitude.toFixed(4)}` : 'Não capturado'}</p>
+              <p><strong>Criado em:</strong> ${new Date(state.createdAt).toLocaleString('pt-BR')}</p>
             </div>
           </div>
           <div class="status">
-            <span class="chip" data-variant="ok">Yes ${totals.yes}</span>
-            <span class="chip" data-variant="bad">No ${totals.no}</span>
-            <span class="chip" data-variant="warn">N/A ${totals.na}</span>
-            <span class="chip">Pending ${totals.pending}</span>
+            <span class="chip" data-variant="ok">✅ ${totals.yes}</span>
+            <span class="chip" data-variant="bad">❌ ${totals.no}</span>
+            <span class="chip" data-variant="warn">➖ ${totals.na}</span>
+            <span class="chip">⏳ ${totals.pending}</span>
           </div>
         </div>
       `;
-      const items = state.questions.map(q=>{
+
+      state.questions.forEach((q, idx)=>{
         const r = state.runs[q.id] || {};
         const ans = r.answer || 'pending';
         const tagC = ans==='yes'?'ok':ans==='no'?'no':ans==='na'?'na':'pending';
-        return `
+        const emoji = ans==='yes'?'✅':ans==='no'?'❌':ans==='na'?'➖':'⏳';
+        
+        html += `
           <div class="card">
-            <div class="grow">
-              <h4>${escapeHTML(q.text)}</h4>
-              <div class="inline" style="gap:6px; margin-bottom:8px">
-                <span class="tag ${tagC}">${ans.toUpperCase()}</span>
-                <span class="tag">${escapeHTML(q.category||'Uncategorized')}</span>
-                <span class="tag pill">${q.weight ?? 1} pt</span>
-                ${q.requireEvidence ? '<span class="tag pending">Requires evidence</span>' : ''}
-              </div>
-              ${r.note ? `<div><strong>Note:</strong> ${escapeHTML(r.note)}</div>` : ''}
-              ${r.photo ? `<div style="margin-top:8px"><img alt="Evidence" style="max-width:100%; border-radius:8px; border:1px solid var(--border)" src="${r.photo}"/></div>`:''}
-            </div>
+            <h4>${idx+1}. ${escapeHTML(q.text)}</h4>
+            <p><span class="tag ${tagC}">${emoji} ${ans.toUpperCase()}</span> <span class="tag">${escapeHTML(q.category||'Geral')}</span></p>
+            ${r.note ? `<p><strong>Observação:</strong> ${escapeHTML(r.note)}</p>` : ''}
+            ${r.photo ? `<img src="${r.photo}" style="max-width:100%; margin-top:10px; border-radius:8px; border:1px solid var(--border)"/>` : ''}
           </div>
         `;
-      }).join('');
+      });
 
-      wrap.innerHTML = header + items;
+      // Mostrar assinatura se existir
+      if(state.signature.data){
+        html += `
+          <div class="card">
+            <h4>✍️ Assinatura</h4>
+            <p><strong>Nome:</strong> ${escapeHTML(state.signature.name||'-')}</p>
+            <p><strong>Cargo:</strong> ${escapeHTML(state.signature.role||'-')}</p>
+            <img src="${state.signature.data}" style="max-width:400px; border:1px solid var(--border); border-radius:8px; margin-top:10px"/>
+          </div>
+        `;
+      }
+
+      wrap.innerHTML = html;
+      
+      // Vincular campos de assinatura
+      $('#signerName').value = state.signature.name || '';
+      $('#signerRole').value = state.signature.role || '';
+      
+      $('#signerName').addEventListener('input', (e)=>{
+        state.signature.name = e.target.value;
+        save();
+      });
+      
+      $('#signerRole').addEventListener('input', (e)=>{
+        state.signature.role = e.target.value;
+        save();
+      });
+      
+      initSignature();
     }
 
-    // Import / Export
-    function doExport(){
-      const blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
-      const a = document.createElement('a');
-      const date = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
-      a.href = URL.createObjectURL(blob);
-      a.download = `checklist_export_${date}.json`;
-      a.click();
-      toast('Export started','success');
-    }
-    function doImport(file){
-      const reader = new FileReader();
-      reader.onload = ()=>{
-        try{
-          const data = JSON.parse(reader.result);
-          // Basic validation
-          if(!data || typeof data!=='object' || !Array.isArray(data.questions)){
-            throw new Error('Invalid file');
-          }
-          // Keep current createdAt if missing
-          Object.assign(state, {
-            profile: data.profile || state.profile,
-            questions: data.questions || [],
-            runs: data.runs || {},
-            createdAt: data.createdAt || new Date().toISOString()
-          });
+    // Canvas de assinatura
+    function initSignature(){
+      const canvas = $('#signatureCanvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = canvas.offsetWidth;
+      canvas.height = 200;
+      
+      let drawing = false;
+      
+      function startDrawing(e){
+        drawing = true;
+        const rect = canvas.getBoundingClientRect();
+        const x = (e.clientX || e.touches[0].clientX) - rect.left;
+        const y = (e.clientY || e.touches[0].clientY) - rect.top;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+      }
+      
+      function draw(e){
+        if(!drawing) return;
+        e.preventDefault();
+        const rect = canvas.getBoundingClientRect();
+        const x = (e.clientX || e.touches[0].clientX) - rect.left;
+        const y = (e.clientY || e.touches[0].clientY) - rect.top;
+        ctx.lineTo(x, y);
+        ctx.strokeStyle = '#0f172a';
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+      }
+      
+      function stopDrawing(){
+        if(drawing){
+          drawing = false;
+          state.signature.data = canvas.toDataURL();
           save();
-          bindProfile();
-          renderQuestions();
-          renderRun();
-          renderReport();
-          toast('Import successful','success');
-        }catch(e){
-          console.warn(e);
-          toast('Import failed. Make sure it is a valid export file.','error');
         }
-      };
-      reader.readAsText(file);
+      }
+      
+      canvas.addEventListener('mousedown', startDrawing);
+      canvas.addEventListener('mousemove', draw);
+      canvas.addEventListener('mouseup', stopDrawing);
+      canvas.addEventListener('touchstart', startDrawing);
+      canvas.addEventListener('touchmove', draw);
+      canvas.addEventListener('touchend', stopDrawing);
+      
+      $('#btnClearSignature').addEventListener('click', ()=>{
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        state.signature.data = null;
+        save();
+        toast('🗑️ Assinatura limpa');
+      });
+      
+      // Restaurar assinatura se existir
+      if(state.signature.data){
+        const img = new Image();
+        img.onload = ()=> ctx.drawImage(img, 0, 0);
+        img.src = state.signature.data;
+      }
     }
 
-    // Template
-    function loadSampleTemplate(){
-      if(state.questions.length>0 && !confirm('Replace current questions with a sample template?')) return;
-      state.questions = [
-        { id: uid(), text:'Emergency exits are accessible and unblocked', category:'Safety', weight:2, requireEvidence:false },
-        { id: uid(), text:'Fire extinguishers are inspected and tagged within the last 12 months', category:'Safety', weight:3, requireEvidence:true },
-        { id: uid(), text:'PPE available and used by all staff in production area', category:'Operations', weight:2, requireEvidence:true },
-        { id: uid(), text:'Food storage temperatures are within compliant range', category:'Quality', weight:3, requireEvidence:true },
-        { id: uid(), text:'Visitor log maintained and up to date', category:'Compliance', weight:1, requireEvidence:false },
-      ];
-      state.runs = {};
-      save();
-      renderQuestions();
-      toast('Sample template loaded','success');
-    }
-
-    // Utilities
+    // Utilitários
     function fileToDataURL(file){
       return new Promise((res, rej)=>{
         const r = new FileReader();
@@ -748,84 +766,132 @@
         r.readAsDataURL(file);
       });
     }
-    function escapeHTML(s){ return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-    function escapeAttr(s){ return escapeHTML(s).replace(/"/g,'&quot;'); }
-    function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
 
-    // Clear all
-    function clearAll(){
-      if(!confirm('This will erase all data on this device for Checklist Pro. Continue?')) return;
-      localStorage.removeItem(LS_KEY);
-      // reset state
-      state.profile = { orgName:'', siteName:'', auditorName:'', datePlanned:'', geo:null };
-      state.questions = [];
+    function escapeHTML(s){
+      return (s||'').replace(/[&<>"']/g, c => ({'&':'&','<':'<','>':'>','"':'"',"'":'''}[c]));
+    }
+
+    // Exportar/Importar
+    function doExport(){
+      const blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
+      const a = document.createElement('a');
+      const date = new Date().toISOString().slice(0,10);
+      a.href = URL.createObjectURL(blob);
+      a.download = `checklist_${date}.json`;
+      a.click();
+      toast('💾 Arquivo salvo!');
+    }
+
+    function doImport(file){
+      const reader = new FileReader();
+      reader.onload = ()=>{
+        try{
+          const data = JSON.parse(reader.result);
+          if(!data || !Array.isArray(data.questions)){
+            throw new Error('Arquivo inválido');
+          }
+          Object.assign(state, data);
+          save();
+          bindProfile();
+          toast('📥 Importado com sucesso!');
+          showSection('sectionProfile');
+        }catch(e){
+          toast('❌ Erro ao importar arquivo','error');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // Template de exemplo
+    function loadSampleTemplate(){
+      if(state.questions.length>0 && !confirm('Substituir perguntas atuais?')) return;
+      state.questions = [
+        { id: uid(), text:'As saídas de emergência estão desobstruídas?', category:'Segurança' },
+        { id: uid(), text:'Os extintores estão dentro da validade?', category:'Segurança' },
+        { id: uid(), text:'Os EPIs estão disponíveis e em bom estado?', category:'Segurança' },
+        { id: uid(), text:'A área de trabalho está limpa e organizada?', category:'Organização' },
+        { id: uid(), text:'Os equipamentos estão funcionando corretamente?', category:'Operação' },
+      ];
       state.runs = {};
-      state.createdAt = new Date().toISOString();
-      bindProfile();
+      save();
       renderQuestions();
-      renderRun();
-      renderReport();
-      setStep('profile');
-      toast('All data cleared','success');
+      toast('📝 Modelo carregado!');
     }
 
-    // Events
-    function bindEvents(){
-      // Wizard click
-      $$('.wizard-steps .step').forEach(step=>{
-        step.addEventListener('click', ()=> setStep(step.dataset.step));
-        step.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' ') setStep(step.dataset.step); });
-      });
-      $('#btnGetGeo').addEventListener('click', getGeo);
-      $('#btnAddQuestion').addEventListener('click', ()=> openQuestionEditor(null));
-      $('#btnResetQuestions').addEventListener('click', ()=>{
-        if(confirm('Remove all questions?')){
-          state.questions = [];
-          state.runs = {};
-          save();
-          renderQuestions();
-        }
-      });
-      $('#btnStartNew').addEventListener('click', ()=>{
-        if(confirm('Start a new checklist? Current answers will be cleared.')){
-          state.runs = {};
-          state.createdAt = new Date().toISOString();
-          save();
-          setStep('questions');
-          renderRun();
-          toast('New checklist started','success');
-        }
-      });
-      $('#btnExport').addEventListener('click', doExport);
-      $('#btnImport').addEventListener('click', ()=> $('#fileImport').click());
-      $('#fileImport').addEventListener('change', (e)=>{
-        const f = e.target.files?.[0];
-        if(f) doImport(f);
-        e.target.value = '';
-      });
-      $('#btnCopySummary').addEventListener('click', ()=>{
-        const totals = computeProgress();
-        const prof = state.profile;
-        const txt = [
-          `Checklist Summary`,
-          `Org: ${prof.orgName||'-'} | Site: ${prof.siteName||'-'} | Auditor: ${prof.auditorName||'-'} | Date: ${prof.datePlanned||'-'}`,
-          `GPS: ${prof.geo ? `${prof.geo.latitude.toFixed(5)}, ${prof.geo.longitude.toFixed(5)} (±${Math.round(prof.geo.accuracy)}m)` : 'not verified'}`,
-          `Score: ${totals.score}/${totals.max} (Yes: ${totals.yes}, No: ${totals.no}, N/A: ${totals.na}, Pending: ${totals.pending})`,
-        ].join('\n');
-        navigator.clipboard.writeText(txt).then(()=> toast('Summary copied','success')).catch(()=> toast('Copy failed','error'));
-      });
-      $('#btnClearAll').addEventListener('click', clearAll);
-      $('#btnLoadTemplate').addEventListener('click', loadSampleTemplate);
-    }
+    // Eventos
+    $('#btnGoToQuestions').addEventListener('click', ()=> showSection('sectionQuestions'));
+    $('#btnGoToRun').addEventListener('click', ()=> showSection('sectionRun'));
+    $('#btnGoToReport').addEventListener('click', ()=> showSection('sectionReport'));
+    $('#btnBackToProfile').addEventListener('click', ()=> showSection('sectionProfile'));
+    
+    $('#btnGetGeo').addEventListener('click', getGeo);
+    $('#btnAddQuestion').addEventListener('click', ()=> editQuestion(uid()));
+    $('#btnLoadTemplate').addEventListener('click', loadSampleTemplate);
+    $('#btnResetQuestions').addEventListener('click', ()=>{
+      if(confirm('Limpar todas as perguntas?')){
+        state.questions = [];
+        state.runs = {};
+        save();
+        renderQuestions();
+        toast('🗑️ Perguntas limpas');
+      }
+    });
+    
+    $('#btnStartNew').addEventListener('click', ()=>{
+      if(confirm('Iniciar novo checklist? As respostas atuais serão apagadas.')){
+        state.runs = {};
+        state.signature = { name:'', role:'', data:null };
+        state.createdAt = new Date().toISOString();
+        save();
+        showSection('sectionProfile');
+        toast('🔄 Novo checklist iniciado!');
+      }
+    });
+    
+    $('#btnExport').addEventListener('click', doExport);
+    $('#btnImport').addEventListener('click', ()=> $('#fileImport').click());
+    $('#fileImport').addEventListener('change', (e)=>{
+      const f = e.target.files?.[0];
+      if(f) doImport(f);
+      e.target.value = '';
+    });
+    
+    $('#btnCopySummary').addEventListener('click', ()=>{
+      const totals = computeProgress();
+      const prof = state.profile;
+      const txt = `
+CHECKLIST - RESUMO
+==================
+Empresa: ${prof.orgName||'-'}
+Local: ${prof.siteName||'-'}
+Inspetor: ${prof.auditorName||'-'}
+Data: ${prof.datePlanned||'-'}
+GPS: ${prof.geo ? `${prof.geo.latitude.toFixed(4)}, ${prof.geo.longitude.toFixed(4)}` : 'Não capturado'}
 
-    // Init
+RESULTADOS:
+✅ Sim: ${totals.yes}
+❌ Não: ${totals.no}
+➖ N/A: ${totals.na}
+⏳ Pendente: ${totals.pending}
+
+Assinado por: ${state.signature.name||'-'} (${state.signature.role||'-'})
+      `.trim();
+      navigator.clipboard.writeText(txt).then(()=> toast('📋 Resumo copiado!')).catch(()=> toast('❌ Erro ao copiar'));
+    });
+    
+    $('#btnPrint').addEventListener('click', ()=> window.print());
+
+    // Inicializar
     load();
     bindProfile();
-    renderQuestions();
-    renderRun();
-    renderReport();
-    bindEvents();
-    setStep('profile');
+    showSection('sectionProfile');
+    
+    // Definir data de hoje como padrão
+    if(!state.profile.datePlanned){
+      $('#datePlanned').value = new Date().toISOString().slice(0,10);
+      state.profile.datePlanned = $('#datePlanned').value;
+      save();
+    }
   </script>
 </body>
 </html>
