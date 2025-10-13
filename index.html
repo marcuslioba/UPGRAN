@@ -188,13 +188,32 @@
         setMsg('Conjunto excluído: ' + name);
       };
 
-      // exportar relatório em PDF (relatório está no componente RelatorioFinal — buscamos pelo id)
-      const exportarPDF = async () => {
-        const element = document.getElementById('relatorio-root');
-        if (!element) return alert('Relatório não disponível.');
-        const opt = { margin:0.3, filename: (loja.nome || 'relatorio') + '.pdf', image:{type:'jpeg', quality:0.95}, html2canvas:{scale:1.6}, jsPDF:{unit:'in', format:'a4', orientation:'portrait'} };
-        html2pdf().set(opt).from(element).save();
-      };
+const exportarPDF = async () => {
+  const element = document.getElementById('relatorio-root');
+  if (!element) {
+    alert('Relatório não encontrado na página.');
+    return;
+  }
+
+  // Aguarda um pequeno tempo para garantir que o layout foi renderizado
+  await new Promise(resolve => setTimeout(resolve, 300));
+
+  const opt = {
+    margin: [0.4, 0.3, 0.4, 0.3],
+    filename: (loja.nome || 'relatorio') + '.pdf',
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true },
+    jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+  };
+
+  try {
+    const worker = html2pdf().set(opt).from(element);
+    await worker.save();
+  } catch (err) {
+    console.error('Erro ao gerar PDF:', err);
+    alert('Erro ao gerar o PDF. Tente novamente.');
+  }
+};
 
       // UI de mensagens temporárias
       useEffect(() => {
@@ -649,10 +668,20 @@
             </div>
           </div>
 
-          <div className="mt-4 flex gap-3">
-            <button onClick={exportarPDF} className="bg-indigo-600 text-white px-4 py-2 rounded">Exportar PDF</button>
-            <button onClick={reiniciar} className="bg-gray-200 px-4 py-2 rounded">Novo Checklist</button>
-          </div>
+<div className="mt-4 flex gap-3 no-print">
+  <button
+    onClick={exportarPDF}
+    className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 transition"
+  >
+    <i className="fas fa-file-pdf mr-2"></i>Salvar em PDF
+  </button>
+  <button
+    onClick={reiniciar}
+    className="bg-gray-200 px-4 py-2 rounded hover:bg-gray-300 transition"
+  >
+    <i className="fas fa-redo mr-2"></i>Novo Checklist
+  </button>
+</div>
         </div>
       );
     }
@@ -674,3 +703,4 @@
   </script>
 </body>
 </html>
+
