@@ -1,1299 +1,831 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
+<!doctype html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-  <meta name="theme-color" content="#2563eb"/>
-  <title>Checklist Auditoria Pro</title>
-  <meta name="description" content="Sistema profissional de checklist com geolocalização, evidências fotográficas e relatórios completos." />
-  
-  <!-- PWA -->
-  <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiQ2hlY2tsaXN0IEF1ZGl0b3JpYSBQcm8iLCJzaG9ydF9uYW1lIjoiQ2hlY2tsaXN0Iiwic3RhcnRfdXJsIjoiLiIsImRpc3BsYXkiOiJzdGFuZGFsb25lIiwiYmFja2dyb3VuZF9jb2xvciI6IiNmZmZmZmYiLCJ0aGVtZV9jb2xvciI6IiMyNTYzZWIiLCJpY29ucyI6W3sic3JjIjoiZGF0YTppbWFnZS9zdmcreG1sLCUzQ3N2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAxMDAgMTAwJyUzRSUzQ3RleHQgeT0nLjllbScgZm9udC1zaXplPSc5MCclM0UlRjAlOUYlOTMlOEIlM0MvdGV4dCUzRSUzQy9zdmclM0UiLCJzaXplcyI6IjUxMng1MTIiLCJ0eXBlIjoiaW1hZ2Uvc3ZnK3htbCJ9XX0=">
-  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E📋%3C/text%3E%3C/svg%3E">
-
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  
-  <script src="https://unpkg.com/react@17/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
+  <meta charset="utf-8" />
+  <title>Checklist Pro — Simple Compliance Tool</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light dark" />
   <style>
-    * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
-    
-    body { 
-      -webkit-font-smoothing: antialiased; 
-      -moz-osx-font-smoothing: grayscale;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      min-height: 100vh;
+    :root{
+      --bg:#f7f9fb;
+      --panel:#ffffff;
+      --ink:#0f172a;
+      --muted:#5b667a;
+      --primary:#2563eb;
+      --primary-ink:#ffffff;
+      --success:#16a34a;
+      --warn:#d97706;
+      --danger:#dc2626;
+      --border:#e5e7eb;
+      --soft:#f1f5f9;
+      --focus:#93c5fd;
+      --shadow:0 8px 24px rgba(15,23,42,0.08);
+      --radius:14px;
+      --radius-sm:10px;
+      --radius-xs:8px;
     }
-    
-    /* Utilitários de acessibilidade */
-    .sr-only { 
-      position: absolute; 
-      width: 1px; 
-      height: 1px; 
-      padding: 0; 
-      margin: -1px; 
-      overflow: hidden; 
-      clip: rect(0,0,0,0); 
-      white-space: nowrap; 
-      border: 0; 
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      color:var(--ink);
+      background:linear-gradient(180deg,#f7f9fb 0%, #eef2f7 100%);
     }
-    
-    /* Toast notifications */
-    .toast {
-      position: fixed; 
-      right: 16px; 
-      bottom: 16px; 
-      z-index: 9999;
-      background: #111827; 
-      color: #fff; 
-      padding: 12px 16px; 
-      border-radius: 8px; 
-      box-shadow: 0 10px 25px rgba(0,0,0,.2);
-      display: flex; 
-      gap: 10px; 
-      align-items: center; 
-      font-size: 14px;
-      animation: slideIn 0.3s ease-out;
-      max-width: 90vw;
+    .container{
+      max-width:1100px;
+      margin:32px auto;
+      padding:0 16px;
     }
-    .toast-success { background: #065f46; }
-    .toast-error { background: #991b1b; }
-    .toast-warning { background: #92400e; }
-    
-    @keyframes slideIn {
-      from { transform: translateX(400px); opacity: 0; }
-      to { transform: translateX(0); opacity: 1; }
+    header.appbar{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:16px; padding:16px 18px; background:var(--panel); border:1px solid var(--border);
+      border-radius:var(--radius); box-shadow:var(--shadow); position:sticky; top:12px; z-index:20;
+      backdrop-filter:saturate(1.2) blur(6px);
     }
-    
-    /* Badge component */
-    .badge { 
-      display: inline-block; 
-      padding: 3px 10px; 
-      border-radius: 9999px; 
-      font-size: 11px; 
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+    .brand{display:flex; align-items:center; gap:12px}
+    .logo{
+      width:36px; height:36px; border-radius:10px; display:grid; place-items:center;
+      background:linear-gradient(135deg, #2563eb, #60a5fa); color:white; font-weight:800;
+      letter-spacing:0.5px;
+      box-shadow:0 6px 18px rgba(37,99,235,0.35);
     }
-    
-    /* Wizard steps */
-    .wizard-step {
-      position: relative;
-      flex: 1;
-      display: flex;
-      align-items: center;
-      gap: 8px;
+    .brand h1{font-size:18px; margin:0;}
+    .brand small{color:var(--muted)}
+    .toolbar{display:flex; gap:8px; flex-wrap:wrap}
+    button, .btn{
+      appearance:none; border:none; background:var(--primary); color:var(--primary-ink);
+      padding:10px 14px; border-radius:12px; font-weight:600; cursor:pointer;
+      box-shadow:0 6px 16px rgba(37,99,235,0.25);
     }
-    
-    .wizard-step-circle {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
-      font-size: 14px;
-      transition: all 0.3s;
-      flex-shrink: 0;
+    button.secondary{
+      background:var(--soft); color:var(--ink); box-shadow:none; border:1px solid var(--border);
     }
-    
-    .wizard-step-line {
-      flex: 1;
-      height: 3px;
-      background: #e5e7eb;
-      transition: all 0.3s;
+    button.ghost{
+      background:transparent; color:var(--ink); box-shadow:none; border:1px solid var(--border);
     }
-    
-    .wizard-step.active .wizard-step-circle {
-      background: #2563eb;
-      color: white;
-      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2);
+    button:disabled{opacity:.6; cursor:not-allowed}
+    button:focus-visible, .input:focus-visible, select:focus-visible, textarea:focus-visible{
+      outline:3px solid var(--focus); outline-offset:2px;
     }
-    
-    .wizard-step.completed .wizard-step-circle {
-      background: #10b981;
-      color: white;
+    .layout{
+      display:grid; grid-template-columns: 280px 1fr; gap:16px; margin-top:16px;
     }
-    
-    .wizard-step.completed .wizard-step-line {
-      background: #10b981;
+    @media (max-width: 900px){
+      .layout{grid-template-columns:1fr}
     }
-    
-    .wizard-step.inactive .wizard-step-circle {
-      background: #e5e7eb;
-      color: #9ca3af;
+    .panel{
+      background:var(--panel); border:1px solid var(--border); border-radius:var(--radius);
+      box-shadow:var(--shadow);
     }
-    
-    /* Botões com estados melhorados */
-    .btn {
-      transition: all 0.2s;
-      font-weight: 600;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
+    .panel .hd{
+      padding:16px 16px 0; display:flex; align-items:center; justify-content:space-between; gap:8px;
     }
-    
-    .btn:active:not(:disabled) {
-      transform: scale(0.98);
+    .panel .bd{padding:16px}
+    .muted{color:var(--muted)}
+    .input, select, textarea{
+      width:100%; padding:10px 12px; border-radius:12px; border:1px solid var(--border);
+      background:white; color:var(--ink);
     }
-    
-    .btn:focus {
-      outline: 2px solid;
-      outline-offset: 2px;
+    label{font-weight:600; display:block; margin-bottom:6px}
+    .row{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+    @media (max-width:700px){ .row{grid-template-columns:1fr} }
+    .chip{
+      display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px;
+      border:1px solid var(--border); background:var(--soft); color:var(--muted); font-size:12px;
     }
-    
-    /* Cards com elevação */
-    .card {
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      transition: box-shadow 0.2s;
+    .status{display:flex; gap:8px; flex-wrap:wrap}
+    .status .chip[data-variant="ok"]{background:#ecfdf5; color:#065f46; border-color:#a7f3d0}
+    .status .chip[data-variant="warn"]{background:#fffbeb; color:#92400e; border-color:#fde68a}
+    .status .chip[data-variant="bad"]{background:#fef2f2; color:#991b1b; border-color:#fecaca}
+    .list{display:flex; flex-direction:column; gap:10px}
+    .card{
+      border:1px solid var(--border); border-radius:14px; padding:12px; background:white;
+      display:flex; gap:12px; align-items:flex-start;
     }
-    
-    .card:hover {
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    .card .grow{flex:1}
+    .card h4{margin:0 0 6px; font-size:15px}
+    .card small{color:var(--muted)}
+    .split{display:flex; align-items:center; gap:8px; flex-wrap:wrap}
+    .tag{padding:3px 8px; border-radius:999px; font-size:12px; border:1px solid var(--border); background:var(--soft)}
+    .tag.ok{background:#ecfdf5; color:#065f46; border-color:#a7f3d0}
+    .tag.na{background:#eef2ff; color:#3730a3; border-color:#c7d2fe}
+    .tag.no{background:#fef2f2; color:#991b1b; border-color:#fecaca}
+    .tag.pending{background:#eff6ff; color:#1e40af; border-color:#bfdbfe}
+    .inline{display:flex; gap:8px; align-items:center}
+    .hr{height:1px; background:var(--border); margin:12px 0}
+    .toast{
+      position:fixed; right:16px; bottom:16px; display:flex; flex-direction:column; gap:8px; z-index:50;
     }
-    
-    /* Input com foco melhorado */
-    input:focus, select:focus, textarea:focus {
-      outline: none;
-      ring: 2px;
-      border-color: #2563eb;
+    .toast .item{
+      background:var(--ink); color:white; padding:10px 12px; border-radius:12px; box-shadow:var(--shadow);
+      display:flex; gap:10px; align-items:flex-start; max-width:360px;
     }
-    
-    /* Animação de loading */
-    .spinner {
-      border: 3px solid rgba(255,255,255,0.3);
-      border-top-color: white;
-      border-radius: 50%;
-      width: 20px;
-      height: 20px;
-      animation: spin 0.8s linear infinite;
+    .kbd{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size:12px; background:#0f172a; color:#e2e8f0; padding:2px 6px; border-radius:6px}
+    .empty{
+      text-align:center; padding:24px; border:1px dashed var(--border); border-radius:12px; color:var(--muted); background:linear-gradient(180deg,#fff, #fafbfc)
     }
-    
-    @keyframes spin {
-      to { transform: rotate(360deg); }
+    .wizard-steps{display:flex; gap:10px; flex-wrap:wrap}
+    .wizard-steps .step{
+      display:flex; align-items:center; gap:8px; padding:10px 12px; border-radius:12px; border:1px solid var(--border); background:var(--soft);
+      cursor:pointer;
     }
-    
-    /* Print styles */
-    @media print {
-      .no-print { display: none !important; }
-      body { 
-        -webkit-print-color-adjust: exact; 
-        print-color-adjust: exact;
-        background: white !important;
-      }
-      .card { box-shadow: none; border: 1px solid #e5e7eb; }
-    }
-    
-    /* Responsividade melhorada */
-    @media (max-width: 640px) {
-      .wizard-step-label { display: none; }
-      .toast { right: 8px; bottom: 8px; font-size: 13px; }
-    }
-    
-    /* Tooltip simples */
-    .tooltip {
-      position: relative;
-      display: inline-block;
-    }
-    
-    .tooltip .tooltiptext {
-      visibility: hidden;
-      width: 200px;
-      background-color: #1f2937;
-      color: #fff;
-      text-align: center;
-      border-radius: 6px;
-      padding: 8px;
-      position: absolute;
-      z-index: 1;
-      bottom: 125%;
-      left: 50%;
-      margin-left: -100px;
-      opacity: 0;
-      transition: opacity 0.3s;
-      font-size: 12px;
-    }
-    
-    .tooltip:hover .tooltiptext {
-      visibility: visible;
-      opacity: 1;
-    }
-    
-    /* Melhorias de contraste */
-    .text-muted { color: #6b7280; }
-    .text-success { color: #059669; }
-    .text-error { color: #dc2626; }
-    .text-warning { color: #d97706; }
-    
-    /* Skeleton loading */
-    .skeleton {
-      background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
-      background-size: 200% 100%;
-      animation: loading 1.5s infinite;
-    }
-    
-    @keyframes loading {
-      0% { background-position: 200% 0; }
-      100% { background-position: -200% 0; }
-    }
+    .wizard-steps .step[data-active="true"]{border-color:#93c5fd; background:#eff6ff}
+    .help{font-size:13px; color:var(--muted)}
+    .foot-actions{display:flex; justify-content:space-between; gap:8px; padding-top:4px}
+    .pill{border-radius:999px}
+    .hidden{display:none !important}
   </style>
 </head>
 <body>
-  <div id="root"></div>
-
-  <script type="text/babel">
-    const { useState, useEffect, useMemo, useCallback } = React;
-
-    // ============================================
-    // HOOK: Toast Notifications
-    // ============================================
-    function useToast() {
-      const [toast, setToast] = useState(null);
-      
-      const show = useCallback((msg, type='success', timeout=3000) => {
-        setToast({ msg, type });
-        setTimeout(() => setToast(null), timeout);
-      }, []);
-      
-      const Toast = () => toast ? (
-        <div 
-          role="status" 
-          aria-live="polite" 
-          className={'toast toast-' + toast.type}
-        >
-          <i className={'fas ' + (
-            toast.type === 'error' ? 'fa-times-circle' : 
-            toast.type === 'warning' ? 'fa-exclamation-triangle' : 
-            'fa-check-circle'
-          )}></i>
-          <span>{toast.msg}</span>
+  <div class="container" role="application" aria-label="Checklist Pro">
+    <header class="appbar" aria-label="Header">
+      <div class="brand">
+        <div class="logo" aria-hidden="true">CP</div>
+        <div>
+          <h1>Checklist Pro</h1>
+          <small class="muted">Simple, guided compliance checklists</small>
         </div>
-      ) : null;
-      
-      return { show, Toast };
-    }
+      </div>
+      <div class="toolbar" role="toolbar" aria-label="Main actions">
+        <button id="btnStartNew" class="secondary" title="Start a new checklist">New checklist</button>
+        <button id="btnImport" class="ghost" title="Import from file">Import</button>
+        <button id="btnExport" class="" title="Export your data">Export</button>
+      </div>
+    </header>
 
-    // ============================================
-    // COMPONENTE: Wizard Steps
-    // ============================================
-    function WizardSteps({ currentStep, steps }) {
-      return (
-        <div className="no-print mb-6 sm:mb-8">
-          <div className="flex items-center justify-between">
-            {steps.map((step, idx) => (
-              <div 
-                key={step.n} 
-                className={'wizard-step ' + (
-                  currentStep > step.n ? 'completed' : 
-                  currentStep === step.n ? 'active' : 
-                  'inactive'
-                )}
-              >
-                <div className="wizard-step-circle" aria-label={'Passo ' + step.n}>
-                  {currentStep > step.n ? <i className="fas fa-check"></i> : step.n}
-                </div>
-                <span className="wizard-step-label hidden sm:inline text-xs font-semibold text-gray-700">
-                  {step.label}
-                </span>
-                {idx < steps.length - 1 && <div className="wizard-step-line"></div>}
+    <main class="layout" id="app">
+      <!-- Left: Setup & Navigation -->
+      <section class="panel" aria-label="Setup">
+        <div class="hd">
+          <h2 style="margin:0;font-size:16px">Setup</h2>
+        </div>
+        <div class="bd">
+          <div class="wizard-steps" role="tablist" aria-label="Checklist setup steps">
+            <div class="step" data-step="profile" data-active="true" role="tab" aria-selected="true" tabindex="0">
+              1. Profile
+            </div>
+            <div class="step" data-step="questions" role="tab" aria-selected="false" tabindex="-1">
+              2. Questions
+            </div>
+            <div class="step" data-step="run" role="tab" aria-selected="false" tabindex="-1">
+              3. Run
+            </div>
+            <div class="step" data-step="report" role="tab" aria-selected="false" tabindex="-1">
+              4. Report
+            </div>
+          </div>
+
+          <div id="panelProfile" class="setup-panel" style="margin-top:14px">
+            <div class="row">
+              <div>
+                <label for="orgName">Organization</label>
+                <input id="orgName" class="input" placeholder="e.g., ACME Foods Ltd." />
               </div>
-            ))}
+              <div>
+                <label for="siteName">Site / Location</label>
+                <input id="siteName" class="input" placeholder="e.g., Plant 02 - North" />
+              </div>
+            </div>
+            <div class="row" style="margin-top:10px">
+              <div>
+                <label for="auditorName">Auditor</label>
+                <input id="auditorName" class="input" placeholder="Your name" />
+              </div>
+              <div>
+                <label for="datePlanned">Planned Date</label>
+                <input id="datePlanned" type="date" class="input" />
+              </div>
+            </div>
+            <div class="hr"></div>
+            <div class="split">
+              <div>
+                <div class="inline" aria-live="polite">
+                  <span class="chip" id="geoStatus">GPS not checked</span>
+                </div>
+                <div class="help">Enable GPS to validate presence on site</div>
+              </div>
+              <button id="btnGetGeo" class="secondary">Check GPS</button>
+            </div>
           </div>
-          <div className="mt-4 bg-blue-50 border-l-4 border-blue-500 p-3 rounded">
-            <p className="text-sm text-blue-900 font-medium">
-              <i className="fas fa-info-circle mr-2"></i>
-              {currentStep === 1 && 'Preencha o nome e endereço da loja'}
-              {currentStep === 2 && 'Capture e valide sua localização GPS'}
-              {currentStep === 3 && 'Configure as perguntas do checklist'}
-              {currentStep === 4 && 'Clique em "Iniciar Checklist" para começar'}
-              {currentStep === 5 && 'Checklist em andamento'}
-              {currentStep === 6 && 'Relatório finalizado'}
-            </p>
+
+          <div id="panelQuestions" class="setup-panel hidden" style="margin-top:14px">
+            <div class="split" style="justify-content:space-between">
+              <h3 style="margin:0; font-size:16px">Questions</h3>
+              <div class="inline">
+                <button id="btnAddQuestion" class="secondary">Add</button>
+                <button id="btnResetQuestions" class="ghost">Reset</button>
+              </div>
+            </div>
+            <div id="questionList" class="list" style="margin-top:10px" aria-live="polite"></div>
+            <div id="emptyQuestions" class="empty" role="status">
+              No questions yet. Click “Add” or use Import to load a template.
+            </div>
           </div>
+
+          <div id="panelRun" class="setup-panel hidden" style="margin-top:14px">
+            <div class="split" style="justify-content:space-between">
+              <h3 style="margin:0; font-size:16px">Run Checklist</h3>
+              <div class="status" id="runStatus"></div>
+            </div>
+            <div id="runList" class="list" style="margin-top:10px"></div>
+          </div>
+
+          <div id="panelReport" class="setup-panel hidden" style="margin-top:14px">
+            <div class="split" style="justify-content:space-between">
+              <h3 style="margin:0; font-size:16px">Report</h3>
+              <div class="inline">
+                <button id="btnCopySummary" class="secondary">Copy Summary</button>
+                <button id="btnClearAll" class="ghost">Clear All</button>
+              </div>
+            </div>
+            <div id="reportBody" class="bd" style="padding:0; margin-top:10px">
+              <div class="empty">Run the checklist to generate a report.</div>
+            </div>
+          </div>
+
         </div>
-      );
+      </section>
+
+      <!-- Right: Context panel -->
+      <section class="panel" aria-label="Context and Help">
+        <div class="hd">
+          <h2 style="margin:0;font-size:16px">Help & Tips</h2>
+          <span class="chip">Offline ready</span>
+        </div>
+        <div class="bd">
+          <p class="muted" style="margin-top:0">
+            Keep it simple. Answer each question as Yes, No, or N/A. Add a note or photo when needed.
+          </p>
+          <ul>
+            <li>Use Import/Export to share templates with your team.</li>
+            <li>Tap Check GPS to confirm you are at the site.</li>
+            <li>All data stays on this device unless you export it.</li>
+          </ul>
+          <div class="hr"></div>
+          <details>
+            <summary><strong>Accessibility</strong></summary>
+            <p class="help">Keyboard: Tab/Shift+Tab to move, Enter to activate. Screen readers announce statuses and errors.</p>
+          </details>
+          <div class="hr"></div>
+          <details>
+            <summary><strong>Quick template</strong></summary>
+            <p class="help">Add a starter set of questions.</p>
+            <button id="btnLoadTemplate" class="secondary">Load sample template</button>
+          </details>
+        </div>
+      </section>
+    </main>
+
+    <!-- Hidden file inputs -->
+    <input type="file" id="fileImport" accept=".json" class="hidden" />
+
+    <!-- Toasts -->
+    <div class="toast" id="toast"></div>
+  </div>
+
+  <script>
+    // Simple state and persistence
+    const LS_KEY = 'checklist_pro_v1';
+    const $ = sel => document.querySelector(sel);
+    const $$ = sel => Array.from(document.querySelectorAll(sel));
+    const state = {
+      profile: { orgName:'', siteName:'', auditorName:'', datePlanned:'', geo:null },
+      questions: [],
+      runs: {}, // qid -> {answer:'yes'|'no'|'na'|null, note:'', photo: dataURL|null}
+      createdAt: new Date().toISOString()
+    };
+
+    function load(){
+      try{
+        const raw = localStorage.getItem(LS_KEY);
+        if(!raw) return;
+        const data = JSON.parse(raw);
+        Object.assign(state, data);
+      }catch(e){ console.warn('Load failed', e); }
+    }
+    function save(){
+      localStorage.setItem(LS_KEY, JSON.stringify(state));
     }
 
-    // ============================================
-    // COMPONENTE: Help Tooltip
-    // ============================================
-    function HelpTooltip({ text }) {
-      return (
-        <div className="tooltip inline-block ml-2">
-          <i className="fas fa-question-circle text-gray-400 hover:text-gray-600 cursor-help"></i>
-          <span className="tooltiptext">{text}</span>
-        </div>
-      );
+    // Toast system
+    function toast(msg, type='info'){
+      const t = document.createElement('div');
+      t.className = 'item';
+      t.setAttribute('role','status');
+      t.innerHTML = `
+        <div style="font-weight:700">${type === 'error' ? 'Error' : type === 'success' ? 'Success' : 'Info'}</div>
+        <div style="flex:1">${msg}</div>
+        <button class="ghost" style="padding:6px 8px" aria-label="Dismiss">Close</button>
+      `;
+      $('#toast').appendChild(t);
+      const close = t.querySelector('button');
+      const remove = () => t.remove();
+      close.addEventListener('click', remove);
+      setTimeout(remove, 4000);
     }
 
-    // ============================================
-    // COMPONENTE PRINCIPAL: App
-    // ============================================
-    function App() {
-      const { show, Toast } = useToast();
-      
-      // Estados: Perguntas
-      const [perguntas, setPerguntas] = useState([
-        { id: 1, categoria: 'Segurança', texto: 'EPIs conferidos?', fotoObrigatoria: true },
-        { id: 2, categoria: 'Operação', texto: 'Equipamentos verificados?', fotoObrigatoria: false },
-        { id: 3, categoria: 'Documentação', texto: 'Documentos atualizados?', fotoObrigatoria: false },
-      ]);
-      const [novaPergunta, setNovaPergunta] = useState('');
-      const [novaCategoria, setNovaCategoria] = useState('');
-      const [novaFotoObrigatoria, setNovaFotoObrigatoria] = useState(false);
-      const [editandoIndex, setEditandoIndex] = useState(null);
-      const [textoEdicao, setTextoEdicao] = useState('');
-      const [categoriaEdicao, setCategoriaEdicao] = useState('');
-      const [fotoObrigatoriaEdicao, setFotoObrigatoriaEdicao] = useState(false);
-
-      // Estados: Fluxo
-      const [checklistIniciado, setChecklistIniciado] = useState(false);
-      const [checklistFinalizado, setChecklistFinalizado] = useState(false);
-      const [passo, setPasso] = useState(1);
-
-      // Estados: Loja
-      const [lojaNome, setLojaNome] = useState('');
-      const [lojaEndereco, setLojaEndereco] = useState('');
-
-      // Estados: Geolocalização
-      const [geoStatus, setGeoStatus] = useState('idle');
-      const [coords, setCoords] = useState(null);
-      const [enderecoGPS, setEnderecoGPS] = useState('');
-      const [geoErro, setGeoErro] = useState('');
-      const [gpsConfereEndereco, setGpsConfereEndereco] = useState(null);
-      const [gpsValidando, setGpsValidando] = useState(false);
-      const [alvoLat, setAlvoLat] = useState('');
-      const [alvoLon, setAlvoLon] = useState('');
-      const [alvoRaio, setAlvoRaio] = useState(100);
-      const [distancia, setDistancia] = useState(null);
-      const [dentroDaArea, setDentroDaArea] = useState(false);
-
-      // Estados: Respostas e evidências
-      const [respostas, setRespostas] = useState({});
-      const [evidencias, setEvidencias] = useState({});
-
-      // Estados: Tempo
-      const [inicioISO, setInicioISO] = useState(null);
-      const [fimISO, setFimISO] = useState(null);
-
-      // Estados: CSV e Sets
-      const [uploadErro, setUploadErro] = useState('');
-      const [nomeSet, setNomeSet] = useState('');
-      const [setsSalvos, setSetsSalvos] = useState([]);
-      const [setSelecionado, setSetSelecionado] = useState('');
-      
-      // Estados: Validação
-      const [erroInicio, setErroInicio] = useState('');
-
-      // ============================================
-      // UTILITÁRIOS
-      // ============================================
-      const formatarDataHora = (iso) => {
-        if (!iso) return '';
-        const d = new Date(iso);
-        return d.toLocaleString('pt-BR', { 
-          day: '2-digit', 
-          month: '2-digit', 
-          year: 'numeric', 
-          hour: '2-digit', 
-          minute: '2-digit' 
-        });
-      };
-
-      const duracaoHumana = (ms) => {
-        if (!ms || ms < 0) return '';
-        const s = Math.floor(ms / 1000);
-        const h = Math.floor(s / 3600);
-        const m = Math.floor((s % 3600) / 60);
-        const seg = s % 60;
-        return [
-          h ? h + 'h' : null, 
-          (m || h) ? m + 'm' : null, 
-          seg + 's'
-        ].filter(Boolean).join(' ');
-      };
-
-      const toRad = (deg) => (deg * Math.PI) / 180;
-
-      const haversineMeters = (lat1, lon1, lat2, lon2) => {
-        const R = 6371000;
-        const dLat = toRad(lat2 - lat1);
-        const dLon = toRad(lon2 - lon1);
-        const a = Math.sin(dLat/2)**2 + 
-                  Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * 
-                  Math.sin(dLon/2)**2;
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        return R * c;
-      };
-
-      const normalizarTexto = (s) => {
-        return (s || '')
-          .toString()
-          .toLowerCase()
-          .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-          .replace(/[.,;:]/g, ' ')
-          .replace(/\s+/g, ' ')
-          .trim();
-      };
-
-      const extrairTokensEndereco = (s) => {
-        const t = normalizarTexto(s);
-        return t.split(' ').filter(w => w && !/^\d{1,2}$/.test(w));
-      };
-
-      const enderecoCoincide = (endLoja, endGPS) => {
-        const a = new Set(extrairTokensEndereco(endLoja));
-        const b = new Set(extrairTokensEndereco(endGPS));
-        let inter = 0;
-        for (const token of a) {
-          if (b.has(token)) inter++;
-        }
-        return inter >= 3;
-      };
-
-      // ============================================
-      // LOCALSTORAGE: Sets de perguntas
-      // ============================================
-      const LS_META_KEY = 'checklist_sets_meta';
-
-      const carregarMeta = () => {
-        try { 
-          return JSON.parse(localStorage.getItem(LS_META_KEY) || '[]'); 
-        } catch { 
-          return []; 
-        }
-      };
-
-      const salvarMeta = (meta) => {
-        localStorage.setItem(LS_META_KEY, JSON.stringify(meta));
-      };
-
-      const salvarSetLocal = (nome, listaPerguntas) => {
-        if (!nome || !listaPerguntas || listaPerguntas.length === 0) return;
-        localStorage.setItem('checklist_set::' + nome, JSON.stringify(listaPerguntas));
-        const meta = carregarMeta();
-        const idx = meta.findIndex(m => m.name === nome);
-        const item = { 
-          name: nome, 
-          count: listaPerguntas.length, 
-          updatedAt: new Date().toISOString() 
-        };
-        if (idx >= 0) {
-          meta[idx] = item;
-        } else {
-          meta.push(item);
-        }
-        salvarMeta(meta);
-        setSetsSalvos(meta);
-      };
-
-      const carregarSetLocal = (nome) => {
-        try { 
-          return JSON.parse(localStorage.getItem('checklist_set::' + nome) || 'null'); 
-        } catch { 
-          return null; 
-        }
-      };
-
-      const excluirSetLocal = (nome) => {
-        localStorage.removeItem('checklist_set::' + nome);
-        const meta = carregarMeta().filter(m => m.name !== nome);
-        salvarMeta(meta);
-        setSetsSalvos(meta);
-      };
-
-      // ============================================
-      // LOCALSTORAGE: Dados da loja
-      // ============================================
-      const salvarLojaNome = (nome) => { 
-        localStorage.setItem('loja_nome', nome); 
-        setLojaNome(nome); 
-      };
-
-      const salvarLojaEndereco = (endereco) => { 
-        localStorage.setItem('loja_endereco', endereco); 
-        setLojaEndereco(endereco); 
-      };
-
-      const carregarDadosLoja = () => {
-        setLojaNome(localStorage.getItem('loja_nome') || '');
-        setLojaEndereco(localStorage.getItem('loja_endereco') || '');
-      };
-
-      useEffect(() => {
-        setSetsSalvos(carregarMeta());
-        carregarDadosLoja();
-        
-        // Registrar Service Worker para PWA
-        if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.register('data:text/javascript;base64,').catch(() => {});
-        }
-      }, []);
-
-      // ============================================
-      // GEOLOCALIZAÇÃO
-      // ============================================
-      const validarEnderecoGPS = (endGPS, endLoja) => {
-        setGpsValidando(true);
-        try {
-          const ok = enderecoCoincide(endLoja, endGPS);
-          setGpsConfereEndereco(ok);
-          if (ok) {
-            show('Endereço GPS validado com sucesso!', 'success');
-          } else {
-            show('Endereço GPS não confere com o da loja', 'warning', 4000);
-          }
-        } finally {
-          setGpsValidando(false);
-        }
-      };
-
-      const capturarLocalizacao = () => {
-        setGeoErro('');
-        if (!('geolocation' in navigator)) {
-          setGeoStatus('erro');
-          setGeoErro('Geolocalização não suportada no navegador.');
-          show('Geolocalização não suportada', 'error');
-          return;
-        }
-        
-        setGeoStatus('buscando');
-        show('Capturando localização...', 'success', 2000);
-        
-        navigator.geolocation.getCurrentPosition(
-          async (pos) => {
-            const { latitude, longitude, accuracy } = pos.coords;
-            const c = { latitude, longitude, accuracy };
-            setCoords(c);
-            setGeoStatus('ok');
-
-            if (!alvoLat || !alvoLon) {
-              setAlvoLat(latitude.toString());
-              setAlvoLon(longitude.toString());
-              setDistancia(0);
-              setDentroDaArea(true);
-            } else {
-              const d = haversineMeters(
-                parseFloat(latitude),
-                parseFloat(longitude),
-                parseFloat(alvoLat),
-                parseFloat(alvoLon)
-              );
-              setDistancia(d);
-              setDentroDaArea(d <= (parseFloat(alvoRaio) || 0));
-            }
-
-            try {
-              const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`;
-              const resp = await fetch(url, { 
-                headers: { 'Accept-Language': 'pt-BR' } 
-              });
-              if (resp.ok) {
-                const data = await resp.json();
-                const end = data.display_name || '';
-                setEnderecoGPS(end);
-                if (lojaEndereco.trim()) {
-                  validarEnderecoGPS(end, lojaEndereco);
-                }
-              }
-            } catch (e) {
-              console.error('Erro ao buscar endereço:', e);
-              show('Localização capturada, mas não foi possível obter o endereço', 'warning');
-            }
-          },
-          (err) => {
-            setGeoStatus('erro');
-            const msg = err.message || 'Falha ao obter localização.';
-            setGeoErro(msg);
-            show('Erro ao capturar localização: ' + msg, 'error', 4000);
-          },
-          { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
-        );
-      };
-
-      // ============================================
-      // PERGUNTAS: CRUD
-      // ============================================
-      const proximoId = useMemo(
-        () => (perguntas.length ? Math.max(...perguntas.map(p => p.id)) + 1 : 1),
-        [perguntas]
-      );
-
-      const adicionarPergunta = () => {
-        if (!novaPergunta.trim()) {
-          show('Digite uma pergunta válida', 'warning');
-          return;
-        }
-        const cat = novaCategoria.trim() || 'Geral';
-        setPerguntas(p => [...p, {
-          id: proximoId,
-          categoria: cat,
-          texto: novaPergunta.trim(),
-          fotoObrigatoria: !!novaFotoObrigatoria
-        }]);
-        setNovaPergunta('');
-        setNovaCategoria('');
-        setNovaFotoObrigatoria(false);
-        show('Pergunta adicionada!', 'success');
-      };
-
-      const removerPergunta = (id) => {
-        setPerguntas(perguntas.filter(p => p.id !== id));
-        show('Pergunta removida', 'success');
-      };
-
-      const iniciarEdicao = (id) => {
-        const idx = perguntas.findIndex(p => p.id === id);
-        if (idx < 0) return;
-        setEditandoIndex(id);
-        setTextoEdicao(perguntas[idx].texto);
-        setCategoriaEdicao(perguntas[idx].categoria);
-        setFotoObrigatoriaEdicao(!!perguntas[idx].fotoObrigatoria);
-      };
-
-      const salvarEdicao = () => {
-        if (editandoIndex == null) return;
-        const novas = perguntas.map(p => p.id === editandoIndex ? ({
-          ...p,
-          texto: textoEdicao.trim() || p.texto,
-          categoria: categoriaEdicao.trim() || 'Geral',
-          fotoObrigatoria: !!fotoObrigatoriaEdicao
-        }) : p);
-        setPerguntas(novas);
-        setEditandoIndex(null);
-        setTextoEdicao('');
-        setCategoriaEdicao('');
-        setFotoObrigatoriaEdicao(false);
-        show('Pergunta atualizada!', 'success');
-      };
-
-      // ============================================
-      // EVIDÊNCIAS: Upload com compressão
-      // ============================================
-      const handleEvidenciaUpload = async (id, file) => {
-        if (!file) return;
-        
-        const compressImage = (file, maxW=1280, maxH=1280, quality=0.8) => 
-          new Promise((resolve, reject) => {
-            const img = new Image();
-            const reader = new FileReader();
-            reader.onload = e => { img.src = e.target.result; };
-            img.onload = () => {
-              let { width, height } = img;
-              const ratio = Math.min(maxW / width, maxH / height, 1);
-              const canvas = document.createElement('canvas');
-              canvas.width = Math.round(width * ratio);
-              canvas.height = Math.round(height * ratio);
-              const ctx = canvas.getContext('2d');
-              ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-              canvas.toBlob(
-                blob => {
-                  const fr = new FileReader();
-                  fr.onload = ev => resolve(ev.target.result);
-                  fr.onerror = reject;
-                  fr.readAsDataURL(blob);
-                },
-                'image/jpeg',
-                quality
-              );
-            };
-            img.onerror = reject;
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
-          });
-
-        try {
-          show('Processando imagem...', 'success', 1500);
-          const base64 = await compressImage(file);
-          setEvidencias(ev => ({ ...ev, [id]: base64 }));
-          show('Foto anexada com sucesso!', 'success');
-        } catch (e) {
-          show('Falha ao processar a imagem. Tente outra foto.', 'error');
-        }
-      };
-
-      // ============================================
-      // FLUXO: Iniciar e Finalizar
-      // ============================================
-      const responderPergunta = (id, resp) => {
-        setRespostas({ ...respostas, [id]: resp });
-      };
-
-      const requisitosAtendidosParaIniciar = () => {
-        if (!lojaNome.trim() || !lojaEndereco.trim()) return false;
-        if (!coords) return false;
-        if (!dentroDaArea) return false;
-        if (gpsConfereEndereco !== true) return false;
-        if (perguntas.length === 0) return false;
-        return true;
-      };
-
-      const iniciarChecklist = () => {
-        if (!requisitosAtendidosParaIniciar()) {
-          if (gpsConfereEndereco === false) {
-            setErroInicio('O endereço GPS não confere com o da loja. Ajuste sua localização ou verifique o endereço.');
-          } else if (!coords) {
-            setErroInicio('Capture a localização GPS antes de iniciar.');
-          } else if (!dentroDaArea) {
-            setErroInicio('Você está fora da área permitida. Aproxime-se da loja.');
-          } else if (!lojaNome.trim() || !lojaEndereco.trim()) {
-            setErroInicio('Preencha o nome e endereço da loja.');
-          } else if (perguntas.length === 0) {
-            setErroInicio('Adicione pelo menos uma pergunta ao checklist.');
-          } else {
-            setErroInicio('Verifique todos os requisitos antes de iniciar.');
-          }
-          show('Não foi possível iniciar. Verifique os requisitos.', 'error', 4000);
-          return;
-        }
-        
-        setErroInicio('');
-        setChecklistIniciado(true);
-        setRespostas({});
-        setInicioISO(new Date().toISOString());
-        setFimISO(null);
-        setPasso(5);
-        show('Checklist iniciado! Responda todas as perguntas.', 'success');
-      };
-
-      const todasRespondidas = perguntas.every((p) => respostas[p.id]);
-      const evidenciasOk = perguntas.every((p) => {
-        if (p.fotoObrigatoria) return !!evidencias[p.id];
-        return true;
+    // Wizard navigation
+    function setStep(step){
+      $$('.wizard-steps .step').forEach(el=>{
+        const active = el.dataset.step === step;
+        el.dataset.active = active ? 'true' : 'false';
+        el.setAttribute('aria-selected', active ? 'true':'false');
+        el.tabIndex = active ? 0 : -1;
       });
+      $('#panelProfile').classList.toggle('hidden', step!=='profile');
+      $('#panelQuestions').classList.toggle('hidden', step!=='questions');
+      $('#panelRun').classList.toggle('hidden', step!=='run');
+      $('#panelReport').classList.toggle('hidden', step!=='report');
+      if(step==='questions') renderQuestions();
+      if(step==='run') renderRun();
+      if(step==='report') renderReport();
+    }
 
-      const finalizarChecklist = () => {
-        if (!todasRespondidas) {
-          show('Responda todas as perguntas antes de finalizar.', 'error', 3000);
-          return;
-        }
-        if (!evidenciasOk) {
-          show('Há itens com foto obrigatória sem evidência anexada.', 'error', 3000);
-          return;
-        }
-        setFimISO(new Date().toISOString());
-        setChecklistFinalizado(true);
-        setPasso(6);
-        show('Checklist finalizado com sucesso!', 'success');
-      };
+    // IDs
+    function uid(){ return Math.random().toString(36).slice(2,9); }
 
-      const calcularNota = () => {
-        const total = perguntas.length;
-        const pos = perguntas.filter(p => respostas[p.id] === 'sim').length;
-        return total > 0 ? ((pos / total) * 10).toFixed(1) : '0.0';
-      };
-
-      const reiniciar = () => {
-        setChecklistIniciado(false);
-        setChecklistFinalizado(false);
-        setRespostas({});
-        setEvidencias({});
-        setCoords(null);
-        setEnderecoGPS('');
-        setGeoStatus('idle');
-        setGeoErro('');
-        setDistancia(null);
-        setDentroDaArea(false);
-        setGpsConfereEndereco(null);
-        setInicioISO(null);
-        setFimISO(null);
-        setAlvoLat('');
-        setAlvoLon('');
-        setErroInicio('');
-        setPasso(1);
-        show('Pronto para novo checklist!', 'success');
-      };
-
-      // ============================================
-      // CSV: Parsing avançado
-      // ============================================
-      const detectarDelimitador = (text) => {
-        const primeiroBloco = text.split(/\r?\n/).slice(0, 5).join('\n');
-        const c1 = (primeiroBloco.match(/;/g) || []).length;
-        const c2 = (primeiroBloco.match(/,/g) || []).length;
-        const c3 = (primeiroBloco.match(/\t/g) || []).length;
-        if (c1 >= c2 && c1 >= c3) return ';';
-        if (c2 >= c1 && c2 >= c3) return ',';
-        return '\t';
-      };
-
-      const parseBooleanLoose = (v) => {
-        const t = normalizarTexto(v);
-        return ['sim','yes','true','1'].includes(t);
-      };
-
-      const parseCSVToPerguntas = (text) => {
-        const linhas = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-        if (linhas.length === 0) return [];
-        const delim = detectarDelimitador(text);
-
-        const headerCells = linhas[0].split(delim).map(c => normalizarTexto(c));
-        const hasHeader = ['categoria','pergunta','perguntas','foto_obrigatoria','foto obrigatoria','foto-obrigatoria','foto obrigatoria?'].some(h => headerCells.includes(h));
-
-        const out = [];
-        if (hasHeader) {
-          const idxCategoria = headerCells.findIndex(h => h === 'categoria');
-          const idxPergunta = headerCells.findIndex(h => ['pergunta','perguntas'].includes(h));
-          const idxFoto = headerCells.findIndex(h => ['foto_obrigatoria','foto obrigatoria','foto-obrigatoria','foto obrigatoria?'].includes(h));
-          for (let i = 1; i < linhas.length; i++) {
-            const cols = linhas[i].split(delim).map(c => c.trim());
-            const texto = idxPergunta >= 0 ? (cols[idxPergunta] || '') : '';
-            if (!texto) continue;
-            const categoria = idxCategoria >= 0 ? (cols[idxCategoria] || 'Geral') : 'Geral';
-            const fotoObrigatoria = idxFoto >= 0 ? parseBooleanLoose(cols[idxFoto] || 'não') : false;
-            out.push({ categoria, texto, fotoObrigatoria });
-          }
-        } else {
-          for (const l of linhas) {
-            out.push({ categoria: 'Geral', texto: l, fotoObrigatoria: false });
-          }
-        }
-        
-        const uniq = [];
-        const seen = new Set();
-        for (const p of out) {
-          const key = normalizarTexto(p.categoria + '__' + p.texto);
-          if (!seen.has(key)) { 
-            seen.add(key); 
-            uniq.push(p); 
-          }
-        }
-        return uniq;
-      };
-
-      const handleArquivoCSV = (file) => {
-        setUploadErro('');
-        if (!file) return;
-        const isCSV = file.name.toLowerCase().endsWith('.csv');
-        if (!isCSV) {
-          setUploadErro('Formato não suportado. Exporte seu Excel como CSV (.csv).');
-          show('Formato de arquivo inválido', 'error');
-          return;
-        }
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          try {
-            const text = e.target.result;
-            const dados = parseCSVToPerguntas(text);
-            if (dados.length === 0) {
-              setUploadErro('Nenhuma pergunta válida encontrada no CSV.');
-              show('CSV vazio ou inválido', 'error');
-              return;
-            }
-            const novos = dados.map((d, i) => ({
-              id: i + 1,
-              categoria: d.categoria || 'Geral',
-              texto: d.texto,
-              fotoObrigatoria: !!d.fotoObrigatoria
-            }));
-            setPerguntas(novos);
-            setRespostas({});
-            setEvidencias({});
-            show(`${novos.length} perguntas importadas com sucesso!`, 'success');
-          } catch (err) {
-            setUploadErro('Falha ao processar o CSV. ' + err.message);
-            show('Erro ao processar CSV', 'error');
-          }
-        };
-        reader.readAsText(file, 'utf-8');
-      };
-
-      const baixarModeloCSV = () => {
-        const linhas = [
-          'categoria;pergunta;foto_obrigatoria',
-          'Segurança;EPIs conferidos?;sim',
-          'Operação;Equipamentos verificados?;nao',
-          'Documentação;Documentos atualizados?;nao'
-        ];
-        const csv = linhas.join('\n');
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'modelo_perguntas_checklist.csv';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        show('Modelo CSV baixado!', 'success');
-      };
-
-      // ============================================
-      // EXPORTAÇÃO: CSV e JSON
-      // ============================================
-      const exportarPerguntasCSV = () => {
-        const header = ['categoria','pergunta','foto_obrigatoria'];
-        const linhas = [header.join(';')];
-        for (const p of perguntas) {
-          linhas.push([
-            p.categoria || 'Geral', 
-            p.texto.replace(/;/g, ','), 
-            p.fotoObrigatoria ? 'sim' : 'nao'
-          ].join(';'));
-        }
-        const blob = new Blob([linhas.join('\n')], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url; 
-        a.download = 'perguntas_checklist.csv'; 
-        document.body.appendChild(a); 
-        a.click();
-        document.body.removeChild(a); 
-        URL.revokeObjectURL(url);
-        show('Perguntas exportadas (CSV)!', 'success');
-      };
-
-      const exportarPerguntasJSON = () => {
-        const blob = new Blob([JSON.stringify(perguntas, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url; 
-        a.download = 'perguntas_checklist.json'; 
-        document.body.appendChild(a); 
-        a.click();
-        document.body.removeChild(a); 
-        URL.revokeObjectURL(url);
-        show('Perguntas exportadas (JSON)!', 'success');
-      };
-
-      const exportarResultadoCSV = () => {
-        const header = ['categoria','pergunta','resposta','tem_foto','loja','endereco','inicio','fim','lat','lon','precisao_m','distancia_m','dentro_area'];
-        const linhas = [header.join(';')];
-        for (const p of perguntas) {
-          const resp = respostas[p.id] || '';
-          const foto = evidencias[p.id] ? 'sim' : 'nao';
-          linhas.push([
-            p.categoria || 'Geral',
-            (p.texto || '').replace(/;/g, ','),
-            resp,
-            foto,
-            lojaNome.replace(/;/g, ','),
-            lojaEndereco.replace(/;/g, ','),
-            inicioISO || '',
-            fimISO || '',
-            coords?.latitude?.toFixed(6) || '',
-            coords?.longitude?.toFixed(6) || '',
-            coords?.accuracy ? Math.round(coords.accuracy) : '',
-            distancia != null ? Math.round(distancia) : '',
-            dentroDaArea ? 'sim' : 'nao'
-          ].join(';'));
-        }
-        const blob = new Blob([linhas.join('\n')], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url; 
-        a.download = 'resultado_checklist.csv'; 
-        document.body.appendChild(a); 
-        a.click();
-        document.body.removeChild(a); 
-        URL.revokeObjectURL(url);
-        show('Resultado exportado (CSV)!', 'success');
-      };
-
-      // ============================================
-      // AGRUPAMENTO POR CATEGORIA
-      // ============================================
-      const categorias = useMemo(() => {
-        const map = new Map();
-        for (const p of perguntas) {
-          if (!map.has(p.categoria)) map.set(p.categoria, []);
-          map.get(p.categoria).push(p);
-        }
-        return Array.from(map.entries()).sort((a,b) => a[0].localeCompare(b[0]));
-      }, [perguntas]);
-
-      // ============================================
-      // WIZARD: Atualização automática de passos
-      // ============================================
-      useEffect(() => {
-        if (checklistFinalizado) {
-          setPasso(6);
-        } else if (checklistIniciado) {
-          setPasso(5);
-        } else if (!lojaNome.trim() || !lojaEndereco.trim()) {
-          setPasso(1);
-        } else if (!coords || gpsConfereEndereco !== true || !dentroDaArea) {
-          setPasso(2);
-        } else if (perguntas.length === 0) {
-          setPasso(3);
-        } else {
-          setPasso(4);
-        }
-      }, [lojaNome, lojaEndereco, coords, gpsConfereEndereco, dentroDaArea, perguntas, checklistIniciado, checklistFinalizado]);
-
-      const passos = [
-        { n: 1, label: 'Dados' },
-        { n: 2, label: 'GPS' },
-        { n: 3, label: 'Perguntas' },
-        { n: 4, label: 'Iniciar' },
-        { n: 5, label: 'Executar' },
-        { n: 6, label: 'Relatório' },
+    // Profile bindings
+    function bindProfile(){
+      const map = [
+        ['#orgName','orgName'],
+        ['#siteName','siteName'],
+        ['#auditorName','auditorName'],
+        ['#datePlanned','datePlanned'],
       ];
+      map.forEach(([sel,key])=>{
+        const el = $(sel);
+        el.value = state.profile[key] || '';
+        el.addEventListener('input', ()=>{
+          state.profile[key] = el.value;
+          save();
+        });
+      });
+      updateGeoStatus();
+    }
 
-      // ============================================
-      // RENDERIZAÇÃO: Relatório Final
-      // ============================================
-      if (checklistFinalizado) {
-        const nota = calcularNota();
-        const total = perguntas.length;
-        const pos = perguntas.filter(p => respostas[p.id] === 'sim').length;
-        const duracao = inicioISO && fimISO ? duracaoHumana(new Date(fimISO) - new Date(inicioISO)) : '';
+    // Geolocation
+    async function getGeo(){
+      if(!('geolocation' in navigator)){
+        toast('Geolocation not supported on this device','error'); return;
+      }
+      $('#btnGetGeo').disabled = true;
+      try{
+        const pos = await new Promise((res, rej)=>navigator.geolocation.getCurrentPosition(res, rej, {enableHighAccuracy:true, timeout:10000}));
+        const {latitude, longitude, accuracy} = pos.coords;
+        state.profile.geo = { latitude, longitude, accuracy, at: new Date().toISOString() };
+        save();
+        updateGeoStatus();
+        toast('GPS location captured','success');
+      }catch(err){
+        console.warn(err);
+        toast('Could not get GPS location. Check permissions and signal.','error');
+      }finally{
+        $('#btnGetGeo').disabled = false;
+      }
+    }
+    function updateGeoStatus(){
+      const el = $('#geoStatus');
+      if(state.profile.geo){
+        const {latitude, longitude, accuracy} = state.profile.geo;
+        el.textContent = `GPS OK • ${latitude.toFixed(5)}, ${longitude.toFixed(5)} • ±${Math.round(accuracy)}m`;
+        el.className = 'chip';
+        el.style.background = '#ecfdf5';
+        el.style.borderColor = '#a7f3d0';
+        el.style.color = '#065f46';
+      }else{
+        el.textContent = 'GPS not checked';
+        el.className = 'chip';
+        el.style = '';
+      }
+    }
 
-        return (
-          <div className="min-h-screen p-4 print:bg-white print:p-0">
-            <Toast />
-            <div className="max-w-5xl mx-auto bg-white rounded-xl shadow-2xl p-6 sm:p-10 print:shadow-none">
-              <WizardSteps currentStep={passo} steps={passos} />
-              
-              <div className="text-center mb-8">
-                <h1 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-2">
-                  <i className="fas fa-file-alt mr-3 text-blue-600"></i>
-                  Relatório do Checklist
-                </h1>
-                <p className="text-gray-600">Auditoria concluída com sucesso</p>
+    // Questions CRUD
+    function renderQuestions(){
+      const list = $('#questionList');
+      const empty = $('#emptyQuestions');
+      list.innerHTML = '';
+      if(state.questions.length === 0){
+        empty.classList.remove('hidden');
+        return;
+      }
+      empty.classList.add('hidden');
+
+      state.questions.forEach(q=>{
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          <div class="grow">
+            <h4>${escapeHTML(q.text)}</h4>
+            <div class="inline">
+              <span class="tag ${q.category ? '' : 'pending'}">${q.category || 'Uncategorized'}</span>
+              <span class="tag pill">${q.weight ?? 1} pt</span>
+              ${q.requireEvidence ? '<span class="tag pending">Requires evidence</span>' : ''}
+            </div>
+          </div>
+          <div class="inline">
+            <button class="secondary" aria-label="Edit question">Edit</button>
+            <button class="ghost" aria-label="Delete question">Delete</button>
+          </div>
+        `;
+        const [btnEdit, btnDel] = card.querySelectorAll('button');
+        btnEdit.addEventListener('click', ()=> openQuestionEditor(q.id));
+        btnDel.addEventListener('click', ()=>{
+          if(confirm('Delete this question?')){
+            state.questions = state.questions.filter(x=>x.id!==q.id);
+            delete state.runs[q.id];
+            save();
+            renderQuestions();
+            toast('Question deleted','success');
+          }
+        });
+        list.appendChild(card);
+      });
+    }
+
+    function openQuestionEditor(id=null){
+      const isNew = !id;
+      const q = isNew ? { id: uid(), text:'', category:'', weight:1, requireEvidence:false } : state.questions.find(x=>x.id===id);
+      const dlg = document.createElement('div');
+      dlg.role = 'dialog';
+      dlg.ariaModal = 'true';
+      dlg.style.position='fixed';
+      dlg.style.inset='0';
+      dlg.style.background='rgba(15,23,42,0.35)';
+      dlg.style.display='grid';
+      dlg.style.placeItems='center';
+      dlg.innerHTML = `
+        <div class="panel" style="max-width:600px; width:95%">
+          <div class="hd"><h3 style="margin:0;font-size:16px">${isNew?'Add':'Edit'} Question</h3></div>
+          <div class="bd">
+            <div>
+              <label for="qText">Question</label>
+              <textarea id="qText" class="input" rows="3" placeholder="Describe what should be checked..."></textarea>
+            </div>
+            <div class="row" style="margin-top:10px">
+              <div>
+                <label for="qCat">Category</label>
+                <input id="qCat" class="input" placeholder="e.g., Safety" />
               </div>
-
-              {/* Dados da Loja */}
-              <div className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 p-5 rounded-xl border border-blue-200">
-                <h3 className="font-bold text-lg mb-3 text-blue-800 flex items-center gap-2">
-                  <i className="fas fa-store"></i>
-                  Dados da Loja
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-gray-700">
-                  <div>
-                    <span className="font-semibold">Nome:</span> {lojaNome}
-                  </div>
-                  <div>
-                    <span className="font-semibold">Endereço:</span> {lojaEndereco}
-                  </div>
-                </div>
+              <div>
+                <label for="qWeight">Weight (points)</label>
+                <input id="qWeight" type="number" min="1" max="10" step="1" class="input" />
               </div>
+            </div>
+            <div class="inline" style="margin-top:10px">
+              <input id="qReq" type="checkbox" />
+              <label for="qReq" style="margin:0">Requires evidence (photo/note)</label>
+            </div>
+            <div class="foot-actions">
+              <button class="ghost" id="qCancel">Cancel</button>
+              <button id="qSave">Save</button>
+            </div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(dlg);
+      $('#qText', dlg)?.focus;
 
-              {/* Informações de Tempo e GPS */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <div className="bg-gray-50 p-5 rounded-xl border">
-                  <h4 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
-                    <i className="fas fa-clock text-purple-600"></i>
-                    Tempo de Execução
-                  </h4>
-                  <div className="text-sm text-gray-700 space-y-2">
-                    <div><span className="font-semibold">Início:</span> {formatarDataHora(inicioISO)}</div>
-                    <div><span className="font-semibold">Término:</span> {formatarDataHora(fimISO)}</div>
-                    <div><span className="font-semibold">Duração:</span> {duracao}</div>
-                  </div>
-                </div>
+      dlg.querySelector('#qText').value = q.text || '';
+      dlg.querySelector('#qCat').value = q.category || '';
+      dlg.querySelector('#qWeight').value = q.weight ?? 1;
+      dlg.querySelector('#qReq').checked = !!q.requireEvidence;
 
-                <div className="bg-gray-50 p-5 rounded-xl border">
-                  <h4 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
-                    <i className="fas fa-map-marker-alt text-red-600"></i>
-                    Localização GPS
-                  </h4>
-                  {coords && (
-                    <div className="text-sm text-gray-700 space-y-2">
-                      <div className="break-all">
-                        <span className="font-semibold">Coordenadas:</span> {coords.latitude.toFixed(6)}, {coords.longitude.toFixed(6)}
-                      </div>
-                      {coords.accuracy && (
-                        <div><span className="font-semibold">Precisão:</span> ±{Math.round(coords.accuracy)} m</div>
-                      )}
-                      {distancia != null && (
-                        <div>
-                          <span className="font-semibold">Distância:</span> {Math.round(distancia)} m
-                          <span className={'ml-2 badge ' + (dentroDaArea ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700')}>
-                            {dentroDaArea ? 'Dentro da área' : 'Fora da área'}
-                          </span>
-                        </div>
-                      )}
-                      {enderecoGPS && (
-                        <div className="break-words pt-2 border-t">
-                          <span className="font-semibold">Endereço GPS:</span> {enderecoGPS}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
+      dlg.querySelector('#qCancel').addEventListener('click', ()=> dlg.remove());
+      dlg.querySelector('#qSave').addEventListener('click', ()=>{
+        const text = dlg.querySelector('#qText').value.trim();
+        const cat = dlg.querySelector('#qCat').value.trim();
+        const weight = clamp(parseInt(dlg.querySelector('#qWeight').value||'1',10),1,10);
+        const req = dlg.querySelector('#qReq').checked;
+        if(text.length < 3){ toast('Please enter a clear question','error'); return; }
+        q.text = text; q.category = cat; q.weight = weight; q.requireEvidence = req;
+
+        if(isNew) state.questions.push(q);
+        else state.questions = state.questions.map(x=> x.id===q.id ? q : x);
+
+        save();
+        renderQuestions();
+        dlg.remove();
+        toast(isNew?'Question added':'Question updated','success');
+      });
+    }
+
+    // Run checklist
+    function renderRun(){
+      const runList = $('#runList');
+      const status = $('#runStatus');
+      runList.innerHTML = '';
+      if(state.questions.length===0){
+        runList.innerHTML = `<div class="empty">No questions to run. Add questions first.</div>`;
+        status.innerHTML = '';
+        return;
+      }
+
+      // Progress
+      const totals = computeProgress();
+      status.innerHTML = `
+        <span class="chip" data-variant="ok">Yes: ${totals.yes}</span>
+        <span class="chip" data-variant="bad">No: ${totals.no}</span>
+        <span class="chip" data-variant="warn">N/A: ${totals.na}</span>
+        <span class="chip">Pending: ${totals.pending}</span>
+        <span class="chip">Score: ${totals.score}/${totals.max}</span>
+      `;
+
+      state.questions.forEach(q=>{
+        const ans = state.runs[q.id] || {answer:null, note:'', photo:null};
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          <div class="grow">
+            <h4>${escapeHTML(q.text)}</h4>
+            <div class="inline" style="gap:6px; margin-top:6px">
+              <button class="pill ${ans.answer==='yes'?'':'secondary'}" data-a="yes">Yes</button>
+              <button class="pill ${ans.answer==='no'?'':'secondary'}" data-a="no">No</button>
+              <button class="pill ${ans.answer==='na'?'':'secondary'}" data-a="na">N/A</button>
+            </div>
+            <div class="row" style="margin-top:10px">
+              <div>
+                <label for="n_${q.id}">Note</label>
+                <input id="n_${q.id}" class="input" placeholder="Optional note" value="${escapeAttr(ans.note||'')}" />
               </div>
-
-              {/* Nota Final */}
-              <div className="bg-gradient-to-r from-green-400 to-emerald-500 rounded-xl p-6 mb-6 text-center text-white shadow-lg">
-                <h2 className="text-5xl sm:text-6xl font-bold mb-2">{nota}</h2>
-                <p className="text-lg">Nota Final</p>
-                <p className="text-sm opacity-90 mt-1">{pos} de {total} respostas positivas ({((pos/total)*100).toFixed(0)}%)</p>
+              <div>
+                <label for="p_${q.id}">Photo</label>
+                <input id="p_${q.id}" type="file" accept="image/*" capture="environment" class="input" />
+                ${ans.photo ? `<div style="margin-top:6px"><img alt="Evidence" style="max-width:100%; border-radius:8px; border:1px solid var(--border)" src="${ans.photo}"/></div>`:''}
               </div>
+            </div>
+            ${q.requireEvidence ? `<div class="help" style="margin-top:6px">This item requires a note or a photo.</div>`:''}
+          </div>
+          <div class="inline">
+            <span class="tag ${ans.answer==='yes'?'ok':ans.answer==='no'?'no':ans.answer==='na'?'na':'pending'}">
+              ${ans.answer? ans.answer.toUpperCase() : 'PENDING'}
+            </span>
+          </div>
+        `;
+        // Bindings
+        card.querySelectorAll('button[data-a]').forEach(b=>{
+          b.addEventListener('click', ()=>{
+            const a = b.dataset.a;
+            setAnswer(q.id, a);
+            renderRun();
+          });
+        });
+        card.querySelector('#n_'+q.id).addEventListener('input', (e)=>{
+          const v = e.target.value;
+          ensureRun(q.id);
+          state.runs[q.id].note = v;
+          save();
+        });
+        card.querySelector('#p_'+q.id).addEventListener('change', async (e)=>{
+          const file = e.target.files?.[0];
+          if(!file){ return; }
+          const dataURL = await fileToDataURL(file);
+          ensureRun(q.id);
+          state.runs[q.id].photo = dataURL;
+          save();
+          toast('Photo attached','success');
+          renderRun();
+        });
 
-              {/* Resumo por Categoria */}
-              <div className="mb-6">
-                <h3 className="font-bold text-xl mb-4 text-gray-800">
-                  <i className="fas fa-list-check mr-2"></i>
-                  Resumo por Categoria
-                </h3>
-                <div className="space-y-4">
-                  {categorias.map(([cat, itens]) => {
-                    const catPos = itens.filter(p => respostas[p.id] === 'sim').length;
-                    const catTotal = itens.length;
-                    const catPercent = ((catPos / catTotal) * 100).toFixed(0);
-                    
-                    return (
-                      <div key={cat} className="card border overflow-hidden">
-                        <div className="px-4 py-3 bg-gradient-to-r from-gray-100 to-gray-50 border-b flex items-center justify-between">
-                          <span className="font-bold text-gray-800">{cat}</span>
-                          <span className="text-sm text-gray-600">{catPos}/{catTotal} ({catPercent}%)</span>
-                        </div>
-                        <div className="p-4 space-y-3">
-                          {itens.map((p) => (
-                            <div key={p.id} className="bg-gray-50 p-4 rounded-lg border">
-                              <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-                                <div className="flex-1">
-                                  <div className="text-sm font-semibold mb-2 break-words text-gray-800">
-                                    {p.texto}
-                                  </div>
-                                  <div className="flex items-center gap-3 flex-wrap">
-                                    <span className={'badge text-sm ' + (respostas[p.id] === 'sim' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700')}>
-                                      {respostas[p.id] === 'sim' ? '✓ SIM' : '✗ NÃO'}
-                                    </span>
-                                    {p.fotoObrigatoria && (
-                                      <span className="badge bg-yellow-100 text-yellow-700">
-                                        <i className="fas fa-camera mr-1"></i>Foto obrigatória
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                                <div className="w-full lg:w-48 text-center">
-                                  {evidencias[p.id] ? (
-                                    <img 
-                                      src={evidencias[p.id]} 
-                                      alt={'Evidência ' + p.id} 
-                                      className="w-full h-32 object-cover rounded-lg border-2 border-gray-200 shadow-sm mx-auto" 
-                                    />
-                                  ) : (
-                                    <div className="w-full h-32 bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center">
-                                      <span className="text-xs text-gray-400">Sem evidência</span>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+        runList.appendChild(card);
+      });
+    }
+
+    function ensureRun(qid){
+      if(!state.runs[qid]) state.runs[qid] = {answer:null, note:'', photo:null};
+    }
+
+    function setAnswer(qid, answer){
+      ensureRun(qid);
+      state.runs[qid].answer = answer;
+      save();
+      // Validate required evidence
+      const q = state.questions.find(x=>x.id===qid);
+      if(q?.requireEvidence){
+        const r = state.runs[qid];
+        if(!(r.note?.trim() || r.photo)){
+          toast('Evidence is required for this item','error');
+        }
+      }
+    }
+
+    function computeProgress(){
+      let yes=0,no=0,na=0,pending=0,score=0,max=0;
+      for(const q of state.questions){
+        const w = q.weight ?? 1;
+        max += w;
+        const r = state.runs[q.id];
+        if(!r || !r.answer){ pending++; continue; }
+        if(r.answer==='yes'){ yes++; score += w; }
+        else if(r.answer==='no'){ no++; }
+        else { na++; }
+      }
+      return {yes,no,na,pending,score,max};
+    }
+
+    // Report
+    function renderReport(){
+      const wrap = $('#reportBody');
+      const totals = computeProgress();
+      if(state.questions.length===0){
+        wrap.innerHTML = `<div class="empty">No data to report.</div>`;
+        return;
+      }
+      const prof = state.profile;
+      const header = `
+        <div class="card" style="align-items:center">
+          <div class="grow">
+            <h4 style="margin:0">Summary</h4>
+            <small class="muted">Created: ${new Date(state.createdAt).toLocaleString()}</small>
+            <div class="hr"></div>
+            <div class="row">
+              <div>
+                <div><strong>Organization:</strong> ${escapeHTML(prof.orgName||'-')}</div>
+                <div><strong>Site:</strong> ${escapeHTML(prof.siteName||'-')}</div>
+                <div><strong>Auditor:</strong> ${escapeHTML(prof.auditorName||'-')}</div>
               </div>
-
-              {/* Botões de Ação */}
-              <div className="flex flex-col sm:flex-row gap-3 no-print">
-                <button 
-                  onClick={() => window.print()} 
-                  className="btn flex-1 bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 transition shadow-md"
-                >
-                  <i className="fas fa-print"></i>
-                  Imprimir / Salvar PDF
-                </button>
-                <button 
-                  onClick={exportarResultadoCSV} 
-                  className="btn flex-1 bg-emerald-600 text-white py-3 rounded-lg hover:bg-emerald-700 transition shadow-md"
-                >
-                  <i className="fas fa-file-csv"></i>
-                  Exportar CSV
-                </button>
-                <button 
-                  onClick={reiniciar} 
-                  className="btn flex-1 bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600 transition shadow-md"
-                >
-                  <i className="fas fa-redo"></i>
-                  Novo Checklist
-                </button>
+              <div>
+                <div><strong>Planned date:</strong> ${escapeHTML(prof.datePlanned||'-')}</div>
+                <div><strong>GPS:</strong> ${prof.geo ? `${prof.geo.latitude.toFixed(5)}, ${prof.geo.longitude.toFixed(5)} (±${Math.round(prof.geo.accuracy)}m)` : 'not verified'}</div>
+                <div><strong>Score:</strong> ${totals.score}/${totals.max}</div>
               </div>
             </div>
           </div>
-        );
-      }
-
-      // ============================================
-      // RENDERIZAÇÃO: Checklist em Andamento
-      // ============================================
-      if (checklistIniciado) {
-        const respondidas = perguntas.filter(p => respostas[p.id]).length;
-        const progresso = ((respondidas / perguntas.length) * 100).toFixed(0);
-        
-        return (
-          <div className="min-h-screen p-4">
-            <Toast />
-            <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-2xl p-6 sm:p-8">
-              <WizardSteps currentStep={passo} steps={passos} />
-              
-              <div className="text-center mb-6">
-                <h1 className="text-2xl sm:text-3xl font-bold text-purple-600 mb-2">
-                  <i className="fas fa-clipboard-check mr-2"></i>
-                  Checklist em Andamento
-                </h1>
-                <p className="text-gray-600">Responda todas as perguntas e anexe as evidências</p>
+          <div class="status">
+            <span class="chip" data-variant="ok">Yes ${totals.yes}</span>
+            <span class="chip" data-variant="bad">No ${totals.no}</span>
+            <span class="chip" data-variant="warn">N/A ${totals.na}</span>
+            <span class="chip">Pending ${totals.pending}</span>
+          </div>
+        </div>
+      `;
+      const items = state.questions.map(q=>{
+        const r = state.runs[q.id] || {};
+        const ans = r.answer || 'pending';
+        const tagC = ans==='yes'?'ok':ans==='no'?'no':ans==='na'?'na':'pending';
+        return `
+          <div class="card">
+            <div class="grow">
+              <h4>${escapeHTML(q.text)}</h4>
+              <div class="inline" style="gap:6px; margin-bottom:8px">
+                <span class="tag ${tagC}">${ans.toUpperCase()}</span>
+                <span class="tag">${escapeHTML(q.category||'Uncategorized')}</span>
+                <span class="tag pill">${q.weight ?? 1} pt</span>
+                ${q.requireEvidence ? '<span class="tag pending">Requires evidence</span>' : ''}
               </div>
+              ${r.note ? `<div><strong>Note:</strong> ${escapeHTML(r.note)}</div>` : ''}
+              ${r.photo ? `<div style="margin-top:8px"><img alt="Evidence" style="max-width:100%; border-radius:8px; border:1px solid var(--border)" src="${r.photo}"/></div>`:''}
+            </div>
+          </div>
+        `;
+      }).join('');
 
-              {/* Informações da Loja */}
-              <div className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl border border-blue-200">
-                <h3 className="font-bold text-sm mb-2 text-blue-800 flex items-center gap-2">
-                  <i className="fas fa-store"></i>
-                  {lojaNome}
-                </h3>
-                <div className="text-xs text-gray-700">{lojaEndereco}</div>
-              </div>
+      wrap.innerHTML = header + items;
+    }
 
-              {/* Barra de Progresso */}
-              <div className="mb-6 bg-gray-100 p-4 rounded-xl">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-semibold text-gray-700">Progresso</span>
-                  <span className="text-sm font-bold text-purple-600">{respondidas}/{perguntas.length} ({progresso}%)</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-                  <div 
-                    className="bg-gradient-to-r from-purple-500 to-pink-500 h-3 rounded-full transition-all duration-300"
-                    style={{ width: progresso + '%' }}
-                  ></div>
-                </div>
-              </div>
+    // Import / Export
+    function doExport(){
+      const blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
+      const a = document.createElement('a');
+      const date = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
+      a.href = URL.createObjectURL(blob);
+      a.download = `checklist_export_${date}.json`;
+      a.click();
+      toast('Export started','success');
+    }
+    function doImport(file){
+      const reader = new FileReader();
+      reader.onload = ()=>{
+        try{
+          const data = JSON.parse(reader.result);
+          // Basic validation
+          if(!data || typeof data!=='object' || !Array.isArray(data.questions)){
+            throw new Error('Invalid file');
+          }
+          // Keep current createdAt if missing
+          Object.assign(state, {
+            profile: data.profile || state.profile,
+            questions: data.questions || [],
+            runs: data.runs || {},
+            createdAt: data.createdAt || new Date().toISOString()
+          });
+          save();
+          bindProfile();
+          renderQuestions();
+          renderRun();
+          renderReport();
+          toast('Import successful','success');
+        }catch(e){
+          console.warn(e);
+          toast('Import failed. Make sure it is a valid export file.','error');
+        }
+      };
+      reader.readAsText(file);
+    }
 
-              {/* Perguntas por Categoria */}
-              <div className="space-y-6 mb-6">
-                {categorias.map(([cat, itens]) => (
-                  <div key={cat} className="card border overflow-hidden">
-                    <div className="px-4 py-3 bg-gradient-to-r from-purple-100 to-pink-100 border-b">
-                      <span className="font-bold text-purple-800">{cat}</span>
-                    </div>
-                    <div className="p-4 space-y-4">
-                      {itens.map((p) => (
-                        <div key={p.id} className="bg-gray-50 p-4 rounded-xl border-2 border-gray-200 hover:border-purple-300 transition">
-                          <p className="font-semibold mb-3 text-sm sm:text-base break-words text-gray-800">
-                            {p.texto}
-                          </p>
-                          
-                          {/* Botões SIM/NÃO */}
-                          <div className="flex flex-col gap-3">
-                            <div className="flex gap-3">
-                              <button
-                                onClick={() => responderPergunta(p.id, 'sim')}
-                                aria-pressed={respostas[p.id] === 'sim'}
-                                className={'btn flex-1 py-3 rounded-lg font-bold transition text-sm sm:text-base ' + (
-                                  respostas[p.id] === 'sim' 
-                                    ? 'bg-green-500 text-white shadow-lg' 
-                                    : 'bg-gray-200 text-gray-700 hover:bg-green-100'
-                                )}
-                              >
-                                <i className="fas fa-check"></i>
-                                SIM
-                              </button>
-                              <button
-                                onClick={() => responderPergunta(p.id, 'nao')}
-                                aria-pressed={respostas[p.id] === 'nao'}
-                                className={'btn flex
+    // Template
+    function loadSampleTemplate(){
+      if(state.questions.length>0 && !confirm('Replace current questions with a sample template?')) return;
+      state.questions = [
+        { id: uid(), text:'Emergency exits are accessible and unblocked', category:'Safety', weight:2, requireEvidence:false },
+        { id: uid(), text:'Fire extinguishers are inspected and tagged within the last 12 months', category:'Safety', weight:3, requireEvidence:true },
+        { id: uid(), text:'PPE available and used by all staff in production area', category:'Operations', weight:2, requireEvidence:true },
+        { id: uid(), text:'Food storage temperatures are within compliant range', category:'Quality', weight:3, requireEvidence:true },
+        { id: uid(), text:'Visitor log maintained and up to date', category:'Compliance', weight:1, requireEvidence:false },
+      ];
+      state.runs = {};
+      save();
+      renderQuestions();
+      toast('Sample template loaded','success');
+    }
+
+    // Utilities
+    function fileToDataURL(file){
+      return new Promise((res, rej)=>{
+        const r = new FileReader();
+        r.onload = ()=> res(r.result);
+        r.onerror = rej;
+        r.readAsDataURL(file);
+      });
+    }
+    function escapeHTML(s){ return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+    function escapeAttr(s){ return escapeHTML(s).replace(/"/g,'&quot;'); }
+    function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
+
+    // Clear all
+    function clearAll(){
+      if(!confirm('This will erase all data on this device for Checklist Pro. Continue?')) return;
+      localStorage.removeItem(LS_KEY);
+      // reset state
+      state.profile = { orgName:'', siteName:'', auditorName:'', datePlanned:'', geo:null };
+      state.questions = [];
+      state.runs = {};
+      state.createdAt = new Date().toISOString();
+      bindProfile();
+      renderQuestions();
+      renderRun();
+      renderReport();
+      setStep('profile');
+      toast('All data cleared','success');
+    }
+
+    // Events
+    function bindEvents(){
+      // Wizard click
+      $$('.wizard-steps .step').forEach(step=>{
+        step.addEventListener('click', ()=> setStep(step.dataset.step));
+        step.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' ') setStep(step.dataset.step); });
+      });
+      $('#btnGetGeo').addEventListener('click', getGeo);
+      $('#btnAddQuestion').addEventListener('click', ()=> openQuestionEditor(null));
+      $('#btnResetQuestions').addEventListener('click', ()=>{
+        if(confirm('Remove all questions?')){
+          state.questions = [];
+          state.runs = {};
+          save();
+          renderQuestions();
+        }
+      });
+      $('#btnStartNew').addEventListener('click', ()=>{
+        if(confirm('Start a new checklist? Current answers will be cleared.')){
+          state.runs = {};
+          state.createdAt = new Date().toISOString();
+          save();
+          setStep('questions');
+          renderRun();
+          toast('New checklist started','success');
+        }
+      });
+      $('#btnExport').addEventListener('click', doExport);
+      $('#btnImport').addEventListener('click', ()=> $('#fileImport').click());
+      $('#fileImport').addEventListener('change', (e)=>{
+        const f = e.target.files?.[0];
+        if(f) doImport(f);
+        e.target.value = '';
+      });
+      $('#btnCopySummary').addEventListener('click', ()=>{
+        const totals = computeProgress();
+        const prof = state.profile;
+        const txt = [
+          `Checklist Summary`,
+          `Org: ${prof.orgName||'-'} | Site: ${prof.siteName||'-'} | Auditor: ${prof.auditorName||'-'} | Date: ${prof.datePlanned||'-'}`,
+          `GPS: ${prof.geo ? `${prof.geo.latitude.toFixed(5)}, ${prof.geo.longitude.toFixed(5)} (±${Math.round(prof.geo.accuracy)}m)` : 'not verified'}`,
+          `Score: ${totals.score}/${totals.max} (Yes: ${totals.yes}, No: ${totals.no}, N/A: ${totals.na}, Pending: ${totals.pending})`,
+        ].join('\n');
+        navigator.clipboard.writeText(txt).then(()=> toast('Summary copied','success')).catch(()=> toast('Copy failed','error'));
+      });
+      $('#btnClearAll').addEventListener('click', clearAll);
+      $('#btnLoadTemplate').addEventListener('click', loadSampleTemplate);
+    }
+
+    // Init
+    load();
+    bindProfile();
+    renderQuestions();
+    renderRun();
+    renderReport();
+    bindEvents();
+    setStep('profile');
+  </script>
+</body>
+</html>
