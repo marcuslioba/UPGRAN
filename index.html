@@ -1,1193 +1,603 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard de Vendas - Tempo Real</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard de Vendas - Tempo Real</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,'Helvetica Neue',Arial;
+      background:#FF500a;min-height:100vh;padding:16px;overflow-x:hidden
+    }
+    .container{max-width:1280px;margin:0 auto}
+    .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+    .logo{color:#fff;font-size:1.8rem;font-weight:800}
+    .sync-status{background:#fff;color:#FF500a;padding:8px 14px;border-radius:18px;font-weight:700;display:flex;align-items:center;gap:8px}
+    .sync-indicator{width:10px;height:10px;background:#10b981;border-radius:50%}
+    .loading-screen{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;color:#fff;text-align:center}
+    .dashboard{display:block}
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #FF500a;
-            min-height: 100vh;
-            padding: 20px;
-            overflow-x: hidden;
-        }
+    /* Minimalismo */
+    .store-selector{background:#fff;padding:10px 14px;border-radius:12px;box-shadow:0 3px 12px rgba(0,0,0,.18);margin-bottom:12px}
+    .store-selector select{width:100%;padding:10px 12px;font-size:1rem;border:2px solid #FF500a;border-radius:8px;font-weight:700;background:#fff}
 
-        .container {
-            max-width: 1920px;
-            margin: 0 auto;
-        }
+    .metrics-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:12px}
+    .metric-card{background:#fff;padding:12px;border-radius:12px;box-shadow:0 3px 12px rgba(0,0,0,.18)}
+    .metric-label{color:#666;font-size:.78rem;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;font-weight:800}
+    .metric-value{font-size:1.4rem;font-weight:800;color:#FF500a;margin-bottom:4px}
+    .metric-trend{display:flex;align-items:center;gap:6px;font-size:.86rem;font-weight:700}
+    .trend-up{color:#10b981}.trend-down{color:#ef4444}
 
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            animation: slideDown 0.6s ease-out;
-        }
+    .charts-row{display:grid;grid-template-columns:2fr 1fr;gap:10px;margin-bottom:12px}
+    .charts-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:12px}
+    .chart-card{background:#fff;padding:12px;border-radius:12px;box-shadow:0 3px 12px rgba(0,0,0,.18)}
+    .chart-title{font-size:1rem;color:#333;margin-bottom:6px;font-weight:800;display:flex;align-items:center;gap:8px}
 
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
+    .gauge-container{position:relative;height:120px;display:flex;align-items:center;justify-content:center}
+    #gaugeChart{height:110px!important}
 
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: scale(0.95);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
+    .top-stores{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:12px}
+    .top-card{background:#fff;padding:12px;border-radius:12px;box-shadow:0 3px 12px rgba(0,0,0,.18)}
+    .top-item{display:flex;justify-content:space-between;align-items:center;padding:8px;margin-bottom:6px;background:#f8f9fa;border-radius:8px}
+    .top-item-rank{font-size:1.2rem;font-weight:800;margin-right:10px}
+    .top-item-name{flex:1;font-weight:700}
+    .top-item-value{font-weight:800;color:#FF500a}
 
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
+    .stores-table{background:#fff;padding:12px;border-radius:12px;box-shadow:0 3px 12px rgba(0,0,0,.18);overflow-x:auto}
+    table{width:100%;border-collapse:collapse}
+    th{background:#FF500a;color:#fff;padding:10px;text-align:left;font-weight:800;font-size:.9rem}
+    td{padding:10px;border-bottom:1px solid #eee;font-size:.9rem}
+    tr:hover{background:#fff5f3}
+    .badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:.8rem;font-weight:800}
+    .badge-success{background:#d1fae5;color:#065f46}
+    .badge-danger{background:#fee2e2;color:#991b1b}
 
-        @keyframes pulse {
-            0%, 100% {
-                opacity: 1;
-            }
-            50% {
-                opacity: 0.5;
-            }
-        }
-
-        @keyframes highlight {
-            0% {
-                background: #fff5f3;
-                transform: scale(1.02);
-            }
-            100% {
-                background: white;
-                transform: scale(1);
-            }
-        }
-
-        .logo {
-            color: white;
-            font-size: 2.5em;
-            font-weight: bold;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-
-        .sync-status {
-            background: white;
-            color: #FF500a;
-            padding: 12px 25px;
-            border-radius: 25px;
-            font-weight: 600;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-direction: column;
-        }
-
-        .sync-main {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .sync-indicator {
-            width: 12px;
-            height: 12px;
-            background: #10b981;
-            border-radius: 50%;
-            animation: pulse 2s infinite;
-        }
-
-        .sync-countdown {
-            font-size: 0.85em;
-            color: #666;
-        }
-
-        .sync-debug {
-            font-size: 0.75em;
-            color: #999;
-        }
-
-        .loading-screen {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 80vh;
-            color: white;
-            text-align: center;
-        }
-
-        .loading-screen h1 {
-            font-size: 3em;
-            margin-bottom: 20px;
-            text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
-        }
-
-        .spinner {
-            width: 60px;
-            height: 60px;
-            border: 6px solid rgba(255,255,255,0.3);
-            border-top-color: white;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .dashboard {
-            display: none;
-        }
-
-        .dashboard.active {
-            display: block;
-        }
-
-        .store-selector {
-            background: white;
-            padding: 15px 25px;
-            border-radius: 15px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
-            margin-bottom: 20px;
-            animation: fadeIn 0.6s ease-out;
-        }
-
-        .store-selector select {
-            width: 100%;
-            padding: 12px;
-            font-size: 1.1em;
-            border: 2px solid #FF500a;
-            border-radius: 8px;
-            cursor: pointer;
-            background: white;
-            font-weight: 600;
-        }
-
-        .metrics-grid {
-            display: grid;
-            grid-template-columns: repeat(6, 1fr);
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .metric-card {
-            background: white;
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
-            transition: all 0.3s;
-            animation: fadeIn 0.8s ease-out;
-        }
-
-        .metric-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-        }
-
-        .metric-card.updated {
-            animation: highlight 0.8s ease-out;
-        }
-
-        .metric-label {
-            color: #666;
-            font-size: 0.85em;
-            margin-bottom: 8px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-weight: 600;
-        }
-
-        .metric-value {
-            font-size: 2em;
-            font-weight: bold;
-            color: #FF500a;
-            margin-bottom: 8px;
-        }
-
-        .metric-trend {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 0.85em;
-            font-weight: 600;
-        }
-
-        .trend-up {
-            color: #10b981;
-        }
-
-        .trend-down {
-            color: #ef4444;
-        }
-
-        .charts-main {
-            display: grid;
-            grid-template-columns: 70% 30%;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .charts-secondary {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .chart-card {
-            background: white;
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
-            animation: slideUp 0.8s ease-out;
-        }
-
-        .chart-card.updated {
-            animation: highlight 0.8s ease-out;
-        }
-
-        .chart-title {
-            font-size: 1.2em;
-            color: #333;
-            margin-bottom: 15px;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .stores-table {
-            background: white;
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
-            overflow-x: auto;
-            animation: slideUp 1s ease-out;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        th {
-            background: #FF500a;
-            color: white;
-            padding: 15px;
-            text-align: left;
-            font-weight: 600;
-            font-size: 0.95em;
-        }
-
-        td {
-            padding: 15px;
-            border-bottom: 1px solid #eee;
-            font-size: 0.95em;
-        }
-
-        tr:hover {
-            background: #fff5f3;
-        }
-
-        tr.updated {
-            animation: highlight 0.8s ease-out;
-        }
-
-        .badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 0.85em;
-            font-weight: 700;
-        }
-
-        .badge-success {
-            background: #d1fae5;
-            color: #065f46;
-        }
-
-        .badge-danger {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-
-        .gauge-container {
-            position: relative;
-            height: 180px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .top-stores {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .top-card {
-            background: white;
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
-            animation: fadeIn 1s ease-out;
-        }
-
-        .top-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px;
-            margin-bottom: 8px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            transition: all 0.3s;
-        }
-
-        .top-item:hover {
-            background: #fff5f3;
-            transform: translateX(5px);
-        }
-
-        .top-item-rank {
-            font-size: 1.5em;
-            font-weight: bold;
-            margin-right: 15px;
-        }
-
-        .top-item-name {
-            flex: 1;
-            font-weight: 600;
-        }
-
-        .top-item-value {
-            font-weight: bold;
-            color: #FF500a;
-        }
-
-        .error-message {
-            background: white;
-            color: #ef4444;
-            padding: 20px;
-            border-radius: 15px;
-            margin: 20px 0;
-            text-align: center;
-            font-weight: 600;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
-        }
-
-        .cors-warning {
-            background: #fff3cd;
-            color: #856404;
-            padding: 15px;
-            border-radius: 10px;
-            margin: 10px 0;
-            border-left: 4px solid #ffc107;
-        }
-    </style>
+    /* Responsivo simplificado */
+    @media (max-width: 1100px){
+      .metrics-grid{grid-template-columns:repeat(3,1fr)}
+      .charts-row{grid-template-columns:1fr}
+      .charts-grid{grid-template-columns:1fr}
+      .top-stores{grid-template-columns:1fr}
+    }
+    @media (max-width: 640px){
+      .metrics-grid{grid-template-columns:repeat(2,1fr)}
+      .logo{font-size:1.4rem}
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <div class="logo">📊 Dashboard de Vendas - Tempo Real</div>
-            <div class="sync-status">
-                <div class="sync-main">
-                    <div class="sync-indicator"></div>
-                    <span id="syncStatus">Sincronizando...</span>
-                </div>
-                <div class="sync-countdown" id="countdown">Próxima atualização em 10s</div>
-                <div class="sync-debug" id="debugInfo">Aguardando dados...</div>
-            </div>
-        </div>
-
-        <div class="loading-screen" id="loadingScreen">
-            <h1>Carregando dados...</h1>
-            <div class="spinner"></div>
-            <p style="margin-top: 20px; font-size: 1.2em;">Conectando ao Google Sheets</p>
-        </div>
-
-        <div id="errorContainer"></div>
-
-        <div class="dashboard" id="dashboard">
-            <div class="store-selector">
-                <select id="storeSelect" onchange="updateDashboard()">
-                    <option value="all">📍 Todas as Lojas</option>
-                </select>
-            </div>
-
-            <div class="metrics-grid">
-                <div class="metric-card" data-metric="totalSales">
-                    <div class="metric-label">Vendas Totais</div>
-                    <div class="metric-value" id="totalSales">R$ 0</div>
-                    <div class="metric-trend" id="salesTrend"></div>
-                </div>
-                <div class="metric-card" data-metric="counterSales">
-                    <div class="metric-label">Vendas Balcão</div>
-                    <div class="metric-value" id="counterSales">R$ 0</div>
-                </div>
-                <div class="metric-card" data-metric="deliverySales">
-                    <div class="metric-label">Delivery</div>
-                    <div class="metric-value" id="deliverySales">R$ 0</div>
-                    <div class="metric-trend" id="deliveryTrend"></div>
-                </div>
-                <div class="metric-card" data-metric="deliveryPercent">
-                    <div class="metric-label">% Delivery</div>
-                    <div class="metric-value" id="deliveryPercent">0%</div>
-                </div>
-                <div class="metric-card" data-metric="forecast">
-                    <div class="metric-label">Previsão Mês</div>
-                    <div class="metric-value" id="forecast">R$ 0</div>
-                </div>
-                <div class="metric-card" data-metric="goalValue">
-                    <div class="metric-label">Meta do Mês</div>
-                    <div class="metric-value" id="goalValue">R$ 0</div>
-                    <div class="metric-trend" id="goalStatus"></div>
-                </div>
-            </div>
-
-            <div class="charts-main">
-                <div class="chart-card" id="salesChartCard">
-                    <div class="chart-title">📈 Evolução de Vendas - Mês Atual vs Mês Anterior</div>
-                    <canvas id="salesChart"></canvas>
-                </div>
-                <div class="chart-card" id="deliveryChartCard">
-                    <div class="chart-title">🚚 Evolução do Delivery</div>
-                    <canvas id="deliveryChart"></canvas>
-                </div>
-            </div>
-
-            <div class="charts-secondary">
-                <div class="chart-card" id="storesChartCard">
-                    <div class="chart-title">🏪 Vendas por Loja</div>
-                    <canvas id="storesChart"></canvas>
-                </div>
-                <div class="chart-card" id="gaugeChartCard">
-                    <div class="chart-title">🎯 Progresso da Meta</div>
-                    <div class="gauge-container">
-                        <canvas id="gaugeChart"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <div class="top-stores">
-                <div class="top-card">
-                    <div class="chart-title">🏆 Top 3 Melhores Lojas</div>
-                    <div id="topStores"></div>
-                </div>
-                <div class="top-card">
-                    <div class="chart-title">⚠️ Top 3 Lojas em Alerta</div>
-                    <div id="bottomStores"></div>
-                </div>
-            </div>
-
-            <div class="stores-table">
-                <div class="chart-title">📋 Resumo Detalhado por Loja</div>
-                <table id="storesTable">
-                    <thead>
-                        <tr>
-                            <th>Loja</th>
-                            <th>Vendas Balcão</th>
-                            <th>Delivery</th>
-                            <th>Total</th>
-                            <th>% Delivery</th>
-                            <th>Previsão Mês</th>
-                            <th>Meta</th>
-                            <th>Status Meta</th>
-                            <th>Tendência</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-        </div>
+  <div class="container">
+    <div class="header">
+      <div class="logo">📊 Dashboard de Vendas - Tempo Real</div>
+      <div class="sync-status">
+        <div class="sync-indicator" id="syncDot"></div>
+        <span id="syncStatus">Sincronizando...</span>
+      </div>
     </div>
 
-    <script>
-        const SHEET_ID = '1Ks-Ks-Ks-Ks-Ks';
-        const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQOilCaKcPSn1mh5zp8yd7TrjJpRFqspq-4NZErDtSibx7QqK0PggMQfCYlruJmeU6ebjZGXEqO3L9T/pub?gid=0&single=true&output=csv';
-        const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
-        const REFRESH_INTERVAL = 10000; // 10 segundos
+    <div class="store-selector">
+      <select id="storeSelect" onchange="updateDashboard()">
+        <option value="all">📍 Todas as Lojas</option>
+      </select>
+    </div>
 
-        let salesData = [];
-        let previousData = {};
-        let salesChart, storesChart, deliveryChart, gaugeChart;
-        let lastUpdate = null;
-        let countdownInterval;
-        let remainingSeconds = 10;
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-label">Vendas Totais</div>
+        <div class="metric-value" id="totalSales">R$ 0</div>
+        <div class="metric-trend" id="salesTrend"></div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Vendas Balcão</div>
+        <div class="metric-value" id="counterSales">R$ 0</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Delivery</div>
+        <div class="metric-value" id="deliverySales">R$ 0</div>
+        <div class="metric-trend" id="deliveryTrend"></div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">% Delivery</div>
+        <div class="metric-value" id="deliveryPercent">0%</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Previsão Mês</div>
+        <div class="metric-value" id="forecast">R$ 0</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Meta do Mês</div>
+        <div class="metric-value" id="goalValue">R$ 0</div>
+        <div class="metric-trend" id="goalStatus"></div>
+      </div>
+    </div>
 
-        // Carregar dados iniciais
-        loadDataFromSheet();
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="chart-title">📈 Evolução de Vendas</div>
+        <div style="height:220px">
+          <canvas id="salesChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">🎯 Progresso da Meta</div>
+        <div class="gauge-container">
+          <canvas id="gaugeChart"></canvas>
+        </div>
+      </div>
+    </div>
 
-        // Atualizar a cada 10 segundos
-        setInterval(loadDataFromSheet, REFRESH_INTERVAL);
+    <div class="top-stores">
+      <div class="top-card">
+        <div class="chart-title">🏆 Top 3 Melhores Lojas</div>
+        <div id="topStores"></div>
+      </div>
+      <div class="top-card">
+        <div class="chart-title">⚠️ Top 3 Lojas em Alerta</div>
+        <div id="bottomStores"></div>
+      </div>
+    </div>
 
-        // Iniciar contador regressivo
-        startCountdown();
+    <div class="charts-grid">
+      <div class="chart-card">
+        <div class="chart-title">🚚 Evolução do Delivery</div>
+        <div style="height:200px">
+          <canvas id="deliveryChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">🏪 Vendas por Loja</div>
+        <div style="height:220px">
+          <canvas id="storesChart"></canvas>
+        </div>
+      </div>
+    </div>
 
-        function startCountdown() {
-            countdownInterval = setInterval(() => {
-                remainingSeconds--;
-                if (remainingSeconds <= 0) {
-                    remainingSeconds = 10;
-                }
-                document.getElementById('countdown').textContent = `Próxima atualização em ${remainingSeconds}s`;
-            }, 1000);
+    <div class="stores-table">
+      <div class="chart-title">📋 Resumo Detalhado por Loja</div>
+      <table id="storesTable">
+        <thead>
+        <tr>
+          <th>Loja</th>
+          <th>Vendas Balcão</th>
+          <th>Delivery</th>
+          <th>Total</th>
+          <th>% Delivery</th>
+          <th>Previsão Mês</th>
+          <th>Meta</th>
+          <th>Status Meta</th>
+          <th>Tendência</th>
+        </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    // ======= CONFIG =======
+    // Se você usar Apps Script, troque para true e preencha SHEET_API_URL.
+    const USE_APPS_SCRIPT = true;
+
+    // URL pública do CSV do Google Sheets (não tem CORS):
+    const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQOilCaKcPSn1mh5zp8yd7TrjJpRFqspq-4NZErDtSibx7QqK0PggMQfCYlruJmeU6ebjZGXEqO3L9T/pub?gid=0&single=true&output=csv';
+
+    // Opção 1 (recomendada para GitHub Pages): Seu PROXY com CORS liberado
+    // Exemplo de rota: https://seu-dominio.com/proxy?url=<ENCODED>
+    // Coloque aqui a URL base do seu proxy:
+    const PROXY_CORS_URL = 'https://YOUR_PROXY_DOMAIN/proxy?url=';
+
+    // Opção 2 (Apps Script Web App retornando JSON com CORS):
+    const SHEET_API_URL = 'https://script.google.com/macros/s/AKfycbzA5tqE0f7KpJ%E2%80%A6/exec';
+
+    const REFRESH_INTERVAL = 10000; // 10s
+
+    let salesData = [];
+    let salesChart, storesChart, deliveryChart, gaugeChart;
+
+    function setSync(message, isError=false){
+      document.getElementById('syncStatus').textContent = message;
+      document.getElementById('syncDot').style.background = isError ? '#ef4444' : '#10b981';
+      document.title = 'Dashboard - ' + message;
+    }
+
+    // Carregar dados
+    loadDataFromSource();
+    setInterval(loadDataFromSource, REFRESH_INTERVAL);
+
+    async function loadDataFromSource() {
+      try {
+        setSync('Sincronizando...');
+        let dataRows;
+
+        if (USE_APPS_SCRIPT) {
+          // Apps Script deve responder JSON: [{date:'DD/MM/YYYY', store:'Loja', counter:123, delivery:45, goal:1000}, ...]
+          const resp = await fetch(SHEET_API_URL, {mode: 'cors', cache: 'no-store'});
+          if (!resp.ok) throw new Error('Erro HTTP ' + resp.status);
+          dataRows = await resp.json();
+        } else {
+          // Via proxy CORS lendo o CSV público
+          const proxied = PROXY_CORS_URL + encodeURIComponent(SHEET_CSV_URL + '&t=' + Date.now());
+          const resp = await fetch(proxied, {mode: 'cors', cache: 'no-store'});
+          if (!resp.ok) throw new Error('Erro HTTP ' + resp.status);
+          const csvText = await resp.text();
+          dataRows = parseCSV(csvText);
         }
 
-        async function loadDataFromSheet() {
-            try {
-                const timestamp = new Date().getTime();
-                const url = `${CORS_PROXY}${encodeURIComponent(SHEET_URL)}&t=${timestamp}`;
-                
-                console.log('🔄 Carregando dados...', new Date().toLocaleString('pt-BR'));
-                
-                const response = await fetch(url, {
-                    method: 'GET',
-                    cache: 'no-store'
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-                
-                const csvText = await response.text();
-                
-                console.log('✅ Dados recebidos:', csvText.substring(0, 200) + '...');
-                console.log('📊 Tamanho:', csvText.length, 'caracteres');
-                
-                if (csvText && csvText.length > 10) {
-                    parseCSV(csvText);
-                    lastUpdate = new Date();
-                    remainingSeconds = 10;
-                    updateSyncStatus('✓ Sincronizado', false);
-                    updateDebugInfo();
-                } else {
-                    throw new Error('Dados vazios recebidos');
-                }
-            } catch (error) {
-                console.error('❌ Erro ao carregar dados:', error);
-                updateSyncStatus('✗ Erro na sincronização', true);
-                showError(`${error.message}`);
-                updateDebugInfo(error.message);
-            }
+        if (!Array.isArray(dataRows) || dataRows.length === 0) throw new Error('Sem dados válidos');
+
+        // Normaliza e ordena
+        salesData = dataRows.map(row => ({
+          date: parseDate(row.date),
+          store: String(row.store || '').trim(),
+          counter: toNum(row.counter),
+          delivery: toNum(row.delivery),
+          goal: toNum(row.goal)
+        })).filter(r => r.store && r.date instanceof Date && !isNaN(r.date));
+
+        salesData.sort((a,b)=> a.date - b.date);
+
+        populateStoreSelector();
+        updateDashboard();
+        setSync('Atualizado agora');
+      } catch (e) {
+        console.error('Falha ao carregar:', e);
+        setSync('Erro na sincronização', true);
+      }
+    }
+
+    // Parse CSV básico -> array de objetos
+    function parseCSV(csv){
+      const lines = csv.split('\n').map(l=>l.replace(/\r/g,'').trim()).filter(Boolean);
+      // Esperado: Data,Loja,Balcão,Delivery,Meta
+      const out = [];
+      for (let i=1;i<lines.length;i++){
+        const cols = splitCSVLine(lines[i]);
+        if (cols.length >= 5){
+          out.push({
+            date: cols[0],
+            store: cols[1],
+            counter: cols[2],
+            delivery: cols[3],
+            goal: cols[4]
+          });
         }
+      }
+      return out;
+    }
 
-        function parseCSV(csv) {
-            const lines = csv.split('\n');
-            const newData = [];
-            
-            console.log('📝 Processando', lines.length, 'linhas...');
-            
-            for (let i = 1; i < lines.length; i++) {
-                const line = lines[i].trim();
-                if (!line) continue;
-                
-                const values = line.split(',');
-                if (values.length >= 5 && values[0] && values[1]) {
-                    try {
-                        const dataPoint = {
-                            date: parseDate(values[0]),
-                            store: values[1].toString().trim(),
-                            counter: parseFloat(values[2]) || 0,
-                            delivery: parseFloat(values[3]) || 0,
-                            goal: parseFloat(values[4]) || 0
-                        };
-                        newData.push(dataPoint);
-                    } catch (e) {
-                        console.error('⚠️ Erro ao processar linha:', line, e);
-                    }
-                }
-            }
+    // Divide linha CSV respeitando aspas
+    function splitCSVLine(line){
+      const res=[]; let cur=''; let q=false;
+      for (let i=0;i<line.length;i++){
+        const c=line[i];
+        if (c === '"'){ q=!q; continue; }
+        if (c === ',' && !q){ res.push(cur); cur=''; continue; }
+        cur += c;
+      }
+      res.push(cur);
+      return res;
+    }
 
-            console.log('✅ Dados processados:', newData.length, 'registros válidos');
+    function toNum(v){ const n = parseFloat(String(v).replace(/\./g,'').replace(',','.')); return isNaN(n)?0:n; }
 
-            if (newData.length > 0) {
-                savePreviousData();
-                
-                salesData = newData;
-                salesData.sort((a, b) => a.date - b.date);
-                
-                if (document.getElementById('dashboard').classList.contains('active')) {
-                    updateDashboard();
-                } else {
-                    populateStoreSelector();
-                    updateDashboard();
-                    document.getElementById('loadingScreen').style.display = 'none';
-                    document.getElementById('dashboard').classList.add('active');
-                    clearError();
-                }
-            } else {
-                throw new Error('Nenhum dado válido encontrado no CSV');
-            }
+    function parseDate(s){
+      if (!s) return new Date();
+      const parts = String(s).trim().split('/');
+      if (parts.length===3){
+        const d = new Date(Number(parts[2]), Number(parts[1])-1, Number(parts[0]));
+        if (!isNaN(d)) return d;
+      }
+      const d = new Date(s);
+      return isNaN(d) ? new Date() : d;
+    }
+
+    function populateStoreSelector(){
+      const stores = [...new Set(salesData.map(d=>d.store))];
+      const sel = document.getElementById('storeSelect');
+      const current = sel.value;
+      sel.innerHTML = '<option value="all">📍 Todas as Lojas</option>' +
+        stores.map(s=>`<option value="${s}">🏪 ${s}</option>`).join('');
+      if (stores.includes(current)) sel.value = current;
+    }
+
+    function updateDashboard(){
+      const selected = document.getElementById('storeSelect').value;
+      const data = selected==='all' ? salesData : salesData.filter(d=>d.store===selected);
+      updateMetrics(data, selected);
+      updateSalesChart(data);
+      updateDeliveryChart(data);
+      if (selected==='all') updateStoresChart();
+      updateTable();
+      updateTopStores();
+    }
+
+    function updateMetrics(data, selectedStore){
+      const totalCounter = data.reduce((s,d)=>s+d.counter,0);
+      const totalDelivery = data.reduce((s,d)=>s+d.delivery,0);
+      const totalSales = totalCounter + totalDelivery;
+
+      const dates = data.map(d=>d.date);
+      const minDate = new Date(Math.min(...dates));
+      const maxDate = new Date(Math.max(...dates));
+      const daysInData = Math.max(1, Math.ceil((maxDate - minDate)/(1000*60*60*24))+1);
+      const avgDaily = totalSales / daysInData;
+      const daysInMonth = new Date(maxDate.getFullYear(), maxDate.getMonth()+1, 0).getDate();
+      const forecast = avgDaily * daysInMonth;
+
+      const goal = selectedStore==='all'
+        ? [...new Set(salesData.map(d=>d.store))].reduce((sum, store)=>{
+            const g = salesData.find(d=>d.store===store && d.goal>0)?.goal || 0;
+            return sum + g;
+          },0)
+        : (data.find(d=>d.goal>0)?.goal || 0);
+
+      const deliveryPercent = totalSales>0 ? (totalDelivery/totalSales*100) : 0;
+
+      const salesTrend = calcTrend(data.map(d=>({sales:d.counter+d.delivery})));
+      const deliveryTrend = calcTrend(data.map(d=>({sales:d.delivery})));
+
+      setText('totalSales', money(totalSales));
+      setText('counterSales', money(totalCounter));
+      setText('deliverySales', money(totalDelivery));
+      setText('deliveryPercent', deliveryPercent.toFixed(1)+'%');
+      setText('forecast', money(forecast));
+      setText('goalValue', money(goal));
+
+      document.getElementById('salesTrend').innerHTML = salesTrend>=0
+        ? `<span class="trend-up">▲ ${salesTrend.toFixed(1)}%</span>`
+        : `<span class="trend-down">▼ ${Math.abs(salesTrend).toFixed(1)}%</span>`;
+
+      document.getElementById('deliveryTrend').innerHTML = deliveryTrend>=0
+        ? `<span class="trend-up">▲ ${deliveryTrend.toFixed(1)}%</span>`
+        : `<span class="trend-down">▼ ${Math.abs(deliveryTrend).toFixed(1)}%</span>`;
+
+      document.getElementById('goalStatus').innerHTML = forecast>=goal
+        ? `<span class="trend-up">✓ No caminho</span>`
+        : `<span class="trend-down">✗ Abaixo</span>`;
+
+      updateGaugeChart(forecast, goal);
+    }
+
+    function setText(id, txt){ document.getElementById(id).textContent = txt; }
+
+    function calcTrend(arr){
+      if (arr.length<2) return 0;
+      const mid = Math.floor(arr.length/2);
+      const f = arr.slice(0,mid).reduce((s,d)=>s+d.sales,0) / Math.max(1,mid);
+      const s = arr.slice(mid).reduce((s2,d)=>s2+d.sales,0) / Math.max(1,arr.length-mid);
+      if (f===0) return 0;
+      return ((s-f)/f)*100;
+    }
+
+    // ===== Charts minimalistas =====
+    function updateSalesChart(data){
+      const daily = {};
+      data.forEach(d=>{
+        const k = d.date.toLocaleDateString('pt-BR');
+        if (!daily[k]) daily[k] = {counter:0, delivery:0};
+        daily[k].counter += d.counter;
+        daily[k].delivery += d.delivery;
+      });
+      const labels = Object.keys(daily);
+      const counterValues = labels.map(k=>daily[k].counter);
+      const deliveryValues = labels.map(k=>daily[k].delivery);
+
+      if (salesChart) salesChart.destroy();
+      const ctx = document.getElementById('salesChart').getContext('2d');
+      salesChart = new Chart(ctx, {
+        type:'line',
+        data:{
+          labels,
+          datasets:[
+            {label:'Balcão', data:counterValues, borderColor:'#FF500a', tension:.3, fill:false, borderWidth:2, pointRadius:0},
+            {label:'Delivery', data:deliveryValues, borderColor:'#10b981', tension:.3, fill:false, borderWidth:2, pointRadius:0}
+          ]
+        },
+        options:{
+          responsive:true, maintainAspectRatio:false,
+          plugins:{ legend:{display:false}, title:{display:false}, tooltip:{mode:'index', intersect:false} },
+          elements:{ point:{radius:0} },
+          layout:{padding:0},
+          scales:{
+            x:{ grid:{display:false}, ticks:{ maxTicksLimit:6 }},
+            y:{ grid:{display:false}, ticks:{ maxTicksLimit:4, callback:v=>'R$ '+Number(v).toLocaleString('pt-BR') }, beginAtZero:true }
+          }
         }
+      });
+    }
 
-        function parseDate(dateStr) {
-            if (!dateStr) return new Date();
-            
-            dateStr = dateStr.toString().trim();
-            
-            if (dateStr.includes('/')) {
-                const parts = dateStr.split('/');
-                if (parts.length === 3) {
-                    const day = parseInt(parts[0]);
-                    const month = parseInt(parts[1]) - 1;
-                    const year = parseInt(parts[2]);
-                    return new Date(year, month, day);
-                }
-            }
-            
-            const date = new Date(dateStr);
-            if (!isNaN(date.getTime())) {
-                return date;
-            }
-            
-            console.error('❌ Formato de data inválido:', dateStr);
-            return new Date();
+    function updateDeliveryChart(data){
+      const daily = {};
+      data.forEach(d=>{
+        const k = d.date.toLocaleDateString('pt-BR');
+        daily[k] = (daily[k]||0) + d.delivery;
+      });
+      const labels = Object.keys(daily);
+      const values = labels.map(k=>daily[k]);
+
+      if (deliveryChart) deliveryChart.destroy();
+      const ctx = document.getElementById('deliveryChart').getContext('2d');
+      deliveryChart = new Chart(ctx,{
+        type:'bar',
+        data:{ labels, datasets:[{ data:values, backgroundColor:'#10b981', borderWidth:0, barPercentage:.6, categoryPercentage:.8 }] },
+        options:{
+          responsive:true, maintainAspectRatio:false,
+          plugins:{ legend:{display:false}, title:{display:false} },
+          layout:{padding:0},
+          scales:{
+            x:{ grid:{display:false}, ticks:{maxTicksLimit:6}},
+            y:{ grid:{display:false}, beginAtZero:true,
+                ticks:{ maxTicksLimit:4, callback:v=>'R$ '+Number(v).toLocaleString('pt-BR') } }
+          }
         }
+      });
+    }
 
-        function savePreviousData() {
-            previousData = {
-                totalSales: document.getElementById('totalSales').textContent,
-                counterSales: document.getElementById('counterSales').textContent,
-                deliverySales: document.getElementById('deliverySales').textContent,
-                deliveryPercent: document.getElementById('deliveryPercent').textContent,
-                forecast: document.getElementById('forecast').textContent,
-                goalValue: document.getElementById('goalValue').textContent
-            };
+    function updateStoresChart(){
+      const stores = {};
+      salesData.forEach(d=>{
+        if (!stores[d.store]) stores[d.store] = {counter:0, delivery:0};
+        stores[d.store].counter += d.counter;
+        stores[d.store].delivery += d.delivery;
+      });
+      const labels = Object.keys(stores);
+      const counterValues = labels.map(s=>stores[s].counter);
+      const deliveryValues = labels.map(s=>stores[s].delivery);
+
+      if (storesChart) storesChart.destroy();
+      const ctx = document.getElementById('storesChart').getContext('2d');
+      storesChart = new Chart(ctx,{
+        type:'bar',
+        data:{
+          labels,
+          datasets:[
+            {label:'Balcão', data:counterValues, backgroundColor:'#FF500a'},
+            {label:'Delivery', data:deliveryValues, backgroundColor:'#10b981'}
+          ]
+        },
+        options:{
+          responsive:true, maintainAspectRatio:false,
+          plugins:{ legend:{display:true, position:'top'} },
+          scales:{
+            x:{ stacked:true },
+            y:{ stacked:true, beginAtZero:true,
+                ticks:{ callback:v=>'R$ '+Number(v).toLocaleString('pt-BR') } }
+          }
         }
+      });
+    }
 
-        function highlightChanges() {
-            const metrics = ['totalSales', 'counterSales', 'deliverySales', 'deliveryPercent', 'forecast', 'goalValue'];
-            
-            metrics.forEach(metric => {
-                const currentValue = document.getElementById(metric).textContent;
-                if (previousData[metric] && previousData[metric] !== currentValue) {
-                    const card = document.querySelector(`[data-metric="${metric}"]`);
-                    if (card) {
-                        card.classList.remove('updated');
-                        void card.offsetWidth;
-                        card.classList.add('updated');
-                        console.log('🔔 Mudança detectada em:', metric);
-                    }
-                }
-            });
-        }
+    function updateGaugeChart(forecast, goal){
+      const pct = goal>0 ? Math.min((forecast/goal)*100, 100) : 0;
+      if (gaugeChart) gaugeChart.destroy();
+      const ctx = document.getElementById('gaugeChart').getContext('2d');
+      gaugeChart = new Chart(ctx,{
+        type:'doughnut',
+        data:{ datasets:[{ data:[pct, 100-pct],
+          backgroundColor:[ pct>=100?'#10b981' : pct>=80 ? '#FF500a' : '#ef4444', '#e5e7eb' ],
+          borderWidth:0 }] },
+        options:{
+          responsive:true, maintainAspectRatio:false,
+          circumference:180, rotation:270, cutout:'80%',
+          plugins:{ legend:{display:false}, tooltip:{enabled:false} },
+          layout:{padding:0}
+        },
+        plugins:[{
+          id:'gaugeText',
+          afterDraw:(chart)=>{
+            const c = chart.ctx, a = chart.chartArea;
+            const cx = a.left + (a.right-a.left)/2;
+            const cy = a.top + (a.bottom-a.top)/2 + 12;
+            c.save();
+            c.font = 'bold 22px Arial';
+            c.fillStyle = '#333';
+            c.textAlign='center'; c.textBaseline='middle';
+            c.fillText(pct.toFixed(1)+'%', cx, cy);
+            c.font = '12px Arial'; c.fillStyle='#666';
+            c.fillText('da meta', cx, cy+18);
+            c.restore();
+          }
+        }]
+      });
+    }
 
-        function updateSyncStatus(message, isError = false) {
-            const statusElement = document.getElementById('syncStatus');
-            statusElement.textContent = message;
-            
-            const indicator = document.querySelector('.sync-indicator');
-            if (isError) {
-                statusElement.style.color = '#ef4444';
-                indicator.style.background = '#ef4444';
-            } else {
-                statusElement.style.color = '#FF500a';
-                indicator.style.background = '#10b981';
-            }
-        }
+    function updateTopStores(){
+      const stores = [...new Set(salesData.map(d=>d.store))];
+      const stats = stores.map(store=>{
+        const sd = salesData.filter(d=>d.store===store);
+        const total = sd.reduce((s,d)=>s+d.counter+d.delivery,0);
+        const dates = sd.map(d=>d.date);
+        const minD = new Date(Math.min(...dates)); const maxD = new Date(Math.max(...dates));
+        const days = Math.max(1, Math.ceil((maxD-minD)/(1000*60*60*24))+1);
+        const avg = total/days; const dim = new Date(maxD.getFullYear(), maxD.getMonth()+1, 0).getDate();
+        const forecast = avg*dim;
+        return {store,total,forecast};
+      }).sort((a,b)=>b.total-a.total);
 
-        function updateDebugInfo(error = null) {
-            const debugElement = document.getElementById('debugInfo');
-            if (error) {
-                debugElement.textContent = `Erro: ${error}`;
-                debugElement.style.color = '#ef4444';
-            } else if (lastUpdate) {
-                debugElement.textContent = `Última atualização: ${lastUpdate.toLocaleTimeString('pt-BR')}`;
-                debugElement.style.color = '#999';
-            }
-        }
+      document.getElementById('topStores').innerHTML = stats.slice(0,3).map((s,i)=>`
+        <div class="top-item">
+          <div class="top-item-rank">${['🥇','🥈','🥉'][i]}</div>
+          <div class="top-item-name">${s.store}</div>
+          <div class="top-item-value">${money(s.total)}</div>
+        </div>`).join('');
 
-        function showError(message) {
-            const errorContainer = document.getElementById('errorContainer');
-            errorContainer.innerHTML = `
-                <div class="error-message">
-                    ⚠️ ${message}
-                    <br><small>Tentando reconectar automaticamente em ${remainingSeconds}s...</small>
-                    <div class="cors-warning" style="margin-top: 10px; text-align: left;">
-                        <strong>💡 Solução:</strong> O navegador está bloqueando o acesso ao Google Sheets (CORS).
-                        <br>• Certifique-se que a planilha está publicada na web
-                        <br>• Ou use este arquivo HTML em um servidor web
-                    </div>
-                </div>
-            `;
-        }
+      document.getElementById('bottomStores').innerHTML = stats.slice(-3).reverse().map((s,i)=>`
+        <div class="top-item">
+          <div class="top-item-rank">${i+1}</div>
+          <div class="top-item-name">${s.store}</div>
+          <div class="top-item-value">${money(s.total)}</div>
+        </div>`).join('');
+    }
 
-        function clearError() {
-            document.getElementById('errorContainer').innerHTML = '';
-        }
+    function updateTable(){
+      const stores = [...new Set(salesData.map(d=>d.store))];
+      const tbody = document.querySelector('#storesTable tbody');
+      tbody.innerHTML = '';
+      stores.forEach(store=>{
+        const sd = salesData.filter(d=>d.store===store);
+        const totalCounter = sd.reduce((s,d)=>s+d.counter,0);
+        const totalDelivery = sd.reduce((s,d)=>s+d.delivery,0);
+        const total = totalCounter+totalDelivery;
 
-        function populateStoreSelector() {
-            const stores = [...new Set(salesData.map(d => d.store))];
-            const select = document.getElementById('storeSelect');
-            const currentValue = select.value;
-            
-            select.innerHTML = '<option value="all">📍 Todas as Lojas</option>';
-            stores.forEach(store => {
-                select.innerHTML += `<option value="${store}">🏪 ${store}</option>`;
-            });
-            
-            if (currentValue && stores.includes(currentValue)) {
-                select.value = currentValue;
-            }
-        }
+        const dates = sd.map(d=>d.date);
+        const minD = new Date(Math.min(...dates)); const maxD = new Date(Math.max(...dates));
+        const days = Math.max(1, Math.ceil((maxD-minD)/(1000*60*60*24))+1);
+        const avg = total/days; const dim = new Date(maxD.getFullYear(), maxD.getMonth()+1, 0).getDate();
+        const forecast = avg*dim;
+        const goal = sd.find(d=>d.goal>0)?.goal || 0;
+        const delPct = total>0 ? (totalDelivery/total*100) : 0;
+        const trend = calcTrend(sd.map(d=>({sales:d.counter+d.delivery})));
+        const trendIcon = trend>=0 ? '📈' : '📉';
+        const trendClass = trend>=0 ? 'trend-up' : 'trend-down';
+        const goalBadge = forecast>=goal ? '<span class="badge badge-success">✓ Atingirá</span>' : '<span class="badge badge-danger">✗ Abaixo</span>';
 
-        function updateDashboard() {
-            const selectedStore = document.getElementById('storeSelect').value;
-            const filteredData = selectedStore === 'all' 
-                ? salesData 
-                : salesData.filter(d => d.store === selectedStore);
+        tbody.insertAdjacentHTML('beforeend', `
+          <tr>
+            <td><strong>${store}</strong></td>
+            <td>${money(totalCounter)}</td>
+            <td>${money(totalDelivery)}</td>
+            <td><strong>${money(total)}</strong></td>
+            <td>${delPct.toFixed(1)}%</td>
+            <td>${money(forecast)}</td>
+            <td>${money(goal)}</td>
+            <td>${goalBadge}</td>
+            <td class="${trendClass}">${trendIcon} ${trend.toFixed(1)}%</td>
+          </tr>
+        `);
+      });
+    }
 
-            updateMetrics(filteredData, selectedStore);
-            updateCharts(filteredData, selectedStore);
-            updateTable();
-            updateTopStores();
-            highlightChanges();
-        }
+    function money(v){ return 'R$ ' + Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2}); }
+  </script>
 
-        function updateMetrics(data, selectedStore) {
-            const totalCounter = data.reduce((sum, d) => sum + d.counter, 0);
-            const totalDelivery = data.reduce((sum, d) => sum + d.delivery, 0);
-            const totalSales = totalCounter + totalDelivery;
-            
-            const dates = data.map(d => d.date);
-            const minDate = new Date(Math.min(...dates));
-            const maxDate = new Date(Math.max(...dates));
-            const daysInData = Math.ceil((maxDate - minDate) / (1000 * 60 * 60 * 24)) + 1;
-            const avgDaily = totalSales / daysInData;
+  <!--
+  Se preferir remover totalmente problemas de CORS sem proxy, use Google Apps Script:
 
-            const daysInMonth = new Date(maxDate.getFullYear(), maxDate.getMonth() + 1, 0).getDate();
-            const forecast = avgDaily * daysInMonth;
-
-            const goal = selectedStore === 'all' 
-                ? [...new Set(salesData.map(d => d.store))].reduce((sum, store) => {
-                    const storeGoal = salesData.find(d => d.store === store && d.goal > 0);
-                    return sum + (storeGoal ? storeGoal.goal : 0);
-                }, 0)
-                : data.find(d => d.goal > 0)?.goal || 0;
-
-            const deliveryPercent = totalSales > 0 ? (totalDelivery / totalSales * 100) : 0;
-            const salesTrend = calculateTrend(data.map(d => ({...d, sales: d.counter + d.delivery})));
-            const deliveryTrend = calculateDeliveryTrend(data);
-
-            document.getElementById('totalSales').textContent = formatCurrency(totalSales);
-            document.getElementById('counterSales').textContent = formatCurrency(totalCounter);
-            document.getElementById('deliverySales').textContent = formatCurrency(totalDelivery);
-            document.getElementById('deliveryPercent').textContent = deliveryPercent.toFixed(1) + '%';
-            document.getElementById('forecast').textContent = formatCurrency(forecast);
-            document.getElementById('goalValue').textContent = formatCurrency(goal);
-
-            const trendElement = document.getElementById('salesTrend');
-            if (salesTrend > 0) {
-                trendElement.innerHTML = `<span class="trend-up">▲ ${salesTrend.toFixed(1)}%</span>`;
-            } else {
-                trendElement.innerHTML = `<span class="trend-down">▼ ${Math.abs(salesTrend).toFixed(1)}%</span>`;
-            }
-
-            const deliveryTrendElement = document.getElementById('deliveryTrend');
-            if (deliveryTrend > 0) {
-                deliveryTrendElement.innerHTML = `<span class="trend-up">▲ ${deliveryTrend.toFixed(1)}%</span>`;
-            } else {
-                deliveryTrendElement.innerHTML = `<span class="trend-down">▼ ${Math.abs(deliveryTrend).toFixed(1)}%</span>`;
-            }
-
-            const goalStatusElement = document.getElementById('goalStatus');
-            if (forecast >= goal) {
-                goalStatusElement.innerHTML = `<span class="trend-up">✓ No caminho</span>`;
-            } else {
-                goalStatusElement.innerHTML = `<span class="trend-down">✗ Abaixo</span>`;
-            }
-
-            updateGaugeChart(forecast, goal);
-        }
-
-        function calculateTrend(data) {
-            if (data.length < 2) return 0;
-            
-            const mid = Math.floor(data.length / 2);
-            const firstHalf = data.slice(0, mid).reduce((sum, d) => sum + d.sales, 0) / mid;
-            const secondHalf = data.slice(mid).reduce((sum, d) => sum + d.sales, 0) / (data.length - mid);
-            
-            if (firstHalf === 0) return 0;
-            return ((secondHalf - firstHalf) / firstHalf) * 100;
-        }
-
-        function calculateDeliveryTrend(data) {
-            if (data.length < 2) return 0;
-            
-            const mid = Math.floor(data.length / 2);
-            const firstHalf = data.slice(0, mid).reduce((sum, d) => sum + d.delivery, 0) / mid;
-            const secondHalf = data.slice(mid).reduce((sum, d) => sum + d.delivery, 0) / (data.length - mid);
-            
-            if (firstHalf === 0) return 0;
-            return ((secondHalf - firstHalf) / firstHalf) * 100;
-        }
-
-        function updateCharts(data, selectedStore) {
-            updateSalesChart(data);
-            updateDeliveryChart(data);
-            if (selectedStore === 'all') {
-                updateStoresChart();
-            }
-        }
-
-        function updateSalesChart(data) {
-            const currentMonth = new Date().getMonth();
-            const currentYear = new Date().getFullYear();
-            
-            const currentMonthData = {};
-            const previousMonthData = {};
-            
-            data.forEach(d => {
-                const date = d.date;
-                const day = date.getDate();
-                const month = date.getMonth();
-                const year = date.getFullYear();
-                const total = d.counter + d.delivery;
-                
-                if (year === currentYear && month === currentMonth) {
-                    currentMonthData[day] = (currentMonthData[day] || 0) + total;
-                } else if ((year === currentYear && month === currentMonth - 1) || 
-                          (month === 11 && currentMonth === 0 && year === currentYear - 1)) {
-                    previousMonthData[day] = (previousMonthData[day] || 0) + total;
-                }
-            });
-
-            const maxDay = Math.max(...Object.keys(currentMonthData).map(Number), ...Object.keys(previousMonthData).map(Number));
-            const labels = Array.from({length: maxDay}, (_, i) => `Dia ${i + 1}`);
-            
-            const currentValues = Array.from({length: maxDay}, (_, i) => currentMonthData[i + 1] || 0);
-            const previousValues = Array.from({length: maxDay}, (_, i) => previousMonthData[i + 1] || 0);
-
-            if (salesChart) salesChart.destroy();
-
-            const ctx = document.getElementById('salesChart').getContext('2d');
-            salesChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Mês Atual',
-                        data: currentValues,
-                        borderColor: '#FF500a',
-                        backgroundColor: 'rgba(255, 80, 10, 0.1)',
-                        tension: 0.4,
-                        fill: true,
-                        borderWidth: 3
-                    }, {
-                        label: 'Mês Anterior',
-                        data: previousValues,
-                        borderColor: '#999',
-                        backgroundColor: 'rgba(153, 153, 153, 0.1)',
-                        tension: 0.4,
-                        fill: true,
-                        borderWidth: 2,
-                        borderDash: [5, 5]
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    plugins: {
-                        legend: {
-                            display: true,
-                            position: 'top'
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                callback: function(value) {
-                                    return 'R$ ' + value.toLocaleString('pt-BR');
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        function updateDeliveryChart(data) {
-            const dailyData = {};
-            data.forEach(d => {
-                const dateKey = d.date.toLocaleDateString('pt-BR');
-                dailyData[dateKey] = (dailyData[dateKey] || 0) + d.delivery;
-            });
-
-            const labels = Object.keys(dailyData);
-            const values = Object.values(dailyData);
-
-            if (deliveryChart) deliveryChart.destroy();
-
-            const ctx = document.getElementById('deliveryChart').getContext('2d');
-            deliveryChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Delivery Diário',
-                        data: values,
-                        borderColor: '#10b981',
-                        backgroundColor: 'rgba(16, 185, 129, 0.2)',
-                        tension: 0.4,
-                        fill: true,
-                        borderWidth: 3
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                callback: function(value) {
-                                    return 'R$ ' + value.toLocaleString('pt-BR');
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        function updateStoresChart() {
-            const storeData = {};
-            salesData.forEach(d => {
-                if (!storeData[d.store]) {
-                    storeData[d.store] = { counter: 0, delivery: 0 };
-                }
-                storeData[d.store].counter += d.counter;
-                storeData[d.store].delivery += d.delivery;
-            });
-
-            const labels = Object.keys(storeData);
-            const counterValues = Object.values(storeData).map(d => d.counter);
-            const deliveryValues = Object.values(storeData).map(d => d.delivery);
-
-            if (storesChart) storesChart.destroy();
-
-            const ctx = document.getElementById('storesChart').getContext('2d');
-            storesChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Balcão',
-                        data: counterValues,
-                        backgroundColor: '#FF500a'
-                    }, {
-                        label: 'Delivery',
-                        data: deliveryValues,
-                        backgroundColor: '#10b981'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    plugins: {
-                        legend: {
-                            display: true,
-                            position: 'top'
-                        }
-                    },
-                    scales: {
-                        x: {
-                            stacked: true
-                        },
-                        y: {
-                            stacked: true,
-                            beginAtZero: true,
-                            ticks: {
-                                callback: function(value) {
-                                    return 'R$ ' + value.toLocaleString('pt-BR');
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        function updateGaugeChart(forecast, goal) {
-            const percentage = goal > 0 ? Math.min((forecast / goal) * 100, 100) : 0;
-            
-            if (gaugeChart) gaugeChart.destroy();
-
-            const ctx = document.getElementById('gaugeChart').getContext('2d');
-            gaugeChart = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    datasets: [{
-                        data: [percentage, 100 - percentage],
-                        backgroundColor: [
-                            percentage >= 100 ? '#10b981' : percentage >= 80 ? '#FF500a' : '#ef4444',
-                            '#e5e7eb'
-                        ],
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    circumference: 180,
-                    rotation: 270,
-                    cutout: '75%',
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            enabled: false
-                        }
-                    }
-                },
-                plugins: [{
-                    id: 'gaugeText',
-                    afterDraw: (chart) => {
-                        const ctx = chart.ctx;
-                        const centerX = chart.chartArea.left + (chart.chartArea.right - chart.chartArea.left) / 2;
-                        const centerY = chart.chartArea.top + (chart.chartArea.bottom - chart.chartArea.top) / 2 + 20;
-                        
-                        ctx.save();
-                        ctx.font = 'bold 28px Arial';
-                        ctx.fillStyle = '#333';
-                        ctx.textAlign = 'center';
-                        ctx.textBaseline = 'middle';
-                        ctx.fillText(percentage.toFixed(1) + '%', centerX, centerY);
-                        
-                        ctx.font = '12px Arial';
-                        ctx.fillStyle = '#666';
-                        ctx.fillText('da meta', centerX, centerY + 25);
-                        ctx.restore();
-                    }
-                }]
-            });
-        }
-
-        function updateTopStores() {
-            const stores = [...new Set(salesData.map(d => d.store))];
-            const storeStats = stores.map(store => {
-                const storeData = salesData.filter(d => d.store === store);
-                const total = storeData.reduce((sum, d) => sum + d.counter + d.delivery, 0);
-                
-                const dates = storeData.map(d => d.date);
-                const minDate = new Date(Math.min(...dates));
-                const maxDate = new Date(Math.max(...dates));
-                const days = Math.ceil((maxDate - minDate) / (1000 * 60 * 60 * 24)) + 1;
-                const avg = total / days;
-                
-                const daysInMonth = new Date(maxDate.getFullYear(), maxDate.getMonth() + 1, 0).getDate();
-                const forecast = avg * daysInMonth;
-                
-                return { store, total, forecast };
-            });
-
-            storeStats.sort((a, b) => b.total - a.total);
-
-            const topStoresHtml = storeStats.slice(0, 3).map((s, i) => `
-                <div class="top-item">
-                    <div class="top-item-rank">${['🥇', '🥈', '🥉'][i]}</div>
-                    <div class="top-item-name">${s.store}</div>
-                    <div class="top-item-value">${formatCurrency(s.total)}</div>
-                </div>
-            `).join('');
-
-            const bottomStoresHtml = storeStats.slice(-3).reverse().map((s, i) => `
-                <div class="top-item">
-                    <div class="top-item-rank">${i + 1}</div>
-                    <div class="top-item-name">${s.store}</div>
-                    <div class="top-item-value">${formatCurrency(s.total)}</div>
-                </div>
-            `).join('');
-
-            document.getElementById('topStores').innerHTML = topStoresHtml;
-            document.getElementById('bottomStores').innerHTML = bottomStoresHtml;
-        }
-
-        function updateTable() {
-            const stores = [...new Set(salesData.map(d => d.store))];
-            const tbody = document.querySelector('#storesTable tbody');
-            tbody.innerHTML = '';
-
-            stores.forEach(store => {
-                const storeData = salesData.filter(d => d.store === store);
-                const totalCounter = storeData.reduce((sum, d) => sum + d.counter, 0);
-                const totalDelivery = storeData.reduce((sum, d) => sum + d.delivery, 0);
-                const total = totalCounter + totalDelivery;
-                
-                const dates = storeData.map(d => d.date);
-                const minDate = new Date(Math.min(...dates));
-                const maxDate = new Date(Math.max(...dates));
-                const days = Math.ceil((maxDate - minDate) / (1000 * 60 * 60 * 24)) + 1;
-                const avg = total / days;
-                
-                const daysInMonth = new Date(maxDate.getFullYear(), maxDate.getMonth() + 1, 0).getDate();
-                const forecast = avg * daysInMonth;
-                
-                const goal = storeData.find(d => d.goal > 0)?.goal || 0;
-                const deliveryPercent = total > 0 ? (totalDelivery / total * 100) : 0;
-                
-                const trend = calculateTrend(storeData.map(d => ({...d, sales: d.counter + d.delivery})));
-                const trendIcon = trend > 0 ? '📈' : '📉';
-                const trendClass = trend > 0 ? 'trend-up' : 'trend-down';
-
-                const willReachGoal = forecast >= goal;
-                const goalBadge = willReachGoal 
-                    ? '<span class="badge badge-success">✓ Atingirá</span>'
-                    : '<span class="badge badge-danger">✗ Abaixo</span>';
-
-                const row = `
-                    <tr>
-                        <td><strong>${store}</strong></td>
-                        <td>${formatCurrency(totalCounter)}</td>
-                        <td>${formatCurrency(totalDelivery)}</td>
-                        <td><strong>${formatCurrency(total)}</strong></td>
-                        <td>${deliveryPercent.toFixed(1)}%</td>
-                        <td>${formatCurrency(forecast)}</td>
-                        <td>${formatCurrency(goal)}</td>
-                        <td>${goalBadge}</td>
-                        <td class="${trendClass}">${trendIcon} ${trend.toFixed(1)}%</td>
-                    </tr>
-                `;
-                tbody.innerHTML += row;
-            });
-        }
-
-        function formatCurrency(value) {
-            return 'R$ ' + value.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-        }
-    </script>
+  1) Em https://script.google.com > Novo projeto. Colar:
+  function doGet() {
+    const id = 'ID_DA_SUA_PLANILHA';
+    const sh = SpreadsheetApp.openById(id).getSheets()[0];
+    const values = sh.getDataRange().getValues(); // cabeçalho + linhas
+    const out = [];
+    for (let i=1;i<values.length;i++){
+      const [date, store, counter, delivery, goal] = values[i];
+      out.push({
+        date: Utilities.formatDate(new Date(date), Session.getScriptTimeZone(), 'dd/MM/yyyy'),
+        store: String(store||''),
+        counter: Number(counter||0),
+        delivery: Number(delivery||0),
+        goal: Number(goal||0)
+      });
+    }
+    const resp = ContentService.createTextOutput(JSON.stringify(out)).setMimeType(ContentService.MimeType.JSON);
+    // CORS
+    resp.setHeader('Access-Control-Allow-Origin','*');
+    return resp;
+  }
+  2) Deploy > Implementar como aplicativo da Web > Acesso: Qualquer pessoa com o link.
+  3) Copie a URL do deploy e use em SHEET_API_URL; defina USE_APPS_SCRIPT = true.
+  -->
 </body>
 </html>
