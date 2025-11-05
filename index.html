@@ -400,6 +400,15 @@
             font-weight: 600;
             box-shadow: 0 5px 20px rgba(0,0,0,0.2);
         }
+
+        .cors-warning {
+            background: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            border-left: 4px solid #ffc107;
+        }
     </style>
 </head>
 <body>
@@ -411,7 +420,7 @@
                     <div class="sync-indicator"></div>
                     <span id="syncStatus">Sincronizando...</span>
                 </div>
-                <div class="sync-countdown" id="countdown">Próxima atualização em 60s</div>
+                <div class="sync-countdown" id="countdown">Próxima atualização em 10s</div>
                 <div class="sync-debug" id="debugInfo">Aguardando dados...</div>
             </div>
         </div>
@@ -519,20 +528,22 @@
     </div>
 
     <script>
+        const SHEET_ID = '1Ks-Ks-Ks-Ks-Ks';
         const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQOilCaKcPSn1mh5zp8yd7TrjJpRFqspq-4NZErDtSibx7QqK0PggMQfCYlruJmeU6ebjZGXEqO3L9T/pub?gid=0&single=true&output=csv';
-        const REFRESH_INTERVAL = 60000; // 60 segundos
+        const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
+        const REFRESH_INTERVAL = 10000; // 10 segundos
 
         let salesData = [];
         let previousData = {};
         let salesChart, storesChart, deliveryChart, gaugeChart;
         let lastUpdate = null;
         let countdownInterval;
-        let remainingSeconds = 60;
+        let remainingSeconds = 10;
 
         // Carregar dados iniciais
         loadDataFromSheet();
 
-        // Atualizar a cada 60 segundos
+        // Atualizar a cada 10 segundos
         setInterval(loadDataFromSheet, REFRESH_INTERVAL);
 
         // Iniciar contador regressivo
@@ -542,7 +553,7 @@
             countdownInterval = setInterval(() => {
                 remainingSeconds--;
                 if (remainingSeconds <= 0) {
-                    remainingSeconds = 60;
+                    remainingSeconds = 10;
                 }
                 document.getElementById('countdown').textContent = `Próxima atualização em ${remainingSeconds}s`;
             }, 1000);
@@ -550,43 +561,38 @@
 
         async function loadDataFromSheet() {
             try {
-                // Forçar bypass de cache
                 const timestamp = new Date().getTime();
-                const url = `${SHEET_URL}&cachebust=${timestamp}`;
+                const url = `${CORS_PROXY}${encodeURIComponent(SHEET_URL)}&t=${timestamp}`;
                 
-                console.log('Carregando dados...', new Date().toLocaleString('pt-BR'));
+                console.log('🔄 Carregando dados...', new Date().toLocaleString('pt-BR'));
                 
                 const response = await fetch(url, {
                     method: 'GET',
-                    cache: 'no-cache',
-                    headers: {
-                        'Cache-Control': 'no-cache, no-store, must-revalidate',
-                        'Pragma': 'no-cache',
-                        'Expires': '0'
-                    }
+                    cache: 'no-store'
                 });
                 
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
                 
                 const csvText = await response.text();
                 
-                console.log('Dados recebidos:', csvText.substring(0, 200));
+                console.log('✅ Dados recebidos:', csvText.substring(0, 200) + '...');
+                console.log('📊 Tamanho:', csvText.length, 'caracteres');
                 
                 if (csvText && csvText.length > 10) {
                     parseCSV(csvText);
                     lastUpdate = new Date();
-                    remainingSeconds = 60;
-                    updateSyncStatus('Sincronizado', false);
+                    remainingSeconds = 10;
+                    updateSyncStatus('✓ Sincronizado', false);
                     updateDebugInfo();
                 } else {
                     throw new Error('Dados vazios recebidos');
                 }
             } catch (error) {
-                console.error('Erro ao carregar dados:', error);
-                updateSyncStatus('Erro na sincronização', true);
-                showError(`Erro: ${error.message}`);
+                console.error('❌ Erro ao carregar dados:', error);
+                updateSyncStatus('✗ Erro na sincronização', true);
+                showError(`${error.message}`);
                 updateDebugInfo(error.message);
             }
         }
@@ -595,7 +601,7 @@
             const lines = csv.split('\n');
             const newData = [];
             
-            console.log('Total de linhas:', lines.length);
+            console.log('📝 Processando', lines.length, 'linhas...');
             
             for (let i = 1; i < lines.length; i++) {
                 const line = lines[i].trim();
@@ -613,15 +619,14 @@
                         };
                         newData.push(dataPoint);
                     } catch (e) {
-                        console.error('Erro ao processar linha:', line, e);
+                        console.error('⚠️ Erro ao processar linha:', line, e);
                     }
                 }
             }
 
-            console.log('Dados processados:', newData.length, 'registros');
+            console.log('✅ Dados processados:', newData.length, 'registros válidos');
 
             if (newData.length > 0) {
-                // Salvar dados anteriores para comparação
                 savePreviousData();
                 
                 salesData = newData;
@@ -646,7 +651,6 @@
             
             dateStr = dateStr.toString().trim();
             
-            // Tenta formato DD/MM/YYYY
             if (dateStr.includes('/')) {
                 const parts = dateStr.split('/');
                 if (parts.length === 3) {
@@ -657,13 +661,12 @@
                 }
             }
             
-            // Tenta formato padrão
             const date = new Date(dateStr);
             if (!isNaN(date.getTime())) {
                 return date;
             }
             
-            console.error('Formato de data inválido:', dateStr);
+            console.error('❌ Formato de data inválido:', dateStr);
             return new Date();
         }
 
@@ -687,8 +690,9 @@
                     const card = document.querySelector(`[data-metric="${metric}"]`);
                     if (card) {
                         card.classList.remove('updated');
-                        void card.offsetWidth; // Trigger reflow
+                        void card.offsetWidth;
                         card.classList.add('updated');
+                        console.log('🔔 Mudança detectada em:', metric);
                     }
                 }
             });
@@ -712,14 +716,26 @@
             const debugElement = document.getElementById('debugInfo');
             if (error) {
                 debugElement.textContent = `Erro: ${error}`;
+                debugElement.style.color = '#ef4444';
             } else if (lastUpdate) {
                 debugElement.textContent = `Última atualização: ${lastUpdate.toLocaleTimeString('pt-BR')}`;
+                debugElement.style.color = '#999';
             }
         }
 
         function showError(message) {
             const errorContainer = document.getElementById('errorContainer');
-            errorContainer.innerHTML = `<div class="error-message">⚠️ ${message}<br><small>Tentando reconectar automaticamente...</small></div>`;
+            errorContainer.innerHTML = `
+                <div class="error-message">
+                    ⚠️ ${message}
+                    <br><small>Tentando reconectar automaticamente em ${remainingSeconds}s...</small>
+                    <div class="cors-warning" style="margin-top: 10px; text-align: left;">
+                        <strong>💡 Solução:</strong> O navegador está bloqueando o acesso ao Google Sheets (CORS).
+                        <br>• Certifique-se que a planilha está publicada na web
+                        <br>• Ou use este arquivo HTML em um servidor web
+                    </div>
+                </div>
+            `;
         }
 
         function clearError() {
@@ -841,7 +857,6 @@
         }
 
         function updateSalesChart(data) {
-            // Separar dados por mês
             const currentMonth = new Date().getMonth();
             const currentYear = new Date().getFullYear();
             
