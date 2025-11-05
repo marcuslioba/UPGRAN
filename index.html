@@ -1,174 +1,214 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Dashboard de Vendas - Tempo Real</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
-    *{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --brand:#FF500A;
+      --brand-600:#e04909;
+      --ok:#10b981;
+      --down:#ef4444;
+      --ink:#1f2937;
+      --muted:#6b7280;
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --ring:rgba(0,0,0,.06);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
     body{
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,'Helvetica Neue',Arial;
-      background:#FF500a;min-height:100vh;padding:16px;overflow-x:hidden
+      margin:0;background:var(--bg);color:var(--ink);
+      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,'Helvetica Neue',Arial;
+      line-height:1.45;
     }
-    .container{max-width:1280px;margin:0 auto}
-    .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
-    .logo{color:#fff;font-size:1.8rem;font-weight:800}
-    .sync-status{background:#fff;color:#FF500a;padding:8px 14px;border-radius:18px;font-weight:700;display:flex;align-items:center;gap:8px}
-    .sync-indicator{width:10px;height:10px;background:#10b981;border-radius:50%}
-    .loading-screen{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;color:#fff;text-align:center}
-    .dashboard{display:block}
+    .container{max-width:1280px;margin:0 auto;padding:20px}
+    .header{
+      display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;
+    }
+    .brand{
+      display:flex;align-items:center;gap:12px;
+      color:var(--ink);
+    }
+    .logo{
+      width:44px;height:44px;border-radius:10px;
+      background:linear-gradient(135deg,var(--brand) 0%, #ff8a4a 100%);
+      display:grid;place-items:center;color:#fff;font-weight:900;font-size:20px;
+      box-shadow:0 8px 18px rgba(255,80,10,.25);
+    }
+    .title{font-size:1.4rem;font-weight:800}
+    .subtitle{font-size:.9rem;color:var(--muted);margin-top:2px}
+    .sync{
+      display:flex;align-items:center;gap:10px;background:var(--card);
+      padding:8px 14px;border-radius:999px;box-shadow:0 1px 2px var(--ring),0 8px 24px var(--ring);
+      font-weight:700;color:var(--brand);
+    }
+    .dot{width:10px;height:10px;border-radius:50%;background:var(--ok)}
+    .toolbar{
+      display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px
+    }
+    .select{
+      flex:1;min-width:260px;background:var(--card);border-radius:12px;
+      padding:10px 12px;box-shadow:0 1px 2px var(--ring),0 8px 24px var(--ring);
+      border:1px solid #eee;
+    }
+    .select select{
+      width:100%;padding:10px 12px;border:2px solid var(--brand);border-radius:8px;
+      background:#fff;font-weight:700;color:var(--ink)
+    }
 
-    /* Minimalismo */
-    .store-selector{background:#fff;padding:10px 14px;border-radius:12px;box-shadow:0 3px 12px rgba(0,0,0,.18);margin-bottom:12px}
-    .store-selector select{width:100%;padding:10px 12px;font-size:1rem;border:2px solid #FF500a;border-radius:8px;font-weight:700;background:#fff}
+    .metrics{
+      display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:14px
+    }
+    .card{
+      background:var(--card);border-radius:14px;padding:14px;
+      box-shadow:0 1px 2px var(--ring),0 8px 24px var(--ring);
+    }
+    .metric-label{color:var(--muted);font-size:.78rem;letter-spacing:.3px;text-transform:uppercase;font-weight:800;margin-bottom:4px}
+    .metric-value{font-weight:900;color:var(--brand);font-size:1.4rem}
+    .trend{margin-top:4px;font-weight:700;font-size:.92rem}
+    .up{color:var(--ok)} .down{color:var(--down)}
 
-    .metrics-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:12px}
-    .metric-card{background:#fff;padding:12px;border-radius:12px;box-shadow:0 3px 12px rgba(0,0,0,.18)}
-    .metric-label{color:#666;font-size:.78rem;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;font-weight:800}
-    .metric-value{font-size:1.4rem;font-weight:800;color:#FF500a;margin-bottom:4px}
-    .metric-trend{display:flex;align-items:center;gap:6px;font-size:.86rem;font-weight:700}
-    .trend-up{color:#10b981}.trend-down{color:#ef4444}
+    .grid-2-1{display:grid;grid-template-columns:2fr 1fr;gap:12px;margin-bottom:14px}
+    .grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:14px}
+    .card-title{font-weight:800;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+    .canvas-wrap{height:220px}
+    .canvas-wrap.sm{height:200px}
+    .gauge-wrap{height:140px;display:flex;align-items:center;justify-content:center}
 
-    .charts-row{display:grid;grid-template-columns:2fr 1fr;gap:10px;margin-bottom:12px}
-    .charts-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:12px}
-    .chart-card{background:#fff;padding:12px;border-radius:12px;box-shadow:0 3px 12px rgba(0,0,0,.18)}
-    .chart-title{font-size:1rem;color:#333;margin-bottom:6px;font-weight:800;display:flex;align-items:center;gap:8px}
+    .tops{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:14px}
+    .top-item{display:flex;align-items:center;justify-content:space-between;background:#f8fafc;border-radius:10px;padding:8px 10px;margin-bottom:8px}
+    .top-rank{font-size:1.1rem;font-weight:900;margin-right:10px}
+    .top-name{flex:1;font-weight:700}
+    .top-val{font-weight:900;color:var(--brand)}
 
-    .gauge-container{position:relative;height:120px;display:flex;align-items:center;justify-content:center}
-    #gaugeChart{height:110px!important}
-
-    .top-stores{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:12px}
-    .top-card{background:#fff;padding:12px;border-radius:12px;box-shadow:0 3px 12px rgba(0,0,0,.18)}
-    .top-item{display:flex;justify-content:space-between;align-items:center;padding:8px;margin-bottom:6px;background:#f8f9fa;border-radius:8px}
-    .top-item-rank{font-size:1.2rem;font-weight:800;margin-right:10px}
-    .top-item-name{flex:1;font-weight:700}
-    .top-item-value{font-weight:800;color:#FF500a}
-
-    .stores-table{background:#fff;padding:12px;border-radius:12px;box-shadow:0 3px 12px rgba(0,0,0,.18);overflow-x:auto}
+    .table-card{overflow:auto}
     table{width:100%;border-collapse:collapse}
-    th{background:#FF500a;color:#fff;padding:10px;text-align:left;font-weight:800;font-size:.9rem}
-    td{padding:10px;border-bottom:1px solid #eee;font-size:.9rem}
-    tr:hover{background:#fff5f3}
-    .badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:.8rem;font-weight:800}
-    .badge-success{background:#d1fae5;color:#065f46}
-    .badge-danger{background:#fee2e2;color:#991b1b}
+    th{background:var(--brand);color:#fff;padding:10px;text-align:left;font-weight:800}
+    td{padding:10px;border-bottom:1px solid #eee}
+    tr:hover{background:#fff5f0}
 
-    /* Responsivo simplificado */
-    @media (max-width: 1100px){
-      .metrics-grid{grid-template-columns:repeat(3,1fr)}
-      .charts-row{grid-template-columns:1fr}
-      .charts-grid{grid-template-columns:1fr}
-      .top-stores{grid-template-columns:1fr}
+    @media (max-width:1100px){
+      .metrics{grid-template-columns:repeat(3,1fr)}
+      .grid-2-1{grid-template-columns:1fr}
+      .grid-2{grid-template-columns:1fr}
+      .tops{grid-template-columns:1fr}
+      .canvas-wrap{height:220px}
     }
-    @media (max-width: 640px){
-      .metrics-grid{grid-template-columns:repeat(2,1fr)}
-      .logo{font-size:1.4rem}
+    @media (max-width:640px){
+      .metrics{grid-template-columns:repeat(2,1fr)}
+      .title{font-size:1.1rem}
+      .logo{width:40px;height:40px;font-size:18px}
     }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
-      <div class="logo">📊 Dashboard de Vendas - Tempo Real</div>
-      <div class="sync-status">
-        <div class="sync-indicator" id="syncDot"></div>
+      <div class="brand">
+        <div class="logo">DV</div>
+        <div>
+          <div class="title">Dashboard de Vendas</div>
+          <div class="subtitle">Tempo real • minimalista</div>
+        </div>
+      </div>
+      <div class="sync">
+        <div class="dot" id="syncDot"></div>
         <span id="syncStatus">Sincronizando...</span>
       </div>
     </div>
 
-    <div class="store-selector">
-      <select id="storeSelect" onchange="updateDashboard()">
-        <option value="all">📍 Todas as Lojas</option>
-      </select>
+    <div class="toolbar">
+      <div class="select">
+        <select id="storeSelect" onchange="updateDashboard()">
+          <option value="all">📍 Todas as Lojas</option>
+        </select>
+      </div>
     </div>
 
-    <div class="metrics-grid">
-      <div class="metric-card">
+    <div class="metrics">
+      <div class="card">
         <div class="metric-label">Vendas Totais</div>
         <div class="metric-value" id="totalSales">R$ 0</div>
-        <div class="metric-trend" id="salesTrend"></div>
+        <div class="trend" id="salesTrend"></div>
       </div>
-      <div class="metric-card">
+      <div class="card">
         <div class="metric-label">Vendas Balcão</div>
         <div class="metric-value" id="counterSales">R$ 0</div>
       </div>
-      <div class="metric-card">
+      <div class="card">
         <div class="metric-label">Delivery</div>
         <div class="metric-value" id="deliverySales">R$ 0</div>
-        <div class="metric-trend" id="deliveryTrend"></div>
+        <div class="trend" id="deliveryTrend"></div>
       </div>
-      <div class="metric-card">
+      <div class="card">
         <div class="metric-label">% Delivery</div>
         <div class="metric-value" id="deliveryPercent">0%</div>
       </div>
-      <div class="metric-card">
+      <div class="card">
         <div class="metric-label">Previsão Mês</div>
         <div class="metric-value" id="forecast">R$ 0</div>
       </div>
-      <div class="metric-card">
+      <div class="card">
         <div class="metric-label">Meta do Mês</div>
         <div class="metric-value" id="goalValue">R$ 0</div>
-        <div class="metric-trend" id="goalStatus"></div>
+        <div class="trend" id="goalStatus"></div>
       </div>
     </div>
 
-    <div class="charts-row">
-      <div class="chart-card">
-        <div class="chart-title">📈 Evolução de Vendas</div>
-        <div style="height:220px">
-          <canvas id="salesChart"></canvas>
-        </div>
+    <div class="grid-2-1">
+      <div class="card">
+        <div class="card-title">📈 Evolução de Vendas</div>
+        <div class="canvas-wrap"><canvas id="salesChart"></canvas></div>
       </div>
-      <div class="chart-card">
-        <div class="chart-title">🎯 Progresso da Meta</div>
-        <div class="gauge-container">
-          <canvas id="gaugeChart"></canvas>
-        </div>
+      <div class="card">
+        <div class="card-title">🎯 Progresso da Meta</div>
+        <div class="gauge-wrap"><canvas id="gaugeChart"></canvas></div>
       </div>
     </div>
 
-    <div class="top-stores">
-      <div class="top-card">
-        <div class="chart-title">🏆 Top 3 Melhores Lojas</div>
+    <div class="tops">
+      <div class="card">
+        <div class="card-title">🏆 Top 3 Melhores Lojas</div>
         <div id="topStores"></div>
       </div>
-      <div class="top-card">
-        <div class="chart-title">⚠️ Top 3 Lojas em Alerta</div>
+      <div class="card">
+        <div class="card-title">⚠️ Top 3 Lojas em Alerta</div>
         <div id="bottomStores"></div>
       </div>
     </div>
 
-    <div class="charts-grid">
-      <div class="chart-card">
-        <div class="chart-title">🚚 Evolução do Delivery</div>
-        <div style="height:200px">
-          <canvas id="deliveryChart"></canvas>
-        </div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">🚚 Evolução do Delivery</div>
+        <div class="canvas-wrap sm"><canvas id="deliveryChart"></canvas></div>
       </div>
-      <div class="chart-card">
-        <div class="chart-title">🏪 Vendas por Loja</div>
-        <div style="height:220px">
-          <canvas id="storesChart"></canvas>
-        </div>
+      <div class="card">
+        <div class="card-title">🏪 Vendas por Loja</div>
+        <div class="canvas-wrap"><canvas id="storesChart"></canvas></div>
       </div>
     </div>
 
-    <div class="stores-table">
-      <div class="chart-title">📋 Resumo Detalhado por Loja</div>
+    <div class="card table-card">
+      <div class="card-title">📋 Resumo Detalhado por Loja</div>
       <table id="storesTable">
         <thead>
-        <tr>
-          <th>Loja</th>
-          <th>Vendas Balcão</th>
-          <th>Delivery</th>
-          <th>Total</th>
-          <th>% Delivery</th>
-          <th>Previsão Mês</th>
-          <th>Meta</th>
-          <th>Status Meta</th>
-          <th>Tendência</th>
-        </tr>
+          <tr>
+            <th>Loja</th>
+            <th>Vendas Balcão</th>
+            <th>Delivery</th>
+            <th>Total</th>
+            <th>% Delivery</th>
+            <th>Previsão Mês</th>
+            <th>Meta</th>
+            <th>Status Meta</th>
+            <th>Tendência</th>
+          </tr>
         </thead>
         <tbody></tbody>
       </table>
@@ -176,130 +216,83 @@
   </div>
 
   <script>
-    // ======= CONFIG =======
-    // Se você usar Apps Script, troque para true e preencha SHEET_API_URL.
+    // CONFIG
     const USE_APPS_SCRIPT = true;
-
-    // URL pública do CSV do Google Sheets (não tem CORS):
-    const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQOilCaKcPSn1mh5zp8yd7TrjJpRFqspq-4NZErDtSibx7QqK0PggMQfCYlruJmeU6ebjZGXEqO3L9T/pub?gid=0&single=true&output=csv';
-
-    // Opção 1 (recomendada para GitHub Pages): Seu PROXY com CORS liberado
-    // Exemplo de rota: https://seu-dominio.com/proxy?url=<ENCODED>
-    // Coloque aqui a URL base do seu proxy:
-    const PROXY_CORS_URL = 'https://YOUR_PROXY_DOMAIN/proxy?url=';
-
-    // Opção 2 (Apps Script Web App retornando JSON com CORS):
-    const SHEET_API_URL = 'https://script.google.com/macros/s/AKfycbzA5tqE0f7KpJ%E2%80%A6/exec';
-
-    const REFRESH_INTERVAL = 10000; // 10s
+    const SHEET_API_URL = 'https://script.google.com/macros/s/AKfycbzA5tqE0f7KpJ3ldeQ7ancb5itCQlUWHUbF1n9Jrjq5mdogGuiMC_kvhELnfFXSwdlJ/exec';
+    const REFRESH_INTERVAL = 10000;
 
     let salesData = [];
     let salesChart, storesChart, deliveryChart, gaugeChart;
 
-    function setSync(message, isError=false){
-      document.getElementById('syncStatus').textContent = message;
-      document.getElementById('syncDot').style.background = isError ? '#ef4444' : '#10b981';
-      document.title = 'Dashboard - ' + message;
+    function setSync(msg, isError=false){
+      document.getElementById('syncStatus').textContent = msg;
+      document.getElementById('syncDot').style.background = isError ? 'var(--down)' : 'var(--ok)';
+      document.title = 'Dashboard • ' + msg;
     }
 
-    // Carregar dados
-    loadDataFromSource();
-    setInterval(loadDataFromSource, REFRESH_INTERVAL);
+    function jsonp(url) {
+      return new Promise((resolve, reject) => {
+        const cb = 'cb_' + Math.random().toString(36).slice(2);
+        const s = document.createElement('script');
+        s.src = url + (url.includes('?') ? '&' : '?') + 'callback=' + cb + '&t=' + Date.now();
+        window[cb] = (data) => { resolve(data); cleanup(); };
+        s.onerror = (e) => { reject(e); cleanup(); };
+        function cleanup(){ try{ document.body.removeChild(s); }catch{} delete window[cb]; }
+        document.body.appendChild(s);
+      });
+    }
 
     async function loadDataFromSource() {
-      try {
+      try{
         setSync('Sincronizando...');
         let dataRows;
-
         if (USE_APPS_SCRIPT) {
-          // Apps Script deve responder JSON: [{date:'DD/MM/YYYY', store:'Loja', counter:123, delivery:45, goal:1000}, ...]
-          const resp = await fetch(SHEET_API_URL, {mode: 'cors', cache: 'no-store'});
-          if (!resp.ok) throw new Error('Erro HTTP ' + resp.status);
-          dataRows = await resp.json();
+          dataRows = await jsonp(SHEET_API_URL);
         } else {
-          // Via proxy CORS lendo o CSV público
-          const proxied = PROXY_CORS_URL + encodeURIComponent(SHEET_CSV_URL + '&t=' + Date.now());
-          const resp = await fetch(proxied, {mode: 'cors', cache: 'no-store'});
-          if (!resp.ok) throw new Error('Erro HTTP ' + resp.status);
-          const csvText = await resp.text();
-          dataRows = parseCSV(csvText);
+          throw new Error('Configure USE_APPS_SCRIPT = true');
         }
 
-        if (!Array.isArray(dataRows) || dataRows.length === 0) throw new Error('Sem dados válidos');
+        if (!Array.isArray(dataRows) || dataRows.length === 0) throw new Error('Sem dados');
 
-        // Normaliza e ordena
         salesData = dataRows.map(row => ({
           date: parseDate(row.date),
           store: String(row.store || '').trim(),
-          counter: toNum(row.counter),
-          delivery: toNum(row.delivery),
-          goal: toNum(row.goal)
-        })).filter(r => r.store && r.date instanceof Date && !isNaN(r.date));
+          counter: num(row.counter),
+          delivery: num(row.delivery),
+          goal: num(row.goal)
+        })).filter(r => r.store);
 
         salesData.sort((a,b)=> a.date - b.date);
 
         populateStoreSelector();
         updateDashboard();
         setSync('Atualizado agora');
-      } catch (e) {
-        console.error('Falha ao carregar:', e);
+      }catch(e){
+        console.error(e);
         setSync('Erro na sincronização', true);
       }
     }
 
-    // Parse CSV básico -> array de objetos
-    function parseCSV(csv){
-      const lines = csv.split('\n').map(l=>l.replace(/\r/g,'').trim()).filter(Boolean);
-      // Esperado: Data,Loja,Balcão,Delivery,Meta
-      const out = [];
-      for (let i=1;i<lines.length;i++){
-        const cols = splitCSVLine(lines[i]);
-        if (cols.length >= 5){
-          out.push({
-            date: cols[0],
-            store: cols[1],
-            counter: cols[2],
-            delivery: cols[3],
-            goal: cols[4]
-          });
-        }
-      }
-      return out;
-    }
-
-    // Divide linha CSV respeitando aspas
-    function splitCSVLine(line){
-      const res=[]; let cur=''; let q=false;
-      for (let i=0;i<line.length;i++){
-        const c=line[i];
-        if (c === '"'){ q=!q; continue; }
-        if (c === ',' && !q){ res.push(cur); cur=''; continue; }
-        cur += c;
-      }
-      res.push(cur);
-      return res;
-    }
-
-    function toNum(v){ const n = parseFloat(String(v).replace(/\./g,'').replace(',','.')); return isNaN(n)?0:n; }
-
+    function num(v){ const n = parseFloat(String(v).toString().replace(/\./g,'').replace(',','.')); return isNaN(n)?0:n; }
     function parseDate(s){
       if (!s) return new Date();
-      const parts = String(s).trim().split('/');
-      if (parts.length===3){
-        const d = new Date(Number(parts[2]), Number(parts[1])-1, Number(parts[0]));
+      const p = String(s).trim().split('/');
+      if (p.length===3){
+        const d = new Date(+p[2], +p[1]-1, +p[0]);
         if (!isNaN(d)) return d;
       }
       const d = new Date(s);
       return isNaN(d) ? new Date() : d;
     }
+    function money(v){ return 'R$ ' + Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2}); }
 
     function populateStoreSelector(){
       const stores = [...new Set(salesData.map(d=>d.store))];
       const sel = document.getElementById('storeSelect');
-      const current = sel.value;
+      const cur = sel.value;
       sel.innerHTML = '<option value="all">📍 Todas as Lojas</option>' +
         stores.map(s=>`<option value="${s}">🏪 ${s}</option>`).join('');
-      if (stores.includes(current)) sel.value = current;
+      if (stores.includes(cur)) sel.value = cur;
     }
 
     function updateDashboard(){
@@ -334,44 +327,37 @@
         : (data.find(d=>d.goal>0)?.goal || 0);
 
       const deliveryPercent = totalSales>0 ? (totalDelivery/totalSales*100) : 0;
-
       const salesTrend = calcTrend(data.map(d=>({sales:d.counter+d.delivery})));
       const deliveryTrend = calcTrend(data.map(d=>({sales:d.delivery})));
 
-      setText('totalSales', money(totalSales));
-      setText('counterSales', money(totalCounter));
-      setText('deliverySales', money(totalDelivery));
-      setText('deliveryPercent', deliveryPercent.toFixed(1)+'%');
-      setText('forecast', money(forecast));
-      setText('goalValue', money(goal));
+      document.getElementById('totalSales').textContent = money(totalSales);
+      document.getElementById('counterSales').textContent = money(totalCounter);
+      document.getElementById('deliverySales').textContent = money(totalDelivery);
+      document.getElementById('deliveryPercent').textContent = deliveryPercent.toFixed(1)+'%';
+      document.getElementById('forecast').textContent = money(forecast);
+      document.getElementById('goalValue').textContent = money(goal);
 
       document.getElementById('salesTrend').innerHTML = salesTrend>=0
-        ? `<span class="trend-up">▲ ${salesTrend.toFixed(1)}%</span>`
-        : `<span class="trend-down">▼ ${Math.abs(salesTrend).toFixed(1)}%</span>`;
-
+        ? `<span class="up">▲ ${salesTrend.toFixed(1)}%</span>` : `<span class="down">▼ ${Math.abs(salesTrend).toFixed(1)}%</span>`;
       document.getElementById('deliveryTrend').innerHTML = deliveryTrend>=0
-        ? `<span class="trend-up">▲ ${deliveryTrend.toFixed(1)}%</span>`
-        : `<span class="trend-down">▼ ${Math.abs(deliveryTrend).toFixed(1)}%</span>`;
+        ? `<span class="up">▲ ${deliveryTrend.toFixed(1)}%</span>` : `<span class="down">▼ ${Math.abs(deliveryTrend).toFixed(1)}%</span>`;
 
       document.getElementById('goalStatus').innerHTML = forecast>=goal
-        ? `<span class="trend-up">✓ No caminho</span>`
-        : `<span class="trend-down">✗ Abaixo</span>`;
+        ? `<span class="up">✓ No caminho</span>` : `<span class="down">✗ Abaixo</span>`;
 
       updateGaugeChart(forecast, goal);
     }
 
-    function setText(id, txt){ document.getElementById(id).textContent = txt; }
-
     function calcTrend(arr){
       if (arr.length<2) return 0;
-      const mid = Math.floor(arr.length/2);
-      const f = arr.slice(0,mid).reduce((s,d)=>s+d.sales,0) / Math.max(1,mid);
-      const s = arr.slice(mid).reduce((s2,d)=>s2+d.sales,0) / Math.max(1,arr.length-mid);
+      const m = Math.floor(arr.length/2);
+      const f = arr.slice(0,m).reduce((s,d)=>s+d.sales,0)/Math.max(1,m);
+      const s = arr.slice(m).reduce((s2,d)=>s2+d.sales,0)/Math.max(1,arr.length-m);
       if (f===0) return 0;
       return ((s-f)/f)*100;
     }
 
-    // ===== Charts minimalistas =====
+    // Charts minimalistas
     function updateSalesChart(data){
       const daily = {};
       data.forEach(d=>{
@@ -386,23 +372,19 @@
 
       if (salesChart) salesChart.destroy();
       const ctx = document.getElementById('salesChart').getContext('2d');
-      salesChart = new Chart(ctx, {
+      salesChart = new Chart(ctx,{
         type:'line',
-        data:{
-          labels,
-          datasets:[
-            {label:'Balcão', data:counterValues, borderColor:'#FF500a', tension:.3, fill:false, borderWidth:2, pointRadius:0},
-            {label:'Delivery', data:deliveryValues, borderColor:'#10b981', tension:.3, fill:false, borderWidth:2, pointRadius:0}
-          ]
-        },
+        data:{ labels, datasets:[
+          { data:counterValues, borderColor:'var(--brand)', tension:.35, borderWidth:2, pointRadius:0 },
+          { data:deliveryValues, borderColor:'var(--ok)', tension:.35, borderWidth:2, pointRadius:0 }
+        ]},
         options:{
           responsive:true, maintainAspectRatio:false,
-          plugins:{ legend:{display:false}, title:{display:false}, tooltip:{mode:'index', intersect:false} },
+          plugins:{ legend:{display:false}, title:{display:false}, tooltip:{mode:'index',intersect:false} },
           elements:{ point:{radius:0} },
-          layout:{padding:0},
           scales:{
             x:{ grid:{display:false}, ticks:{ maxTicksLimit:6 }},
-            y:{ grid:{display:false}, ticks:{ maxTicksLimit:4, callback:v=>'R$ '+Number(v).toLocaleString('pt-BR') }, beginAtZero:true }
+            y:{ grid:{display:false}, beginAtZero:true, ticks:{ maxTicksLimit:4, callback:v=>'R$ '+Number(v).toLocaleString('pt-BR') } }
           }
         }
       });
@@ -421,11 +403,10 @@
       const ctx = document.getElementById('deliveryChart').getContext('2d');
       deliveryChart = new Chart(ctx,{
         type:'bar',
-        data:{ labels, datasets:[{ data:values, backgroundColor:'#10b981', borderWidth:0, barPercentage:.6, categoryPercentage:.8 }] },
+        data:{ labels, datasets:[{ data:values, backgroundColor:'var(--ok)', borderWidth:0, barPercentage:.6, categoryPercentage:.8 }] },
         options:{
           responsive:true, maintainAspectRatio:false,
           plugins:{ legend:{display:false}, title:{display:false} },
-          layout:{padding:0},
           scales:{
             x:{ grid:{display:false}, ticks:{maxTicksLimit:6}},
             y:{ grid:{display:false}, beginAtZero:true,
@@ -453,8 +434,8 @@
         data:{
           labels,
           datasets:[
-            {label:'Balcão', data:counterValues, backgroundColor:'#FF500a'},
-            {label:'Delivery', data:deliveryValues, backgroundColor:'#10b981'}
+            {label:'Balcão', data:counterValues, backgroundColor:'var(--brand)'},
+            {label:'Delivery', data:deliveryValues, backgroundColor:'var(--ok)'}
           ]
         },
         options:{
@@ -476,26 +457,25 @@
       gaugeChart = new Chart(ctx,{
         type:'doughnut',
         data:{ datasets:[{ data:[pct, 100-pct],
-          backgroundColor:[ pct>=100?'#10b981' : pct>=80 ? '#FF500a' : '#ef4444', '#e5e7eb' ],
+          backgroundColor:[ pct>=100?'var(--ok)' : pct>=80 ? 'var(--brand)' : 'var(--down)', '#e5e7eb' ],
           borderWidth:0 }] },
         options:{
           responsive:true, maintainAspectRatio:false,
-          circumference:180, rotation:270, cutout:'80%',
-          plugins:{ legend:{display:false}, tooltip:{enabled:false} },
-          layout:{padding:0}
+          circumference:180, rotation:270, cutout:'78%',
+          plugins:{ legend:{display:false}, tooltip:{enabled:false} }
         },
         plugins:[{
           id:'gaugeText',
           afterDraw:(chart)=>{
             const c = chart.ctx, a = chart.chartArea;
             const cx = a.left + (a.right-a.left)/2;
-            const cy = a.top + (a.bottom-a.top)/2 + 12;
+            const cy = a.top + (a.bottom-a.top)/2 + 10;
             c.save();
-            c.font = 'bold 22px Arial';
-            c.fillStyle = '#333';
+            c.font = '900 22px Inter, Arial';
+            c.fillStyle = 'var(--ink)';
             c.textAlign='center'; c.textBaseline='middle';
             c.fillText(pct.toFixed(1)+'%', cx, cy);
-            c.font = '12px Arial'; c.fillStyle='#666';
+            c.font = '600 12px Inter, Arial'; c.fillStyle='var(--muted)';
             c.fillText('da meta', cx, cy+18);
             c.restore();
           }
@@ -518,16 +498,16 @@
 
       document.getElementById('topStores').innerHTML = stats.slice(0,3).map((s,i)=>`
         <div class="top-item">
-          <div class="top-item-rank">${['🥇','🥈','🥉'][i]}</div>
-          <div class="top-item-name">${s.store}</div>
-          <div class="top-item-value">${money(s.total)}</div>
+          <div class="top-rank">${['🥇','🥈','🥉'][i]}</div>
+          <div class="top-name">${s.store}</div>
+          <div class="top-val">${money(s.total)}</div>
         </div>`).join('');
 
       document.getElementById('bottomStores').innerHTML = stats.slice(-3).reverse().map((s,i)=>`
         <div class="top-item">
-          <div class="top-item-rank">${i+1}</div>
-          <div class="top-item-name">${s.store}</div>
-          <div class="top-item-value">${money(s.total)}</div>
+          <div class="top-rank">${i+1}</div>
+          <div class="top-name">${s.store}</div>
+          <div class="top-val">${money(s.total)}</div>
         </div>`).join('');
     }
 
@@ -550,8 +530,8 @@
         const delPct = total>0 ? (totalDelivery/total*100) : 0;
         const trend = calcTrend(sd.map(d=>({sales:d.counter+d.delivery})));
         const trendIcon = trend>=0 ? '📈' : '📉';
-        const trendClass = trend>=0 ? 'trend-up' : 'trend-down';
-        const goalBadge = forecast>=goal ? '<span class="badge badge-success">✓ Atingirá</span>' : '<span class="badge badge-danger">✗ Abaixo</span>';
+        const trendClass = trend>=0 ? 'up' : 'down';
+        const goalBadge = forecast>=goal ? '<span class="up">✓ Atingirá</span>' : '<span class="down">✗ Abaixo</span>';
 
         tbody.insertAdjacentHTML('beforeend', `
           <tr>
@@ -569,35 +549,9 @@
       });
     }
 
-    function money(v){ return 'R$ ' + Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2}); }
+    // Inicialização
+    loadDataFromSource();
+    setInterval(loadDataFromSource, REFRESH_INTERVAL);
   </script>
-
-  <!--
-  Se preferir remover totalmente problemas de CORS sem proxy, use Google Apps Script:
-
-  1) Em https://script.google.com > Novo projeto. Colar:
-  function doGet() {
-    const id = 'ID_DA_SUA_PLANILHA';
-    const sh = SpreadsheetApp.openById(id).getSheets()[0];
-    const values = sh.getDataRange().getValues(); // cabeçalho + linhas
-    const out = [];
-    for (let i=1;i<values.length;i++){
-      const [date, store, counter, delivery, goal] = values[i];
-      out.push({
-        date: Utilities.formatDate(new Date(date), Session.getScriptTimeZone(), 'dd/MM/yyyy'),
-        store: String(store||''),
-        counter: Number(counter||0),
-        delivery: Number(delivery||0),
-        goal: Number(goal||0)
-      });
-    }
-    const resp = ContentService.createTextOutput(JSON.stringify(out)).setMimeType(ContentService.MimeType.JSON);
-    // CORS
-    resp.setHeader('Access-Control-Allow-Origin','*');
-    return resp;
-  }
-  2) Deploy > Implementar como aplicativo da Web > Acesso: Qualquer pessoa com o link.
-  3) Copie a URL do deploy e use em SHEET_API_URL; defina USE_APPS_SCRIPT = true.
-  -->
 </body>
 </html>
