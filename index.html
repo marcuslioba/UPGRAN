@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard de Vendas</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <title>Dashboard de Vendas - Tempo Real</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         * {
@@ -67,6 +66,15 @@
             }
         }
 
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
         .logo {
             color: white;
             font-size: 2.5em;
@@ -74,26 +82,53 @@
             text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
 
-        .upload-btn {
+        .sync-status {
             background: white;
             color: #FF500a;
-            padding: 12px 30px;
+            padding: 12px 25px;
             border-radius: 25px;
-            border: none;
-            font-size: 1em;
             font-weight: 600;
-            cursor: pointer;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        .upload-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        .sync-indicator {
+            width: 12px;
+            height: 12px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
         }
 
-        #fileInput {
-            display: none;
+        .loading-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 80vh;
+            color: white;
+            text-align: center;
+        }
+
+        .loading-screen h1 {
+            font-size: 3em;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 6px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
 
         .dashboard {
@@ -199,10 +234,6 @@
             animation: slideUp 0.8s ease-out;
         }
 
-        .chart-card.large {
-            grid-column: span 2;
-        }
-
         .chart-title {
             font-size: 1.2em;
             color: #333;
@@ -264,28 +295,6 @@
             color: #991b1b;
         }
 
-        .welcome-screen {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 80vh;
-            color: white;
-            text-align: center;
-        }
-
-        .welcome-screen h1 {
-            font-size: 4em;
-            margin-bottom: 20px;
-            text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
-        }
-
-        .welcome-screen p {
-            font-size: 1.5em;
-            margin-bottom: 30px;
-            opacity: 0.9;
-        }
-
         .gauge-container {
             position: relative;
             height: 200px;
@@ -340,22 +349,32 @@
             font-weight: bold;
             color: #FF500a;
         }
+
+        .error-message {
+            background: white;
+            color: #ef4444;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            text-align: center;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <div class="logo">📊 Dashboard de Vendas</div>
-            <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
-                📁 Upload Excel
-            </button>
-            <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
+            <div class="logo">📊 Dashboard de Vendas - Tempo Real</div>
+            <div class="sync-status">
+                <div class="sync-indicator"></div>
+                <span id="syncStatus">Sincronizando...</span>
+            </div>
         </div>
 
-        <div class="welcome-screen" id="welcomeScreen">
-            <h1>Bem-vindo ao Dashboard</h1>
-            <p>Faça upload do arquivo Excel para visualizar os dados</p>
-            <p style="font-size: 1em; opacity: 0.7;">Formato: Data | Loja | Vendas Balcão | Delivery | Meta</p>
+        <div class="loading-screen" id="loadingScreen">
+            <h1>Carregando dados...</h1>
+            <div class="spinner"></div>
+            <p style="margin-top: 20px; font-size: 1.2em;">Conectando ao Google Sheets</p>
         </div>
 
         <div class="dashboard" id="dashboard">
@@ -453,70 +472,107 @@
     </div>
 
     <script>
+        const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQOilCaKcPSn1mh5zp8yd7TrjJpRFqspq-4NZErDtSibx7QqK0PggMQfCYlruJmeU6ebjZGXEqO3L9T/pub?gid=0&single=true&output=csv';
+        const REFRESH_INTERVAL = 10000; // 10 segundos
+
         let salesData = [];
         let salesChart, storesChart, deliveryChart, gaugeChart;
+        let lastUpdate = null;
 
-        document.getElementById('fileInput').addEventListener('change', handleFile);
+        // Carregar dados iniciais
+        loadDataFromSheet();
 
-        function handleFile(e) {
-            const file = e.target.files[0];
-            const reader = new FileReader();
+        // Atualizar a cada 10 segundos
+        setInterval(loadDataFromSheet, REFRESH_INTERVAL);
 
-            reader.onload = function(e) {
-                const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, {type: 'array'});
-                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                const jsonData = XLSX.utils.sheet_to_json(firstSheet, {header: 1});
+        async function loadDataFromSheet() {
+            try {
+                const response = await fetch(SHEET_URL + '&t=' + new Date().getTime());
+                const csvText = await response.text();
                 
-                processData(jsonData);
-            };
-
-            reader.readAsArrayBuffer(file);
+                if (csvText) {
+                    parseCSV(csvText);
+                    lastUpdate = new Date();
+                    updateSyncStatus('Atualizado agora');
+                }
+            } catch (error) {
+                console.error('Erro ao carregar dados:', error);
+                updateSyncStatus('Erro na sincronização', true);
+            }
         }
 
-        function processData(data) {
-            salesData = [];
+        function parseCSV(csv) {
+            const lines = csv.split('\n');
+            const newData = [];
             
-            for (let i = 1; i < data.length; i++) {
-                if (data[i][0] && data[i][1] && data[i][2] !== undefined) {
-                    salesData.push({
-                        date: parseDate(data[i][0]),
-                        store: data[i][1].toString(),
-                        counter: parseFloat(data[i][2]) || 0,
-                        delivery: parseFloat(data[i][3]) || 0,
-                        goal: parseFloat(data[i][4]) || 0
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+                
+                const values = line.split(',');
+                if (values.length >= 5 && values[0] && values[1]) {
+                    newData.push({
+                        date: parseDate(values[0]),
+                        store: values[1].toString().trim(),
+                        counter: parseFloat(values[2]) || 0,
+                        delivery: parseFloat(values[3]) || 0,
+                        goal: parseFloat(values[4]) || 0
                     });
                 }
             }
 
-            if (salesData.length > 0) {
+            if (newData.length > 0) {
+                salesData = newData;
                 salesData.sort((a, b) => a.date - b.date);
-                populateStoreSelector();
-                updateDashboard();
-                document.getElementById('welcomeScreen').style.display = 'none';
-                document.getElementById('dashboard').classList.add('active');
+                
+                if (document.getElementById('dashboard').classList.contains('active')) {
+                    updateDashboard();
+                } else {
+                    populateStoreSelector();
+                    updateDashboard();
+                    document.getElementById('loadingScreen').style.display = 'none';
+                    document.getElementById('dashboard').classList.add('active');
+                }
             }
         }
 
         function parseDate(dateStr) {
-            if (dateStr instanceof Date) return dateStr;
-            if (typeof dateStr === 'number') {
-                return new Date((dateStr - 25569) * 86400 * 1000);
-            }
-            const parts = dateStr.toString().split('/');
+            if (!dateStr) return new Date();
+            
+            // Tenta formato DD/MM/YYYY
+            const parts = dateStr.toString().trim().split('/');
             if (parts.length === 3) {
                 return new Date(parts[2], parts[1] - 1, parts[0]);
             }
+            
+            // Tenta formato padrão
             return new Date(dateStr);
+        }
+
+        function updateSyncStatus(message, isError = false) {
+            const statusElement = document.getElementById('syncStatus');
+            statusElement.textContent = message;
+            
+            if (isError) {
+                statusElement.style.color = '#ef4444';
+            } else {
+                statusElement.style.color = '#FF500a';
+            }
         }
 
         function populateStoreSelector() {
             const stores = [...new Set(salesData.map(d => d.store))];
             const select = document.getElementById('storeSelect');
+            const currentValue = select.value;
+            
             select.innerHTML = '<option value="all">📍 Todas as Lojas</option>';
             stores.forEach(store => {
                 select.innerHTML += `<option value="${store}">🏪 ${store}</option>`;
             });
+            
+            if (currentValue && stores.includes(currentValue)) {
+                select.value = currentValue;
+            }
         }
 
         function updateDashboard() {
@@ -594,6 +650,7 @@
             const firstHalf = data.slice(0, mid).reduce((sum, d) => sum + d.sales, 0) / mid;
             const secondHalf = data.slice(mid).reduce((sum, d) => sum + d.sales, 0) / (data.length - mid);
             
+            if (firstHalf === 0) return 0;
             return ((secondHalf - firstHalf) / firstHalf) * 100;
         }
 
