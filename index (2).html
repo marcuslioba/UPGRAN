@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Vendas</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #FF500a;
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1920px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            animation: slideDown 0.6s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .logo {
+            color: white;
+            font-size: 2.5em;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .upload-btn {
+            background: white;
+            color: #FF500a;
+            padding: 12px 30px;
+            border-radius: 25px;
+            border: none;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s;
+        }
+
+        .upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .dashboard {
+            display: none;
+        }
+
+        .dashboard.active {
+            display: block;
+        }
+
+        .store-selector {
+            background: white;
+            padding: 15px 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        .store-selector select {
+            width: 100%;
+            padding: 12px;
+            font-size: 1.1em;
+            border: 2px solid #FF500a;
+            border-radius: 8px;
+            cursor: pointer;
+            background: white;
+            font-weight: 600;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .metric-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            transition: all 0.3s;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+
+        .metric-label {
+            color: #666;
+            font-size: 0.85em;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        .metric-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #FF500a;
+            margin-bottom: 8px;
+        }
+
+        .metric-trend {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .trend-up {
+            color: #10b981;
+        }
+
+        .trend-down {
+            color: #ef4444;
+        }
+
+        .charts-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .chart-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            animation: slideUp 0.8s ease-out;
+        }
+
+        .chart-card.large {
+            grid-column: span 2;
+        }
+
+        .chart-title {
+            font-size: 1.2em;
+            color: #333;
+            margin-bottom: 15px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .stores-table {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            overflow-x: auto;
+            animation: slideUp 1s ease-out;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #FF500a;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            font-size: 0.95em;
+        }
+
+        tr:hover {
+            background: #fff5f3;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 700;
+        }
+
+        .badge-success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge-danger {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .welcome-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 80vh;
+            color: white;
+            text-align: center;
+        }
+
+        .welcome-screen h1 {
+            font-size: 4em;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
+        }
+
+        .welcome-screen p {
+            font-size: 1.5em;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+
+        .gauge-container {
+            position: relative;
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .top-stores {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .top-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            animation: fadeIn 1s ease-out;
+        }
+
+        .top-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            margin-bottom: 8px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .top-item:hover {
+            background: #fff5f3;
+            transform: translateX(5px);
+        }
+
+        .top-item-rank {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-right: 15px;
+        }
+
+        .top-item-name {
+            flex: 1;
+            font-weight: 600;
+        }
+
+        .top-item-value {
+            font-weight: bold;
+            color: #FF500a;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">📊 Dashboard de Vendas</div>
+            <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+                📁 Upload Excel
+            </button>
+            <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
+        </div>
+
+        <div class="welcome-screen" id="welcomeScreen">
+            <h1>Bem-vindo ao Dashboard</h1>
+            <p>Faça upload do arquivo Excel para visualizar os dados</p>
+            <p style="font-size: 1em; opacity: 0.7;">Formato: Data | Loja | Vendas Balcão | Delivery | Meta</p>
+        </div>
+
+        <div class="dashboard" id="dashboard">
+            <div class="store-selector">
+                <select id="storeSelect" onchange="updateDashboard()">
+                    <option value="all">📍 Todas as Lojas</option>
+                </select>
+            </div>
+
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-label">Vendas Totais</div>
+                    <div class="metric-value" id="totalSales">R$ 0</div>
+                    <div class="metric-trend" id="salesTrend"></div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Vendas Balcão</div>
+                    <div class="metric-value" id="counterSales">R$ 0</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Delivery</div>
+                    <div class="metric-value" id="deliverySales">R$ 0</div>
+                    <div class="metric-trend" id="deliveryTrend"></div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">% Delivery</div>
+                    <div class="metric-value" id="deliveryPercent">0%</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Previsão Mês</div>
+                    <div class="metric-value" id="forecast">R$ 0</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Meta do Mês</div>
+                    <div class="metric-value" id="goalValue">R$ 0</div>
+                    <div class="metric-trend" id="goalStatus"></div>
+                </div>
+            </div>
+
+            <div class="charts-row">
+                <div class="chart-card">
+                    <div class="chart-title">📈 Evolução de Vendas</div>
+                    <canvas id="salesChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-title">🎯 Progresso da Meta</div>
+                    <div class="gauge-container">
+                        <canvas id="gaugeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="top-stores">
+                <div class="top-card">
+                    <div class="chart-title">🏆 Top 3 Melhores Lojas</div>
+                    <div id="topStores"></div>
+                </div>
+                <div class="top-card">
+                    <div class="chart-title">⚠️ Top 3 Lojas em Alerta</div>
+                    <div id="bottomStores"></div>
+                </div>
+            </div>
+
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <div class="chart-title">🚚 Evolução do Delivery</div>
+                    <canvas id="deliveryChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-title">🏪 Vendas por Loja</div>
+                    <canvas id="storesChart"></canvas>
+                </div>
+            </div>
+
+            <div class="stores-table">
+                <div class="chart-title">📋 Resumo Detalhado por Loja</div>
+                <table id="storesTable">
+                    <thead>
+                        <tr>
+                            <th>Loja</th>
+                            <th>Vendas Balcão</th>
+                            <th>Delivery</th>
+                            <th>Total</th>
+                            <th>% Delivery</th>
+                            <th>Previsão Mês</th>
+                            <th>Meta</th>
+                            <th>Status Meta</th>
+                            <th>Tendência</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let salesData = [];
+        let salesChart, storesChart, deliveryChart, gaugeChart;
+
+        document.getElementById('fileInput').addEventListener('change', handleFile);
+
+        function handleFile(e) {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(firstSheet, {header: 1});
+                
+                processData(jsonData);
+            };
+
+            reader.readAsArrayBuffer(file);
+        }
+
+        function processData(data) {
+            salesData = [];
+            
+            for (let i = 1; i < data.length; i++) {
+                if (data[i][0] && data[i][1] && data[i][2] !== undefined) {
+                    salesData.push({
+                        date: parseDate(data[i][0]),
+                        store: data[i][1].toString(),
+                        counter: parseFloat(data[i][2]) || 0,
+                        delivery: parseFloat(data[i][3]) || 0,
+                        goal: parseFloat(data[i][4]) || 0
+                    });
+                }
+            }
+
+            if (salesData.length > 0) {
+                salesData.sort((a, b) => a.date - b.date);
+                populateStoreSelector();
+                updateDashboard();
+                document.getElementById('welcomeScreen').style.display = 'none';
+                document.getElementById('dashboard').classList.add('active');
+            }
+        }
+
+        function parseDate(dateStr) {
+            if (dateStr instanceof Date) return dateStr;
+            if (typeof dateStr === 'number') {
+                return new Date((dateStr - 25569) * 86400 * 1000);
+            }
+            const parts = dateStr.toString().split('/');
+            if (parts.length === 3) {
+                return new Date(parts[2], parts[1] - 1, parts[0]);
+            }
+            return new Date(dateStr);
+        }
+
+        function populateStoreSelector() {
+            const stores = [...new Set(salesData.map(d => d.store))];
+            const select = document.getElementById('storeSelect');
+            select.innerHTML = '<option value="all">📍 Todas as Lojas</option>';
+            stores.forEach(store => {
+                select.innerHTML += `<option value="${store}">🏪 ${store}</option>`;
+            });
+        }
+
+        function updateDashboard() {
+            const selectedStore = document.getElementById('storeSelect').value;
+            const filteredData = selectedStore === 'all' 
+                ? salesData 
+                : salesData.filter(d => d.store === selectedStore);
+
+            updateMetrics(filteredData, selectedStore);
+            updateCharts(filteredData, selectedStore);
+            updateTable();
+            updateTopStores();
+        }
+
+        function updateMetrics(data, selectedStore) {
+            const totalCounter = data.reduce((sum, d) => sum + d.counter, 0);
+            const totalDelivery = data.reduce((sum, d) => sum + d.delivery, 0);
+            const totalSales = totalCounter + totalDelivery;
+            
+            const dates = data.map(d => d.date);
+            const minDate = new Date(Math.min(...dates));
+            const maxDate = new Date(Math.max(...dates));
+            const daysInData = Math.ceil((maxDate - minDate) / (1000 * 60 * 60 * 24)) + 1;
+            const avgDaily = totalSales / daysInData;
+
+            const daysInMonth = new Date(maxDate.getFullYear(), maxDate.getMonth() + 1, 0).getDate();
+            const forecast = avgDaily * daysInMonth;
+
+            const goal = selectedStore === 'all' 
+                ? [...new Set(salesData.map(d => d.store))].reduce((sum, store) => {
+                    const storeGoal = salesData.find(d => d.store === store && d.goal > 0);
+                    return sum + (storeGoal ? storeGoal.goal : 0);
+                }, 0)
+                : data.find(d => d.goal > 0)?.goal || 0;
+
+            const deliveryPercent = totalSales > 0 ? (totalDelivery / totalSales * 100) : 0;
+            const salesTrend = calculateTrend(data.map(d => ({...d, sales: d.counter + d.delivery})));
+            const deliveryTrend = calculateDeliveryTrend(data);
+
+            document.getElementById('totalSales').textContent = formatCurrency(totalSales);
+            document.getElementById('counterSales').textContent = formatCurrency(totalCounter);
+            document.getElementById('deliverySales').textContent = formatCurrency(totalDelivery);
+            document.getElementById('deliveryPercent').textContent = deliveryPercent.toFixed(1) + '%';
+            document.getElementById('forecast').textContent = formatCurrency(forecast);
+            document.getElementById('goalValue').textContent = formatCurrency(goal);
+
+            const trendElement = document.getElementById('salesTrend');
+            if (salesTrend > 0) {
+                trendElement.innerHTML = `<span class="trend-up">▲ ${salesTrend.toFixed(1)}%</span>`;
+            } else {
+                trendElement.innerHTML = `<span class="trend-down">▼ ${Math.abs(salesTrend).toFixed(1)}%</span>`;
+            }
+
+            const deliveryTrendElement = document.getElementById('deliveryTrend');
+            if (deliveryTrend > 0) {
+                deliveryTrendElement.innerHTML = `<span class="trend-up">▲ ${deliveryTrend.toFixed(1)}%</span>`;
+            } else {
+                deliveryTrendElement.innerHTML = `<span class="trend-down">▼ ${Math.abs(deliveryTrend).toFixed(1)}%</span>`;
+            }
+
+            const goalStatusElement = document.getElementById('goalStatus');
+            if (forecast >= goal) {
+                goalStatusElement.innerHTML = `<span class="trend-up">✓ No caminho</span>`;
+            } else {
+                goalStatusElement.innerHTML = `<span class="trend-down">✗ Abaixo</span>`;
+            }
+
+            updateGaugeChart(forecast, goal);
+        }
+
+        function calculateTrend(data) {
+            if (data.length < 2) return 0;
+            
+            const mid = Math.floor(data.length / 2);
+            const firstHalf = data.slice(0, mid).reduce((sum, d) => sum + d.sales, 0) / mid;
+            const secondHalf = data.slice(mid).reduce((sum, d) => sum + d.sales, 0) / (data.length - mid);
+            
+            return ((secondHalf - firstHalf) / firstHalf) * 100;
+        }
+
+        function calculateDeliveryTrend(data) {
+            if (data.length < 2) return 0;
+            
+            const mid = Math.floor(data.length / 2);
+            const firstHalf = data.slice(0, mid).reduce((sum, d) => sum + d.delivery, 0) / mid;
+            const secondHalf = data.slice(mid).reduce((sum, d) => sum + d.delivery, 0) / (data.length - mid);
+            
+            if (firstHalf === 0) return 0;
+            return ((secondHalf - firstHalf) / firstHalf) * 100;
+        }
+
+        function updateCharts(data, selectedStore) {
+            updateSalesChart(data);
+            updateDeliveryChart(data);
+            if (selectedStore === 'all') {
+                updateStoresChart();
+            }
+        }
+
+        function updateSalesChart(data) {
+            const dailyData = {};
+            data.forEach(d => {
+                const dateKey = d.date.toLocaleDateString('pt-BR');
+                if (!dailyData[dateKey]) {
+                    dailyData[dateKey] = { counter: 0, delivery: 0 };
+                }
+                dailyData[dateKey].counter += d.counter;
+                dailyData[dateKey].delivery += d.delivery;
+            });
+
+            const labels = Object.keys(dailyData);
+            const counterValues = Object.values(dailyData).map(d => d.counter);
+            const deliveryValues = Object.values(dailyData).map(d => d.delivery);
+
+            if (salesChart) salesChart.destroy();
+
+            const ctx = document.getElementById('salesChart').getContext('2d');
+            salesChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Vendas Balcão',
+                        data: counterValues,
+                        borderColor: '#FF500a',
+                        backgroundColor: 'rgba(255, 80, 10, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }, {
+                        label: 'Delivery',
+                        data: deliveryValues,
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return 'R$ ' + value.toLocaleString('pt-BR');
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateDeliveryChart(data) {
+            const dailyData = {};
+            data.forEach(d => {
+                const dateKey = d.date.toLocaleDateString('pt-BR');
+                dailyData[dateKey] = (dailyData[dateKey] || 0) + d.delivery;
+            });
+
+            const labels = Object.keys(dailyData);
+            const values = Object.values(dailyData);
+
+            if (deliveryChart) deliveryChart.destroy();
+
+            const ctx = document.getElementById('deliveryChart').getContext('2d');
+            deliveryChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Delivery Diário',
+                        data: values,
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                        tension: 0.4,
+                        fill: true,
+                        borderWidth: 3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return 'R$ ' + value.toLocaleString('pt-BR');
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateStoresChart() {
+            const storeData = {};
+            salesData.forEach(d => {
+                if (!storeData[d.store]) {
+                    storeData[d.store] = { counter: 0, delivery: 0 };
+                }
+                storeData[d.store].counter += d.counter;
+                storeData[d.store].delivery += d.delivery;
+            });
+
+            const labels = Object.keys(storeData);
+            const counterValues = Object.values(storeData).map(d => d.counter);
+            const deliveryValues = Object.values(storeData).map(d => d.delivery);
+
+            if (storesChart) storesChart.destroy();
+
+            const ctx = document.getElementById('storesChart').getContext('2d');
+            storesChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Balcão',
+                        data: counterValues,
+                        backgroundColor: '#FF500a'
+                    }, {
+                        label: 'Delivery',
+                        data: deliveryValues,
+                        backgroundColor: '#10b981'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        x: {
+                            stacked: true
+                        },
+                        y: {
+                            stacked: true,
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return 'R$ ' + value.toLocaleString('pt-BR');
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateGaugeChart(forecast, goal) {
+            const percentage = goal > 0 ? Math.min((forecast / goal) * 100, 100) : 0;
+            
+            if (gaugeChart) gaugeChart.destroy();
+
+            const ctx = document.getElementById('gaugeChart').getContext('2d');
+            gaugeChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    datasets: [{
+                        data: [percentage, 100 - percentage],
+                        backgroundColor: [
+                            percentage >= 100 ? '#10b981' : percentage >= 80 ? '#FF500a' : '#ef4444',
+                            '#e5e7eb'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    circumference: 180,
+                    rotation: 270,
+                    cutout: '75%',
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            enabled: false
+                        }
+                    }
+                },
+                plugins: [{
+                    id: 'gaugeText',
+                    afterDraw: (chart) => {
+                        const ctx = chart.ctx;
+                        const centerX = chart.chartArea.left + (chart.chartArea.right - chart.chartArea.left) / 2;
+                        const centerY = chart.chartArea.top + (chart.chartArea.bottom - chart.chartArea.top) / 2 + 20;
+                        
+                        ctx.save();
+                        ctx.font = 'bold 32px Arial';
+                        ctx.fillStyle = '#333';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(percentage.toFixed(1) + '%', centerX, centerY);
+                        
+                        ctx.font = '14px Arial';
+                        ctx.fillStyle = '#666';
+                        ctx.fillText('da meta', centerX, centerY + 30);
+                        ctx.restore();
+                    }
+                }]
+            });
+        }
+
+        function updateTopStores() {
+            const stores = [...new Set(salesData.map(d => d.store))];
+            const storeStats = stores.map(store => {
+                const storeData = salesData.filter(d => d.store === store);
+                const total = storeData.reduce((sum, d) => sum + d.counter + d.delivery, 0);
+                
+                const dates = storeData.map(d => d.date);
+                const minDate = new Date(Math.min(...dates));
+                const maxDate = new Date(Math.max(...dates));
+                const days = Math.ceil((maxDate - minDate) / (1000 * 60 * 60 * 24)) + 1;
+                const avg = total / days;
+                
+                const daysInMonth = new Date(maxDate.getFullYear(), maxDate.getMonth() + 1, 0).getDate();
+                const forecast = avg * daysInMonth;
+                
+                return { store, total, forecast };
+            });
+
+            storeStats.sort((a, b) => b.total - a.total);
+
+            const topStoresHtml = storeStats.slice(0, 3).map((s, i) => `
+                <div class="top-item">
+                    <div class="top-item-rank">${['🥇', '🥈', '🥉'][i]}</div>
+                    <div class="top-item-name">${s.store}</div>
+                    <div class="top-item-value">${formatCurrency(s.total)}</div>
+                </div>
+            `).join('');
+
+            const bottomStoresHtml = storeStats.slice(-3).reverse().map((s, i) => `
+                <div class="top-item">
+                    <div class="top-item-rank">${i + 1}</div>
+                    <div class="top-item-name">${s.store}</div>
+                    <div class="top-item-value">${formatCurrency(s.total)}</div>
+                </div>
+            `).join('');
+
+            document.getElementById('topStores').innerHTML = topStoresHtml;
+            document.getElementById('bottomStores').innerHTML = bottomStoresHtml;
+        }
+
+        function updateTable() {
+            const stores = [...new Set(salesData.map(d => d.store))];
+            const tbody = document.querySelector('#storesTable tbody');
+            tbody.innerHTML = '';
+
+            stores.forEach(store => {
+                const storeData = salesData.filter(d => d.store === store);
+                const totalCounter = storeData.reduce((sum, d) => sum + d.counter, 0);
+                const totalDelivery = storeData.reduce((sum, d) => sum + d.delivery, 0);
+                const total = totalCounter + totalDelivery;
+                
+                const dates = storeData.map(d => d.date);
+                const minDate = new Date(Math.min(...dates));
+                const maxDate = new Date(Math.max(...dates));
+                const days = Math.ceil((maxDate - minDate) / (1000 * 60 * 60 * 24)) + 1;
+                const avg = total / days;
+                
+                const daysInMonth = new Date(maxDate.getFullYear(), maxDate.getMonth() + 1, 0).getDate();
+                const forecast = avg * daysInMonth;
+                
+                const goal = storeData.find(d => d.goal > 0)?.goal || 0;
+                const deliveryPercent = total > 0 ? (totalDelivery / total * 100) : 0;
+                
+                const trend = calculateTrend(storeData.map(d => ({...d, sales: d.counter + d.delivery})));
+                const trendIcon = trend > 0 ? '📈' : '📉';
+                const trendClass = trend > 0 ? 'trend-up' : 'trend-down';
+
+                const willReachGoal = forecast >= goal;
+                const goalBadge = willReachGoal 
+                    ? '<span class="badge badge-success">✓ Atingirá</span>'
+                    : '<span class="badge badge-danger">✗ Abaixo</span>';
+
+                const row = `
+                    <tr>
+                        <td><strong>${store}</strong></td>
+                        <td>${formatCurrency(totalCounter)}</td>
+                        <td>${formatCurrency(totalDelivery)}</td>
+                        <td><strong>${formatCurrency(total)}</strong></td>
+                        <td>${deliveryPercent.toFixed(1)}%</td>
+                        <td>${formatCurrency(forecast)}</td>
+                        <td>${formatCurrency(goal)}</td>
+                        <td>${goalBadge}</td>
+                        <td class="${trendClass}">${trendIcon} ${trend.toFixed(1)}%</td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        }
+
+        function formatCurrency(value) {
+            return 'R$ ' + value.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        }
+    </script>
+</body>
+</html>
